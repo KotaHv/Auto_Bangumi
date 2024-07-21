@@ -56,8 +56,8 @@ class SeasonCollector(DownloadClient):
                 aggregate=False,
                 parser=parser,
             )
-            result = engine.download_bangumi(data)
             engine.bangumi.add(data)
+            result = engine.download_bangumi(data)
             return result
 
 
