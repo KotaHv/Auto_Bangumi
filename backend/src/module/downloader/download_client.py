@@ -1,11 +1,9 @@
 import logging
 
-from lxml import etree
-
 from module.conf import settings
 from module.models import Bangumi, Torrent
 from module.network import RequestContent
-from module.utils import check_torrent
+from module.utils import check_torrent, torrent_hash
 
 from .path import TorrentPath
 
@@ -154,8 +152,11 @@ class DownloadClient(TorrentPath):
                         file, magnet = get_torrent_or_magnet(t)
                         if file:
                             torrent_file.append(file)
+                            t.hash = torrent_hash.from_torrent(file)
                         if magnet:
                             torrent_url.append(magnet)
+                            t.hash = torrent_hash.from_magnet(magnet)
+                    t.bangumi_id = bangumi.id
             else:
                 if "magnet" in torrent.url:
                     torrent_url = torrent.url
@@ -163,6 +164,11 @@ class DownloadClient(TorrentPath):
                     torrent_file = None
                 else:
                     torrent_file, torrent_url = get_torrent_or_magnet(torrent)
+                    if torrent_file:
+                        torrent.hash = torrent_hash.from_torrent(torrent_file)
+                    else:
+                        torrent.hash = torrent_hash.from_magnet(torrent_url)
+                torrent.bangumi_id = bangumi.id
         if self.client.add_torrents(
             torrent_urls=torrent_url,
             torrent_files=torrent_file,
