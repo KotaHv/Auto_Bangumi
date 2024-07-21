@@ -1,9 +1,11 @@
 import logging
 
+from lxml import etree
+
 from module.conf import settings
 from module.models import Bangumi, Torrent
 from module.network import RequestContent
-from module.utils import torrent_hash
+from module.utils import check_torrent
 
 from .path import TorrentPath
 
@@ -119,6 +121,20 @@ class DownloadClient(TorrentPath):
         if not bangumi.save_path:
             bangumi.save_path = self._gen_save_path(bangumi)
         with RequestContent() as req:
+
+            def get_torrent_or_magnet(_torrent: Torrent):
+                content = req.get_content(_torrent.url)
+                if check_torrent(content):
+                    return content, None
+                if _torrent.homepage:
+                    magnet = req.get_magnet(_torrent.homepage)
+                    if magnet:
+                        return None, magnet
+                logger.error(
+                    f'[Downloader] {_torrent.name} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{bangumi.save_path}".'
+                )
+                return None, None
+
             if isinstance(torrent, list):
                 if len(torrent) == 0:
                     logger.debug(
@@ -133,23 +149,20 @@ class DownloadClient(TorrentPath):
                     torrent_file = None
                 else:
                     torrent_file = []
+                    torrent_url = []
                     for t in torrent:
-                        content = req.get_content(t.url)
-                        torrent_file.append(content)
-                        t.hash = torrent_hash.from_torrent(content)
-                    torrent_url = None
-                for t in torrent:
-                    t.bangumi_id = bangumi.id
+                        file, magnet = get_torrent_or_magnet(t)
+                        if file:
+                            torrent_file.append(file)
+                        if magnet:
+                            torrent_url.append(magnet)
             else:
                 if "magnet" in torrent.url:
                     torrent_url = torrent.url
                     torrent.hash = torrent_hash.from_magnet(torrent.url)
                     torrent_file = None
                 else:
-                    torrent_file = req.get_content(torrent.url)
-                    torrent.hash = torrent_hash.from_torrent(torrent_file)
-                    torrent_url = None
-                torrent.bangumi_id = bangumi.id
+                    torrent_file, torrent_url = get_torrent_or_magnet(torrent)
         if self.client.add_torrents(
             torrent_urls=torrent_url,
             torrent_files=torrent_file,
