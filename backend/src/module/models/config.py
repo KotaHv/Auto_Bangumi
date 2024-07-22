@@ -45,6 +45,9 @@ class BangumiManage(BaseModel):
     rename_method: str = Field("pn", description="Rename method")
     group_tag: bool = Field(False, description="Enable group tag")
     remove_bad_torrent: bool = Field(False, description="Remove bad torrent")
+    retain_latest_media_version: bool = Field(
+        False, description="Remove older versions and keep only the latest version"
+    )
 
 
 class Log(BaseModel):

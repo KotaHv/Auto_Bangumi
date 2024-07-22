@@ -38,6 +38,11 @@ const items: SettingItem<BangumiManage>[] = [
     label: () => t('config.manage_set.delete_bad_torrent'),
     type: 'switch',
   },
+  {
+    configKey: 'retain_latest_media_version',
+    label: () => t('config.manage_set.retain_latest_media_version'),
+    type: 'switch',
+  },
 ];
 </script>
 

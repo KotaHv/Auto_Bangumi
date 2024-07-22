@@ -1,11 +1,12 @@
 import logging
 import re
+from collections import defaultdict
 
 from module.conf import settings
+from module.database import Database
 from module.downloader import DownloadClient
 from module.models import EpisodeFile, Notification, SubtitleFile
 from module.parser import TitleParser
-from module.database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +32,12 @@ class Renamer(DownloadClient):
         method: str,
         offset: int,
     ) -> str:
-        season = f"0{file_info.season}" if file_info.season < 10 else file_info.season
-        file_info.episode += offset
-        episode = (
-            f"0{file_info.episode}" if file_info.episode < 10 else file_info.episode
-        )
-        if file_info.episode_revision != 1:
+        season = str(file_info.season).zfill(2)
+        episode = str(file_info.episode + offset).zfill(2)
+        if (
+            not settings.bangumi_manage.retain_latest_media_version
+            and file_info.episode_revision != 1
+        ):
             episode = f"{episode}v{file_info.episode_revision}"
         if method == "none" or method == "subtitle_none":
             return file_info.media_path
@@ -150,9 +151,51 @@ class Renamer(DownloadClient):
                     if not renamed:
                         logger.warning(f"[Renamer] {subtitle_path} rename failed")
 
+    def check_multi_version(self):
+        if not settings.bangumi_manage.retain_latest_media_version:
+            return
+        torrents_info = self.get_torrent_info()
+        grouped_torrents = defaultdict(list)
+
+        for torrent_info in torrents_info:
+            media_list, _ = self.check_files(torrent_info)
+            if len(media_list) == 1:
+                bangumi_name, season = self._path_to_bangumi(torrent_info.save_path)
+                media_path = media_list[0]
+                ep = self._parser.torrent_parser(torrent_path=media_path, season=season)
+                key = f"{bangumi_name} S{season:02d}E{ep.episode:02d}"
+                grouped_torrents[key].append((torrent_info, ep))
+
+        multi_version_torrents = {
+            k: v for k, v in grouped_torrents.items() if len(v) > 1
+        }
+
+        for key, torrents in multi_version_torrents.items():
+            torrent_hashes = {torrent[0].hash: torrent[0].name for torrent in torrents}
+            max_revision = max(ep.episode_revision for _, ep in torrents)
+
+            keep_hashes = []
+            keep_names = []
+
+            for torrent_info, ep in torrents:
+                if ep.episode_revision == max_revision:
+                    keep_hashes.append(torrent_info.hash)
+                    keep_names.append(torrent_hashes.pop(torrent_info.hash))
+
+            if torrent_hashes:
+                logger.warning(
+                    f"""[Renamer] Detected multiple versions for '{key}'.
+\tKeeping version(s):
+\t\t{"\n\t\t".join(f"- {name}" for name in keep_names)}
+\tDeleting version(s):
+\t\t{"\n\t\t".join(f"- {name}" for name in torrent_hashes.values())}"""
+                )
+                # self.delete_torrent(torrent_hashes.keys())
+
     def rename(self) -> list[Notification]:
         # Get torrent info
         logger.debug("[Renamer] Start rename process.")
+        self.check_multi_version()
         rename_method = settings.bangumi_manage.rename_method
         torrents_info = self.get_torrent_info()
         renamed_info: list[Notification] = []
