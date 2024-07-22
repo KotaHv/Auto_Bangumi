@@ -165,6 +165,7 @@ class Renamer(DownloadClient):
                 "_hash": info.hash,
                 "offset": 0,
             }
+            self.set_tag(info.hash, bangumi_name)
             with Database() as db:
                 bangumi_id = db.torrent.get_bangumi_id(info.hash)
                 if bangumi_id:

@@ -90,7 +90,7 @@ class QbDownloader:
             save_path=save_path,
             category=category,
             use_auto_torrent_management=False,
-            content_layout="NoSubFolder"
+            content_layout="NoSubFolder",
         )
         return resp == "Ok."
 
@@ -141,6 +141,9 @@ class QbDownloader:
             logger.warning(f"[Downloader] Category {category} does not exist")
             self.add_category(category)
             self._client.torrents_set_category(category, hashes=_hash)
+
+    def set_tag(self, _hash, tag):
+        self._client.torrents_add_tags(tags=tag, torrent_hashes=_hash)
 
     def check_connection(self):
         return self._client.app_version()
