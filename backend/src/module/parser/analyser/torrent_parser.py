@@ -72,6 +72,18 @@ def get_subtitle_lang(subtitle_name: str) -> str:
                 return key
 
 
+episode_revision_pattern = re.compile(r"\d{1,4}v(\d{1,2})|\[v(\d{1,2})\]", re.I)
+
+
+def get_episode_revision(name: str) -> int:
+    match_result = episode_revision_pattern.search(name)
+    if match_result:
+        for group in match_result.groups():
+            if group:
+                return int(group)
+    return 1
+
+
 def torrent_parser(
     torrent_path: str,
     torrent_name: str | None = None,
@@ -86,6 +98,7 @@ def torrent_parser(
         for compiled_rule in compiled_rules:
             match_obj = compiled_rule.match(match_name)
             if match_obj:
+                episode_revision = get_episode_revision(match_name)
                 group, title = get_group(match_obj.group(1))
                 if not season:
                     title, season = get_season_and_title(title)
@@ -100,6 +113,7 @@ def torrent_parser(
                         title=title,
                         season=season,
                         episode=episode,
+                        episode_revision=episode_revision,
                         suffix=suffix,
                     )
                 elif file_type == "subtitle":
@@ -111,5 +125,6 @@ def torrent_parser(
                         season=season,
                         language=language,
                         episode=episode,
+                        episode_revision=episode_revision,
                         suffix=suffix,
                     )

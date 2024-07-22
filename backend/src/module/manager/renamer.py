@@ -36,6 +36,8 @@ class Renamer(DownloadClient):
         episode = (
             f"0{file_info.episode}" if file_info.episode < 10 else file_info.episode
         )
+        if file_info.episode_revision != 1:
+            episode = f"{episode}v{file_info.episode_revision}"
         if method == "none" or method == "subtitle_none":
             return file_info.media_path
         elif method == "pn":
