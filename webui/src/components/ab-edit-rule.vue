@@ -18,6 +18,8 @@ const rule = defineModel<BangumiRule>('rule', {
   required: true,
 });
 
+const { getAll } = useBangumiStore();
+
 const deleteFileDialog = reactive<{
   show: boolean;
   type: 'disable' | 'delete';
@@ -25,9 +27,19 @@ const deleteFileDialog = reactive<{
   show: false,
   type: 'disable',
 });
+
+const forceCollectDialog = reactive({
+  show: false,
+});
+
+const loading = reactive({
+  collect: false,
+});
+
 watch(show, (val) => {
   if (!val) {
     deleteFileDialog.show = false;
+    forceCollectDialog.show = false;
   }
 });
 
@@ -40,6 +52,10 @@ function showDeleteFileDialog(type: String) {
   }
 }
 
+function showForceCollectDialog(show: boolean) {
+  forceCollectDialog.show = show;
+}
+
 const close = () => (show.value = false);
 
 function emitdeleteFile(deleteFile: boolean) {
@@ -47,6 +63,24 @@ function emitdeleteFile(deleteFile: boolean) {
     id: rule.value.id,
     deleteFile,
   });
+}
+
+function forceCollect() {
+  if (rule.value) {
+    useApi(apiDownload.collection, {
+      showMessage: true,
+      onBeforeExecute() {
+        loading.collect = true;
+      },
+      onSuccess() {
+        getAll();
+        show.value = false;
+      },
+      onFinally() {
+        loading.collect = false;
+      },
+    }).execute(rule.value);
+  }
 }
 
 function emitApply() {
@@ -98,16 +132,24 @@ const boxSize = computed(() => {
     <div v-else space-y-12>
       <ab-rule v-model:rule="rule"></ab-rule>
 
-      <div fx-cer justify-end gap-x-10>
-        <ab-button-multi
-          size="small"
-          type="warn"
-          :selections="[t('homepage.rule.delete'), t('homepage.rule.disable')]"
-          @click="showDeleteFileDialog"
-        />
-        <ab-button size="small" @click="emitApply">
-          {{ $t('homepage.rule.apply') }}
+      <div fx-cer justify-between gap-x-10>
+        <ab-button size="small" @click="() => showForceCollectDialog(true)">
+          {{ $t('homepage.rule.force_collect') }}
         </ab-button>
+        <div fx-cer justify-end gap-x-10>
+          <ab-button-multi
+            size="small"
+            type="warn"
+            :selections="[
+              t('homepage.rule.delete'),
+              t('homepage.rule.disable'),
+            ]"
+            @click="showDeleteFileDialog"
+          />
+          <ab-button size="small" @click="emitApply">
+            {{ $t('homepage.rule.apply') }}
+          </ab-button>
+        </div>
       </div>
     </div>
 
@@ -123,6 +165,28 @@ const boxSize = computed(() => {
           {{ $t('homepage.rule.yes_btn') }}
         </ab-button>
         <ab-button size="small" @click="() => emitdeleteFile(false)">
+          {{ $t('homepage.rule.no_btn') }}
+        </ab-button>
+      </div>
+    </ab-popup>
+
+    <ab-popup
+      v-model:show="forceCollectDialog.show"
+      :title="$t('homepage.rule.force_collect')"
+    >
+      <div>{{ $t('homepage.rule.force_collect_hit') }}</div>
+      <div line my-8></div>
+
+      <div f-cer gap-x-10>
+        <ab-button
+          size="small"
+          type="warn"
+          :loading="loading.collect"
+          @click="forceCollect"
+        >
+          {{ $t('homepage.rule.yes_btn') }}
+        </ab-button>
+        <ab-button size="small" @click="() => showForceCollectDialog(false)">
           {{ $t('homepage.rule.no_btn') }}
         </ab-button>
       </div>

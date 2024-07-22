@@ -89,7 +89,10 @@
       "offset": "Offset",
       "season": "Season",
       "year": "Year",
-      "yes_btn": "Yes"
+      "yes_btn": "Yes",
+      "force_collect": "Force Collect",
+      "force_collect_hit": "Are you sure you want to force collect?",
+      "force_collect_title": "Collect"
     }
   },
   "log": {
