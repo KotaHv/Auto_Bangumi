@@ -162,7 +162,11 @@ class Renamer(DownloadClient):
             if len(media_list) == 1:
                 bangumi_name, season = self._path_to_bangumi(torrent_info.save_path)
                 media_path = media_list[0]
-                ep = self._parser.torrent_parser(torrent_path=media_path, season=season)
+                ep = self._parser.torrent_parser(
+                    torrent_path=media_path,
+                    torrent_name=torrent_info.name,
+                    season=season,
+                )
                 key = f"{bangumi_name} S{season:02d}E{ep.episode:02d}"
                 grouped_torrents[key].append((torrent_info, ep))
 
@@ -173,7 +177,6 @@ class Renamer(DownloadClient):
         for key, torrents in multi_version_torrents.items():
             torrent_hashes = {torrent[0].hash: torrent[0].name for torrent in torrents}
             max_revision = max(ep.episode_revision for _, ep in torrents)
-
             keep_hashes = []
             keep_names = []
 
@@ -181,16 +184,19 @@ class Renamer(DownloadClient):
                 if ep.episode_revision == max_revision:
                     keep_hashes.append(torrent_info.hash)
                     keep_names.append(torrent_hashes.pop(torrent_info.hash))
-
             if torrent_hashes:
                 logger.warning(
-                    f"""[Renamer] Detected multiple versions for '{key}'.
-\tKeeping version(s):
-\t\t{"\n\t\t".join(f"- {name}" for name in keep_names)}
-\tDeleting version(s):
-\t\t{"\n\t\t".join(f"- {name}" for name in torrent_hashes.values())}"""
+                    "[Renamer] Detected multiple versions for '{}'.\n"
+                    "\tKeeping version(s):\n"
+                    "\t\t{}\n"
+                    "\tDeleting version(s):\n"
+                    "\t\t{}".format(
+                        key,
+                        "\n\t\t".join(f"- {name}" for name in keep_names),
+                        "\n\t\t".join(f"- {name}" for name in torrent_hashes.values()),
+                    )
                 )
-                # self.delete_torrent(torrent_hashes.keys())
+                self.delete_torrent(torrent_hashes.keys())
 
     def rename(self) -> list[Notification]:
         # Get torrent info
