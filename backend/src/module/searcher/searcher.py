@@ -51,5 +51,6 @@ class SearchTorrent(RequestContent, RSSAnalyser):
 
     def search_season(self, data: Bangumi, site: str = "mikan") -> list[Torrent]:
         rss_item = self.special_url(data, site)
-        torrents = self.search_torrents(rss_item)
+        # torrents = self.search_torrents(rss_item)
+        torrents = self.get_torrents(rss_item.url, data.filter.replace(",", "|"))
         return [torrent for torrent in torrents if data.title_raw in torrent.name]

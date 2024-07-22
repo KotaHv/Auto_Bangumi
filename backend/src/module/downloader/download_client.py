@@ -156,6 +156,7 @@ class DownloadClient(TorrentPath):
                         if magnet:
                             torrent_url.append(magnet)
                             t.hash = torrent_hash.from_magnet(magnet)
+                for t in torrent:
                     t.bangumi_id = bangumi.id
             else:
                 if "magnet" in torrent.url:
