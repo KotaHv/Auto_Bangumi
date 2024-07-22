@@ -6,6 +6,7 @@ from lxml import etree
 
 from module.conf import settings
 from module.models import Torrent
+from module.utils import check_torrent
 
 from .request_url import RequestURL
 from .site import rss_parser
@@ -83,3 +84,13 @@ class RequestContent(RequestURL):
         magnet = html.xpath('//a[starts-with(@href, "magnet")]/@href')
         if magnet:
             return magnet[0]
+
+    def get_torrent_or_magnet(self, torrent: Torrent) -> bytes | str | None:
+        content = self.get_content(torrent.url)
+        if check_torrent(content):
+            return content
+        if torrent.homepage:
+            magnet = self.get_magnet(torrent.homepage)
+            if magnet:
+                return magnet
+        return

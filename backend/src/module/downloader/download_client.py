@@ -3,7 +3,7 @@ import logging
 from module.conf import settings
 from module.models import Bangumi, Torrent
 from module.network import RequestContent
-from module.utils import check_torrent, torrent_hash
+from module.utils import torrent_hash
 
 from .path import TorrentPath
 
@@ -119,60 +119,31 @@ class DownloadClient(TorrentPath):
         if not bangumi.save_path:
             bangumi.save_path = self._gen_save_path(bangumi)
         with RequestContent() as req:
-
-            def get_torrent_or_magnet(_torrent: Torrent):
-                content = req.get_content(_torrent.url)
-                if check_torrent(content):
-                    return content, None
-                if _torrent.homepage:
-                    magnet = req.get_magnet(_torrent.homepage)
-                    if magnet:
-                        return None, magnet
-                logger.error(
-                    f'[Downloader] {_torrent.name} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{bangumi.save_path}".'
-                )
-                return None, None
-
-            if isinstance(torrent, list):
-                if len(torrent) == 0:
-                    logger.debug(
-                        f"[Downloader] No torrent found: {bangumi.official_title}"
-                    )
-                    return False
-                if "magnet" in torrent[0].url:
-                    torrent_url = []
-                    for t in torrent:
-                        torrent_url.append(t.url)
-                        t.hash = torrent_hash.from_magnet(t.url)
-                    torrent_file = None
+            if isinstance(torrent, Torrent):
+                torrent = [torrent]
+            torrent_files = []
+            torrent_urls = []
+            for t in torrent:
+                t.bangumi_id = bangumi.id
+                if "magnet" in t.url:
+                    torrent_urls.append(t.url)
+                    t.hash = torrent_hash.from_magnet(t.url)
                 else:
-                    torrent_file = []
-                    torrent_url = []
-                    for t in torrent:
-                        file, magnet = get_torrent_or_magnet(t)
-                        if file:
-                            torrent_file.append(file)
-                            t.hash = torrent_hash.from_torrent(file)
-                        if magnet:
-                            torrent_url.append(magnet)
-                            t.hash = torrent_hash.from_magnet(magnet)
-                for t in torrent:
-                    t.bangumi_id = bangumi.id
-            else:
-                if "magnet" in torrent.url:
-                    torrent_url = torrent.url
-                    torrent.hash = torrent_hash.from_magnet(torrent.url)
-                    torrent_file = None
-                else:
-                    torrent_file, torrent_url = get_torrent_or_magnet(torrent)
-                    if torrent_file:
-                        torrent.hash = torrent_hash.from_torrent(torrent_file)
+                    torrent_data = req.get_torrent_or_magnet(t)
+                    if isinstance(torrent_data, bytes):
+                        torrent_files.append(torrent_data)
+                        t.hash = torrent_hash.from_torrent(torrent_data)
+                    elif isinstance(torrent_data, str):
+                        torrent_urls.append(torrent_data)
+                        t.hash = torrent_hash.from_magnet(torrent_data)
                     else:
-                        torrent.hash = torrent_hash.from_magnet(torrent_url)
-                torrent.bangumi_id = bangumi.id
+                        logger.error(
+                            f'[Downloader] {t.name} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{bangumi.save_path}".'
+                        )
+
         if self.client.add_torrents(
-            torrent_urls=torrent_url,
-            torrent_files=torrent_file,
+            torrent_urls=torrent_urls,
+            torrent_files=torrent_files,
             save_path=bangumi.save_path,
             category="Bangumi",
         ):
