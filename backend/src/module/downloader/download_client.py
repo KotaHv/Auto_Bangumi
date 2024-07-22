@@ -118,13 +118,14 @@ class DownloadClient(TorrentPath):
     def add_torrent(self, torrent: Torrent | list, bangumi: Bangumi) -> bool:
         if not bangumi.save_path:
             bangumi.save_path = self._gen_save_path(bangumi)
+        if isinstance(torrent, Torrent):
+            torrent = [torrent]
+        torrent_files = []
+        torrent_urls = []
         with RequestContent() as req:
-            if isinstance(torrent, Torrent):
-                torrent = [torrent]
-            torrent_files = []
-            torrent_urls = []
             for t in torrent:
                 t.bangumi_id = bangumi.id
+                t.downloaded = True
                 if "magnet" in t.url:
                     torrent_urls.append(t.url)
                     t.hash = torrent_hash.from_magnet(t.url)
