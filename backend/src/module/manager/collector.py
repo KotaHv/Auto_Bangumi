@@ -3,7 +3,7 @@ import logging
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel
 from module.rss import RSSEngine
-from module.searcher import SearchTorrent
+from module.searcher import SEARCH_KEY, SearchTorrent
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,14 @@ class SeasonCollector(DownloadClient):
         with RSSEngine() as engine:
             data.added = True
             data.eps_collect = True
+            with SearchTorrent() as st:
+                torrents = st.get_torrents(data.rss_link, data.filter.replace(",", "|"))
+                for torrent in torrents:
+                    bangumi = st.raw_parser(raw=torrent.name)
+                    if bangumi:
+                        for filed in SEARCH_KEY:
+                            setattr(data, filed, getattr(bangumi, filed))
+                        break
             engine.add_rss(
                 rss_link=data.rss_link,
                 name=data.official_title,
