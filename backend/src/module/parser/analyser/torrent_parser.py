@@ -9,12 +9,14 @@ logger = logging.getLogger(__name__)
 PLATFORM = "Unix"
 
 RULES = [
-    r"(.*) - (\d{1,4}(?!\d|p)|\d{1,4}\.\d{1,2}(?!\d|p))(?:v\d{1,2})?(?: )?(?:END)?(.*)",
-    r"(.*)[\[\ E](\d{1,4}|\d{1,4}\.\d{1,2})(?:v\d{1,2})?(?: )?(?:END)?[\]\ ](.*)",
+    r"(.*) - (\d{1,4}\.\d{1,2}(?!\d|p)|\d{1,4}(?!\d|p))(?:v\d{1,2})?(?: )?(?:END)?(.*)",
+    r"(.*)[\[\ E](\d{1,4}\.\d{1,2}|\d{1,4})(?:v\d{1,2})?(?: )?(?:END)?[\]\ ](.*)",
     r"(.*)\[(?:第)?(\d*\.*\d*)[话集話](?:END)?\](.*)",
     r"(.*)第?(\d*\.*\d*)[话話集](?:END)?(.*)",
     r"(.*)(?:S\d{2})?EP?(\d+)(.*)",
 ]
+
+compiled_rules = [re.compile(rule, flags=re.I) for rule in RULES]
 
 SUBTITLE_LANG = {
     "zh-tw": ["tc", "cht", "繁", "zh-tw"],
@@ -34,22 +36,30 @@ def get_path_basename(torrent_path: str) -> str:
     return Path(torrent_path).name
 
 
+group_split_pattern = re.compile(r"[\[\]()【】（）]")
+group_match_pattern = re.compile(r"\d+")
+
+
 def get_group(group_and_title) -> tuple[str | None, str]:
-    n = re.split(r"[\[\]()【】（）]", group_and_title)
+    n = group_split_pattern.split(group_and_title)
     while "" in n:
         n.remove("")
     if len(n) > 1:
-        if re.match(r"\d+", n[1]):
+        if group_match_pattern.match(n[1]):
             return None, group_and_title
         return n[0], n[1]
     else:
         return None, n[0]
 
 
+season_remove_pattern = re.compile(r"([Ss]|Season )\d{1,3}")
+season_search_pattern = re.compile(r"([Ss]|Season )(\d{1,3})", re.I)
+
+
 def get_season_and_title(season_and_title) -> tuple[str, int]:
-    title = re.sub(r"([Ss]|Season )\d{1,3}", "", season_and_title).strip()
+    title = season_remove_pattern.sub("", season_and_title).strip()
     try:
-        season = re.search(r"([Ss]|Season )(\d{1,3})", season_and_title, re.I).group(2)
+        season = season_search_pattern.search(season_and_title).group(2)
     except AttributeError:
         season = 1
     return title, int(season)
@@ -73,15 +83,15 @@ def torrent_parser(
     if torrent_name is None:
         match_names = match_names[1:]
     for match_name in match_names:
-        for rule in RULES:
-            match_obj = re.match(rule, match_name, re.I)
+        for compiled_rule in compiled_rules:
+            match_obj = compiled_rule.match(match_name)
             if match_obj:
                 group, title = get_group(match_obj.group(1))
                 if not season:
                     title, season = get_season_and_title(title)
                 else:
                     title, _ = get_season_and_title(title)
-                episode = int(match_obj.group(2))
+                episode = match_obj.group(2)
                 suffix = Path(torrent_path).suffix
                 if file_type == "media":
                     return EpisodeFile(

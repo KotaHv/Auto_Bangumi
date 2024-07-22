@@ -183,5 +183,5 @@ def raw_parser(raw: str) -> Episode | None:
 
 
 if __name__ == "__main__":
-    title = "[动漫国字幕组&LoliHouse] THE MARGINAL SERVICE - 08 [WebRip 1080p HEVC-10bit AAC][简繁内封字幕]"
+    title = "【喵萌奶茶屋】★01月新番★[我内心的糟糕念头 / Boku no Kokoro no Yabai Yatsu][25][1080p][简日双语][v2][招募翻译]"
     print(raw_parser(title))
