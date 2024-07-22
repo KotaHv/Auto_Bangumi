@@ -46,6 +46,11 @@ class TorrentManager(Database):
                     if rss is None or rss.aggregate:
                         continue
                     self.rss.delete(rss.id)
+                if data.offset != 0:
+                    torrents = self.torrent.search_bangumi(_id)
+                    hashes = {torrent.hash for torrent in torrents if torrent.hash}
+                    with DownloadClient() as client:
+                        client.set_category(hashes, "BangumiFixed")
                 self.bangumi.delete_one(int(_id))
                 self.torrent.delete_by_bangumi_id(int(_id))
                 if file:

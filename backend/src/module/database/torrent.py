@@ -48,6 +48,11 @@ class TorrentDatabase:
     def search_rss(self, rss_id: int) -> list[Torrent]:
         return self.session.exec(select(Torrent).where(Torrent.rss_id == rss_id)).all()
 
+    def search_bangumi(self, bangumi_id: int) -> list[Torrent]:
+        return self.session.exec(
+            select(Torrent).where(Torrent.bangumi_id == bangumi_id)
+        ).all()
+
     def check_new(self, torrents_list: list[Torrent]) -> list[Torrent]:
         new_torrents = []
         old_torrents = self.search_all()
