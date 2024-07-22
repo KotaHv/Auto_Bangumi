@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from module.conf import settings
+from module.conf import settings, setup_logger
 from module.models import APIResponse, Config
 from module.security.api import UNAUTHORIZED, get_current_user
 
@@ -24,10 +24,14 @@ async def update_config(config: Config):
         settings.save(config_dict=config.dict())
         settings.load()
         # update_rss()
+        setup_logger()
         logger.info("Config updated")
         return JSONResponse(
             status_code=200,
-            content={"msg_en": "Update config successfully.", "msg_zh": "更新配置成功。"},
+            content={
+                "msg_en": "Update config successfully.",
+                "msg_zh": "更新配置成功。",
+            },
         )
     except Exception as e:
         logger.warning(e)
