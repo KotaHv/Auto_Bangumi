@@ -4,6 +4,7 @@ from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel
 from module.rss import RSSEngine
 from module.searcher import SEARCH_KEY, SearchTorrent
+from module.utils.multi_version_filter import filter_multi_version_torrents
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class SeasonCollector(DownloadClient):
                 torrents = st.search_season(bangumi)
             else:
                 torrents = st.get_torrents(link, bangumi.filter.replace(",", "|"))
+            filter_multi_version_torrents(torrents)
             if self.add_torrent(torrents, bangumi):
                 logger.info(
                     f"Collections of {bangumi.official_title} Season {bangumi.season} completed."
@@ -43,8 +45,7 @@ class SeasonCollector(DownloadClient):
                     msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 种子已经添加。",
                 )
 
-    @staticmethod
-    def subscribe_season(data: Bangumi, parser: str = "mikan"):
+    def subscribe_season(self, data: Bangumi, parser: str = "mikan"):
         with RSSEngine() as engine:
             data.added = True
             data.eps_collect = True
@@ -56,6 +57,7 @@ class SeasonCollector(DownloadClient):
                         for filed in SEARCH_KEY:
                             setattr(data, filed, getattr(bangumi, filed))
                         break
+            filter_multi_version_torrents(torrents)
             engine.add_rss(
                 rss_link=data.rss_link,
                 name=data.official_title,
@@ -63,8 +65,25 @@ class SeasonCollector(DownloadClient):
                 parser=parser,
             )
             engine.bangumi.add(data)
-            result = engine.download_bangumi(data)
-            return result
+            if torrents:
+                rss_item = engine.rss.search_url(data.rss_link)
+                for torrent in torrents:
+                    torrent.rss_id = rss_item.id
+                self.add_torrent(torrents, data)
+                engine.torrent.add_all(torrents)
+                return ResponseModel(
+                    status=True,
+                    status_code=200,
+                    msg_en=f"[Engine] Download {data.official_title} successfully.",
+                    msg_zh=f"下载 {data.official_title} 成功。",
+                )
+            else:
+                return ResponseModel(
+                    status=False,
+                    status_code=406,
+                    msg_en=f"[Engine] Download {data.official_title} failed.",
+                    msg_zh=f"[Engine] 下载 {data.official_title} 失败。",
+                )
 
     def force_collect(self, bangumi: Bangumi):
         rss_links = filter(None, bangumi.rss_link.split(","))

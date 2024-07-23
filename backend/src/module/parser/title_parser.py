@@ -8,6 +8,7 @@ from module.parser.analyser import (
     mikan_parser,
     raw_parser,
     tmdb_parser,
+    torrent_name_parser,
     torrent_parser,
 )
 
@@ -29,6 +30,15 @@ class TitleParser:
             return torrent_parser(torrent_path, torrent_name, season, file_type)
         except Exception as e:
             logger.warning(f"Cannot parse {torrent_path} with error {e}")
+
+    @staticmethod
+    def torrent_name_parser(
+        torrent_name: str,
+    ):
+        try:
+            return torrent_name_parser(torrent_name)
+        except Exception as e:
+            logger.warning(f"Cannot parse {torrent_name} with error {e}")
 
     @staticmethod
     def tmdb_parser(title: str, season: int, language: str):

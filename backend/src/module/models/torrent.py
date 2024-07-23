@@ -38,3 +38,9 @@ class SubtitleFile(BaseModel):
     episode_revision: int = Field(1)
     language: str = Field(..., regex=r"(zh|zh-tw)")
     suffix: str = Field(..., regex=r"\.(ass|srt|ASS|SRT)$")
+
+
+class TorrentInfo(BaseModel):
+    title: str = Field(...)
+    episode: int | float = Field(...)
+    episode_revision: int = Field(...)

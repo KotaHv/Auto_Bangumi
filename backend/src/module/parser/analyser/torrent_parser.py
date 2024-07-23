@@ -2,7 +2,7 @@ import logging
 import re
 from pathlib import Path
 
-from module.models import EpisodeFile, SubtitleFile
+from module.models import EpisodeFile, SubtitleFile, TorrentInfo
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +91,7 @@ def torrent_parser(
     file_type: str = "media",
 ) -> EpisodeFile | SubtitleFile:
     media_path = get_path_basename(torrent_path)
-    match_names = [torrent_name, media_path]
-    if torrent_name is None:
-        match_names = match_names[1:]
+    match_names = filter(None, [torrent_name, media_path])
     for match_name in match_names:
         for compiled_rule in compiled_rules:
             match_obj = compiled_rule.match(match_name)
@@ -128,3 +126,17 @@ def torrent_parser(
                         episode_revision=episode_revision,
                         suffix=suffix,
                     )
+
+
+def torrent_name_parser(torrent_name: str) -> TorrentInfo:
+    for compiled_rule in compiled_rules:
+        match_obj = compiled_rule.match(torrent_name)
+        if match_obj:
+            episode_revision = get_episode_revision(torrent_name)
+            title = match_obj.group(1)
+            episode = match_obj.group(2)
+            return TorrentInfo(
+                title=title,
+                episode=episode,
+                episode_revision=episode_revision,
+            )

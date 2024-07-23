@@ -6,6 +6,7 @@ from module.database import Database, engine
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel, RSSItem, Torrent
 from module.network import RequestContent
+from module.utils.multi_version_filter import filter_multi_version_torrents
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +145,7 @@ class RSSEngine(Database):
                 torrents = self.fetch_aggregate_rss(rss_item)
             else:
                 torrents = self.fetch_regular_rss(rss_item)
+            filter_multi_version_torrents(torrents)
             new_torrents = self.torrent.check_new(torrents)
             # Get all enabled bangumi data
             for torrent in new_torrents:
