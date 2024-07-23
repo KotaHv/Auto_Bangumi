@@ -66,6 +66,30 @@ class SeasonCollector(DownloadClient):
             result = engine.download_bangumi(data)
             return result
 
+    def force_collect(self, bangumi: Bangumi):
+        rss_links = filter(None, bangumi.rss_link.split(","))
+        rss_link_to_collect = None
+
+        with RSSEngine() as engine:
+            for rss_link in rss_links:
+                rss = engine.rss.search_url(rss_link)
+                if rss is None:
+                    continue
+                if rss.aggregate:
+                    rss_link_to_collect = None
+                    break
+                else:
+                    rss_link_to_collect = rss_link
+                    break
+            else:
+                return ResponseModel(
+                    status=False,
+                    status_code=406,
+                    msg_en=f"Collection of {bangumi.official_title} Season {bangumi.season} failed, no valid rss found.",
+                    msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 未找到有效rss。",
+                )
+        return self.collect_season(bangumi, rss_link_to_collect)
+
 
 def eps_complete():
     with RSSEngine() as engine:

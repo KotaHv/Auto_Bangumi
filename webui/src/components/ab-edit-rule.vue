@@ -67,7 +67,7 @@ function emitdeleteFile(deleteFile: boolean) {
 
 function forceCollect() {
   if (rule.value) {
-    useApi(apiDownload.collection, {
+    useApi(apiDownload.forceCollect, {
       showMessage: true,
       onBeforeExecute() {
         loading.collect = true;
