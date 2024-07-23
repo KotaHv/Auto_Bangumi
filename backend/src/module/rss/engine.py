@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Optional
+from typing import List, Optional
 
 from module.database import Database, engine
 from module.downloader import DownloadClient
@@ -110,6 +110,26 @@ class RSSEngine(Database):
                 return matched
         return None
 
+    def fetch_aggregate_rss(self, rss_item: RSSItem) -> List[Torrent]:
+        with RequestContent() as req:
+            torrents = req.get_torrents(rss_item.url)
+        torrents_to_add = self.bangumi.match_list(torrents.copy(), rss_item.url)
+        if not torrents_to_add:
+            logger.debug("[RSS] No new title has been found.")
+            return torrents
+        from .analyser import RSSAnalyser
+
+        analyser = RSSAnalyser()
+        new_data = analyser.torrents_to_data(torrents_to_add, rss_item)
+        if new_data:
+            self.bangumi.add_all(new_data)
+
+    def fetch_regular_rss(self, rss_item: RSSItem) -> List[Torrent]:
+        bangumi = self.bangumi.search_rss(rss_item.url)[0]
+        with RequestContent() as req:
+            torrents = req.get_torrents(rss_item.url, bangumi.filter.replace(",", "|"))
+        return torrents
+
     def refresh_rss(self, client: DownloadClient, rss_id: Optional[int] = None):
         # Get All RSS Items
         if not rss_id:
@@ -120,9 +140,14 @@ class RSSEngine(Database):
         # From RSS Items, get all torrents
         logger.debug(f"[Engine] Get {len(rss_items)} RSS items")
         for rss_item in rss_items:
-            new_torrents = self.pull_rss(rss_item)
+            if rss_item.aggregate:
+                torrents = self.fetch_aggregate_rss(rss_item)
+            else:
+                torrents = self.fetch_regular_rss(rss_item)
+            new_torrents = self.torrent.check_new(torrents)
             # Get all enabled bangumi data
             for torrent in new_torrents:
+                torrent.rss_id = rss_item.id
                 matched_data = self.match_torrent(torrent)
                 if matched_data:
                     if client.add_torrent(torrent, matched_data):

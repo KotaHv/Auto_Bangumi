@@ -21,10 +21,6 @@ class RSSThread(ProgramStatus):
     def rss_loop(self):
         while not self.stop_event.is_set():
             with DownloadClient() as client, RSSEngine() as engine:
-                # Analyse RSS
-                rss_list = engine.rss.search_aggregate()
-                for rss in rss_list:
-                    self.analyser.rss_to_data(rss, engine)
                 # Run RSS Engine
                 engine.refresh_rss(client)
             if settings.bangumi_manage.eps_complete:
