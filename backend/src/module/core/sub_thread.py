@@ -26,7 +26,7 @@ class RSSThread(ProgramStatus):
             try:
                 self._rss_loop()
             except Exception as e:
-                logger.error(f"[RSS] error: {e}")
+                logger.exception(f"[RSS] error: {e}")
             finally:
                 self.stop_event.wait(settings.program.rss_time)
 
@@ -65,7 +65,7 @@ class RenameThread(ProgramStatus):
             try:
                 self._rename_loop()
             except Exception as e:
-                logger.error(f"[Renamer] error: {e}")
+                logger.exception(f"[Renamer] error: {e}")
             finally:
                 self.stop_event.wait(settings.program.rename_time)
 
