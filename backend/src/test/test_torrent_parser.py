@@ -72,6 +72,12 @@ def test_torrent_parser():
     assert bf.season == 1
     assert bf.episode == 6
 
+    file_name = "Scavengers.Reign.S01E09.1080p.WEB.h264-EDITH.chs.eng.mp4"
+    bf = torrent_parser(file_name)
+    assert bf.title == "Scavengers.Reign."
+    assert bf.season == 1
+    assert bf.episode == 9
+
 
 class TestGetPathBasename:
     def test_regular_path(self):
