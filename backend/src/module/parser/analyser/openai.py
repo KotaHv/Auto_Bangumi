@@ -45,11 +45,19 @@ The extracted data should be output as a valid JSON string adhering to the speci
 
 Example 1:
 - Input: "【喵萌奶茶屋】★04月新番★[夏日重现/Summer Time Rendering][11][1080p][繁日双语][招募翻译]"
-- Output: `{"group": "喵萌奶茶屋", "title_en": "Summer Time Rendering", "resolution": "1080p", "episode": 11, "season": 1, "title_zh": "夏日重现", "sub": "", "title_jp": "", "season_raw": "", "source": ""}`
+- Output: `{"group": "喵萌奶茶屋", "title_en": "Summer Time Rendering", "resolution": "1080P", "episode": 11, "season": 1, "title_zh": "夏日重现", "sub": "", "title_jp": "", "season_raw": "", "source": ""}`
 
 Example 2:
 - Input: "[ANi] 关于我转生变成史莱姆这档事 第三季 - 48.5 [1080P][Baha][WEB-DL][AAC AVC][CHT][MP4]"
-- Output: `{"group": "ANi", "title_en": "", "resolution": "1080p", "episode": 48.5, "season": 3, "source": "Baha", "title_zh": "关于我转生变成史莱姆这档事", "sub": "CHT", "title_jp": "", "season_raw": "第三季"}`
+- Output: `{"group": "ANi", "title_en": "", "resolution": "1080P", "episode": 48.5, "season": 3, "source": "Baha", "title_zh": "关于我转生变成史莱姆这档事", "sub": "CHT", "title_jp": "", "season_raw": "第三季"}`
+
+Example 3:
+- Input: "【幻樱字幕组】【4月新番】【古见同学有交流障碍症 第二季 Komi-san wa, Komyushou Desu. S02】【22】【GB_MP4】【1920X1080】"
+- Output: `{"group": "幻樱字幕组", "title_en": "Komi-san wa, Komyushou Desu.", "resolution": "1920X1080", "episode": 22, "season": 2, "title_zh": "古见同学有交流障碍症", "sub": "", "title_jp": "", "season_raw": "", "source": ""}`
+
+Example 4:
+- Input: "[Lilith-Raws] 关于我在无意间被隔壁的天使变成废柴这件事 / Otonari no Tenshi-sama - 09 [Baha][WEB-DL][1080p][AVC AAC][CHT][MP4]"
+- Output: `{"group": "Lilith-Raws", "title_en": "Otonari no Tenshi-sama", "resolution": "1080p", "episode": 9, "season": 1, "source": "WEB-DL", "title_zh": "关于我在无意间被隔壁的天使变成废柴这件事", "sub": "CHT", "title_jp": ""}`
 
 Please ensure your output strictly follows the JSON format, without any additional text or formatting. If you cannot extract certain information, set the corresponding field to an empty string or `None`.
 """
