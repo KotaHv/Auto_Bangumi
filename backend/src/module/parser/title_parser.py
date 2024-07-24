@@ -68,14 +68,19 @@ class TitleParser:
     def raw_parser(raw: str) -> Bangumi | None:
         language = settings.rss_parser.language
         try:
-            # use OpenAI ChatGPT to parse raw title and get structured data
             if settings.experimental_openai.enable:
-                gpt = OpenAIParser(
-                    api_key=settings.experimental_openai.api_key,
-                    base_url=settings.experimental_openai.base_url,
-                    model=settings.experimental_openai.model,
-                )
-                episode = gpt.parse(raw)
+                try:
+                    with OpenAIParser(
+                        api_key=settings.experimental_openai.api_key,
+                        base_url=settings.experimental_openai.base_url,
+                        model=settings.experimental_openai.model,
+                    ) as gpt:
+                        episode = gpt.parse(raw)
+                except Exception as e:
+                    logger.warning(
+                        f"OpenAIParser failed: {e}, Falling back to raw_parser."
+                    )
+                    episode = raw_parser(raw)
             else:
                 episode = raw_parser(raw)
 

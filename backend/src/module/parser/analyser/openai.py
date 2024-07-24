@@ -62,20 +62,26 @@ class OpenAIParser:
         api_key: str,
         base_url: str = "https://api.openai.com/v1",
         model: str = "gpt-4o-mini",
-        **kwargs,
     ) -> None:
-        http_client = (
+        self.api_key = api_key
+        self.base_url = base_url
+        self.model = model
+        self.http_client = (
             DefaultHttpxClient(proxies=build_proxy_url())
             if settings.proxy.enable
             else None
         )
+
+    def __enter__(self) -> "OpenAIParser":
         self.client = OpenAI(
-            api_key=api_key, base_url=base_url, http_client=http_client
+            api_key=self.api_key, base_url=self.base_url, http_client=self.http_client
         )
-        self.model = model
+        return self
 
-    def parse(self, text: str) -> Episode | None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.client.close()
 
+    def parse(self, text: str) -> Episode:
         chat_completion = self.client.chat.completions.create(
             messages=[
                 dict(role="system", content=DEFAULT_PROMPT),
@@ -91,5 +97,5 @@ class OpenAIParser:
             episode_data = json.loads(result)
             return Episode(**episode_data)
         except json.JSONDecodeError as e:
-            logger.warning(f"Cannot parse result {result} as python dict. error: {e}")
-            return None
+            logger.warning(f"Cannot parse result {result} as python dict.")
+            raise e
