@@ -91,14 +91,17 @@ class RequestURL:
         self.session.close()
 
     def _build_proxy_url(self):
-        proxy_type = "http" if "http" in settings.proxy.type else "socks5h"
+        if settings.proxy.type in ["http", "https", "socks5"]:
+            proxy_type = settings.proxy.type
+        else:
+            proxy_type = None
         auth = (
             f"{settings.proxy.username}:{settings.proxy.password}@"
             if settings.proxy.username
             else ""
         )
 
-        if proxy_type not in ["http", "socks5h"]:
+        if proxy_type is None:
             logger.error(f"[Network] Unsupported proxy type: {settings.proxy.type}")
             return None
 
