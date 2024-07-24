@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-import requests
+import httpx
 from sqlalchemy import inspect
 
 from module.conf import VERSION, settings
@@ -58,7 +58,7 @@ class Checker:
                 if "://" not in settings.downloader.host
                 else f"{settings.downloader.host}"
             )
-            response = requests.get(url, timeout=2)
+            response = httpx.get(url, timeout=2)
             # if settings.downloader.type in response.text.lower():
             if (
                 "qbittorrent" in response.text.lower()
@@ -71,10 +71,10 @@ class Checker:
                         return False
             else:
                 return False
-        except requests.exceptions.ReadTimeout:
+        except httpx.ReadTimeout:
             logger.error("[Checker] Downloader connect timeout.")
             return False
-        except requests.exceptions.ConnectionError:
+        except httpx.ConnectError:
             logger.error("[Checker] Downloader connect failed.")
             return False
         except Exception as e:

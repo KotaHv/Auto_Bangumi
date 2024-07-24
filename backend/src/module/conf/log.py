@@ -32,3 +32,6 @@ def setup_logger(level: int = logging.INFO, reset: bool = False):
             logging.StreamHandler(),
         ],
     )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("hpack").setLevel(logging.WARNING)

@@ -1,6 +1,6 @@
 import json
 
-import requests
+import httpx
 
 
 def load(filename):
@@ -15,5 +15,5 @@ def save(filename, obj):
 
 
 def get(url):
-    req = requests.get(url)
+    req = httpx.get(url)
     return req.json()
