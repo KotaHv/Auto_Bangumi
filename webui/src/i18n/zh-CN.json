@@ -12,11 +12,8 @@
       "username": "用户名"
     },
     "experimental_openai_set": {
-      "api_base": "OpenAI API Base URL (Azure entrypoint)",
+      "base_url": "OpenAI API Base URL",
       "api_key": "OpenAI API Key",
-      "api_type": "OpenAI API 类型",
-      "api_version": "Azure OpenAI 版本",
-      "deployment_id": "Azure OpenAI Deployment ID",
       "enable": "启用 OpenAI",
       "model": "OpenAI 模型",
       "title": "实验功能设置",

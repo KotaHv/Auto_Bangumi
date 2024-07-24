@@ -89,23 +89,12 @@ class Notification(BaseModel):
 class ExperimentalOpenAI(BaseModel):
     enable: bool = Field(False, description="Enable experimental OpenAI")
     api_key: str = Field("", description="OpenAI api key")
-    api_base: str = Field(
+    base_url: str = Field(
         "https://api.openai.com/v1", description="OpenAI api base url"
     )
-    api_type: Literal["azure", "openai"] = Field(
-        "openai", description="OpenAI api type, usually for azure"
-    )
-    api_version: str = Field(
-        "2023-05-15", description="OpenAI api version, only for Azure"
-    )
-    model: str = Field(
-        "gpt-3.5-turbo", description="OpenAI model, ignored when api type is azure"
-    )
-    deployment_id: str = Field(
-        "", description="Azure OpenAI deployment id, ignored when api type is openai"
-    )
+    model: str = Field("gpt-4o-mini", description="OpenAI model")
 
-    @validator("api_base")
+    @validator("base_url")
     def validate_api_base(cls, value: str):
         if value == "https://api.openai.com/":
             return "https://api.openai.com/v1"

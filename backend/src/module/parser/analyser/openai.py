@@ -1,151 +1,95 @@
 import json
 import logging
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
-import openai
+from openai import DefaultHttpxClient, OpenAI
+
+from module.conf import settings
+from module.models.bangumi import Episode
+from module.utils.proxy import build_proxy_url
+from module.utils.text import remove_outside_braces
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PROMPT = """\
-You will now play the role of a super assistant. 
-Your task is to extract structured data from unstructured text content and output it in JSON format. 
-If you are unable to extract any information, please keep all fields and leave the field empty or default value like `''`, `None`.
-But Do not fabricate data!
+## Role
 
-the python structured data type is:
+You will now play the role of a super assistant. Your task is to extract structured data from unstructured text content and output it in JSON format.
+
+## Instructions
+
+- Analyze the given text and identify relevant information for each field in the specified data structure.
+- If you are unable to extract any information for a field, keep the field in the output and set its value to an empty string (`''`) or `None`.
+- Do not fabricate or infer any data! Ensure all fields are included in the output, even if they are empty.
+
+## Data Structure
+
+Use the following Python class as a reference for the structured data format:
 
 ```python
-@dataclass
-class Episode:
-    title_en: Optional[str]
-    title_zh: Optional[str]
-    title_jp: Optional[str]
+class Episode(BaseModel):
+    title_en: str | None
+    title_zh: str | None
+    title_jp: str | None
     season: int
     season_raw: str
-    episode: int
-    sub: str
+    episode: int | float
+    sub: str | None
     group: str
-    resolution: str
-    source: str
+    resolution: str | None
+    source: str | None
 ```
 
-Example:
+## Output Format
 
-```
-input: "【喵萌奶茶屋】★04月新番★[夏日重现/Summer Time Rendering][11][1080p][繁日双语][招募翻译]"
-output: '{"group": "喵萌奶茶屋", "title_en": "Summer Time Rendering", "resolution": "1080p", "episode": 11, "season": 1, "title_zh": "夏日重现", "sub": "", "title_jp": "", "season_raw": "", "source": ""}'
+The extracted data should be output as a valid JSON string adhering to the specified data structure. Do not include any additional text or formatting beyond the JSON data.
 
-input: "【幻樱字幕组】【4月新番】【古见同学有交流障碍症 第二季 Komi-san wa, Komyushou Desu. S02】【22】【GB_MP4】【1920X1080】"
-output: '{"group": "幻樱字幕组", "title_en": "Komi-san wa, Komyushou Desu.", "resolution": "1920X1080", "episode": 22, "season": 2, "title_zh": "古见同学有交流障碍症", "sub": "", "title_jp": "", "season_raw": "", "source": ""}'
+Example 1:
+- Input: "【喵萌奶茶屋】★04月新番★[夏日重现/Summer Time Rendering][11][1080p][繁日双语][招募翻译]"
+- Output: `{"group": "喵萌奶茶屋", "title_en": "Summer Time Rendering", "resolution": "1080p", "episode": 11, "season": 1, "title_zh": "夏日重现", "sub": "", "title_jp": "", "season_raw": "", "source": ""}`
 
-input: "[Lilith-Raws] 关于我在无意间被隔壁的天使变成废柴这件事 / Otonari no Tenshi-sama - 09 [Baha][WEB-DL][1080p][AVC AAC][CHT][MP4]"
-output: '{"group": "Lilith-Raws", "title_en": "Otonari no Tenshi-sama", "resolution": "1080p", "episode": 9, "season": 1, "source": "WEB-DL", "title_zh": "关于我在无意间被隔壁的天使变成废柴这件事", "sub": "CHT", "title_jp": ""}'
-```
+Example 2:
+- Input: "[ANi] 关于我转生变成史莱姆这档事 第三季 - 48.5 [1080P][Baha][WEB-DL][AAC AVC][CHT][MP4]"
+- Output: `{"group": "ANi", "title_en": "", "resolution": "1080p", "episode": 48.5, "season": 3, "source": "Baha", "title_zh": "关于我转生变成史莱姆这档事", "sub": "CHT", "title_jp": "", "season_raw": "第三季"}`
+
+Please ensure your output strictly follows the JSON format, without any additional text or formatting. If you cannot extract certain information, set the corresponding field to an empty string or `None`.
 """
 
 
 class OpenAIParser:
     def __init__(
         self,
+        *,
         api_key: str,
-        api_base: str = "https://api.openai.com/v1",
-        model: str = "gpt-3.5-turbo",
+        base_url: str = "https://api.openai.com/v1",
+        model: str = "gpt-4o-mini",
         **kwargs,
     ) -> None:
-        """OpenAIParser is a class to parse text with openai
-
-        Args:
-            api_key (str): the OpenAI api key
-            api_base (str):
-                the OpenAI api base url, you can use custom url here. \
-                Defaults to "https://api.openai.com/v1".
-            model (str):
-                the ChatGPT model parameter, you can get more details from \
-                https://platform.openai.com/docs/api-reference/chat/create. \
-                Defaults to "gpt-3.5-turbo".
-            kwargs (dict):
-                the OpenAI ChatGPT parameters, you can get more details from \
-                https://platform.openai.com/docs/api-reference/chat/create.
-
-        Raises:
-            ValueError: if api_key is not provided.
-        """
-        if not api_key:
-            raise ValueError("API key is required.")
-
-        self._api_key = api_key
-        self.api_base = api_base
+        http_client = (
+            DefaultHttpxClient(proxies=build_proxy_url())
+            if settings.proxy.enable
+            else None
+        )
+        self.client = OpenAI(
+            api_key=api_key, base_url=base_url, http_client=http_client
+        )
         self.model = model
-        self.openai_kwargs = kwargs
 
-    def parse(
-        self, text: str, prompt: str | None = None, asdict: bool = True
-    ) -> dict | str:
-        """parse text with openai
+    def parse(self, text: str) -> Episode | None:
 
-        Args:
-            text (str): the text to be parsed
-            prompt (str | None, optional):
-                the custom prompt. Built-in prompt will be used if no prompt is provided. \
-                Defaults to None.
-            asdict (bool, optional):
-                whether to return the result as dict or not. \
-                Defaults to True.
-
-        Returns:
-            dict | str: the parsed result.
-        """
-        if not prompt:
-            prompt = DEFAULT_PROMPT
-
-        params = self._prepare_params(text, prompt)
-
-        with ThreadPoolExecutor(max_workers=1) as worker:
-            future = worker.submit(openai.ChatCompletion.create, **params)
-            resp = future.result()
-
-            result = resp["choices"][0]["message"]["content"]
-
-        if asdict:
-            try:
-                result = json.loads(result)
-            except json.JSONDecodeError:
-                logger.warning(f"Cannot parse result {result} as python dict.")
-
-        logger.debug(f"the parsed result is: {result}")
-
-        return result
-
-    def _prepare_params(self, text: str, prompt: str) -> dict[str, Any]:
-        """_prepare_params is a helper function to prepare params for openai library.
-        There are some differences between openai and azure openai api, so we need to
-        prepare params for them.
-
-        Args:
-            text (str): the text to be parsed
-            prompt (str): the custom prompt
-
-        Returns:
-            dict[str, Any]: the prepared key value pairs.
-        """
-        params = dict(
-            api_key=self._api_key,
-            api_base=self.api_base,
+        chat_completion = self.client.chat.completions.create(
             messages=[
-                dict(role="system", content=prompt),
+                dict(role="system", content=DEFAULT_PROMPT),
                 dict(role="user", content=text),
             ],
-            # set temperature to 0 to make results be more stable and reproducible.
+            model=self.model,
             temperature=0,
+            response_format={"type": "json_object"},
         )
-
-        api_type = self.openai_kwargs.get("api_type", "openai")
-        if api_type == "azure":
-            params["deployment_id"] = self.openai_kwargs.get("deployment_id", "")
-            params["api_version"] = self.openai_kwargs.get("api_version", "2023-05-15")
-            params["api_type"] = "azure"
-        else:
-            params["model"] = self.model
-
-        return params
+        result = chat_completion.choices[0].message.content
+        result = remove_outside_braces(result)
+        try:
+            episode_data = json.loads(result)
+            return Episode(**episode_data)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Cannot parse result {result} as python dict. error: {e}")
+            return None

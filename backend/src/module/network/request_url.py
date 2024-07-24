@@ -3,9 +3,9 @@ import socket
 import time
 
 import httpx
-import socks
 
 from module.conf import settings
+from module.utils.proxy import build_proxy_url
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class RequestURL:
             return None
 
     def __enter__(self):
-        proxy = self._build_proxy_url() if settings.proxy.enable else None
+        proxy = build_proxy_url() if settings.proxy.enable else None
         self.session = httpx.Client(
             headers=self.headers, http2=True, proxies=proxy, timeout=5
         )
@@ -89,20 +89,3 @@ class RequestURL:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
-
-    def _build_proxy_url(self):
-        if settings.proxy.type in ["http", "https", "socks5"]:
-            proxy_type = settings.proxy.type
-        else:
-            proxy_type = None
-        auth = (
-            f"{settings.proxy.username}:{settings.proxy.password}@"
-            if settings.proxy.username
-            else ""
-        )
-
-        if proxy_type is None:
-            logger.error(f"[Network] Unsupported proxy type: {settings.proxy.type}")
-            return None
-
-        return f"{proxy_type}://{auth}{settings.proxy.host}:{settings.proxy.port}"

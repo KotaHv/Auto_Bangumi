@@ -12,11 +12,8 @@
       "username": "Username"
     },
     "experimental_openai_set": {
-      "api_base": "OpenAI API Base URL (Azure entrypoint)",
+      "base_url": "OpenAI API Base URL",
       "api_key": "OpenAI API Key",
-      "api_type": "OpenAI API Type",
-      "api_version": "Azure OpenAI Version",
-      "deployment_id": "Azure OpenAI Deployment ID",
       "enable": "Enable OpenAI",
       "model": "OpenAI Model",
       "title": "Experimental Setting",

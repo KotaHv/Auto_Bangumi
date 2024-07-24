@@ -17,7 +17,7 @@ def setup_logger(level: int = logging.INFO, reset: bool = False):
     logging.addLevelName(logging.DEBUG, "DEBUG:")
     logging.addLevelName(logging.INFO, "INFO:")
     logging.addLevelName(logging.WARNING, "WARNING:")
-    LOGGING_FORMAT = "[%(asctime)s] %(levelname)-8s  %(message)s"
+    LOGGING_FORMAT = "[%(asctime)s] %(levelname)-8s %(name)s  %(message)s"
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
     logger = logging.getLogger()
     if logger.hasHandlers():
@@ -32,6 +32,5 @@ def setup_logger(level: int = logging.INFO, reset: bool = False):
             logging.StreamHandler(),
         ],
     )
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
-    logging.getLogger("hpack").setLevel(logging.WARNING)
+    for name in ["httpx", "httpcore", "hpack", "openai"]:
+        logging.getLogger(name).setLevel(logging.WARNING)

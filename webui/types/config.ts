@@ -51,12 +51,8 @@ export interface Config {
   experimental_openai: {
     enable: boolean;
     api_key: string;
-    api_base: string;
-    model: 'gpt-3.5-turbo';
-    // azure
-    api_type: 'openai' | 'azure';
-    api_version?: string;
-    deployment_id?: string;
+    base_url: string;
+    model: string;
   };
 }
 
@@ -111,12 +107,8 @@ export const initConfig: Config = {
   experimental_openai: {
     enable: false,
     api_key: '',
-    api_base: 'https://api.openai.com/v1/',
-    model: 'gpt-3.5-turbo',
-    // azure
-    api_type: 'openai',
-    api_version: '2020-05-03',
-    deployment_id: '',
+    base_url: 'https://api.openai.com/v1/',
+    model: 'gpt-4o-mini',
   },
 };
 
@@ -145,7 +137,3 @@ export type RenameMethod = UnionToTuple<BangumiManage['rename_method']>;
 export type ProxyType = UnionToTuple<Proxy['type']>;
 /** 通知类型 */
 export type NotificationType = UnionToTuple<Notification['type']>;
-/** OpenAI Model List */
-export type OpenAIModel = UnionToTuple<ExperimentalOpenAI['model']>;
-/** OpenAI API Type */
-export type OpenAIType = UnionToTuple<ExperimentalOpenAI['api_type']>;
