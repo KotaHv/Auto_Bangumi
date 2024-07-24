@@ -167,7 +167,7 @@ class Renamer(DownloadClient):
                     torrent_name=torrent_info.name,
                     season=season,
                 )
-                key = f"{bangumi_name} S{season:02d}E{ep.episode:02d}"
+                key = f"{bangumi_name} S{season:02d}E{str(ep.episode).zfill(2)}"
                 grouped_torrents[key].append((torrent_info, ep))
 
         multi_version_torrents = {
