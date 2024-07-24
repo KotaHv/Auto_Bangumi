@@ -5,10 +5,10 @@ import requests
 from sqlalchemy import inspect
 
 from module.conf import VERSION, settings
+from module.database import Database
 from module.downloader import DownloadClient
 from module.models import Config
 from module.update import version_check
-from module.database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,10 @@ class Checker:
             )
             response = requests.get(url, timeout=2)
             # if settings.downloader.type in response.text.lower():
-            if "qbittorrent" in response.text.lower() or "vuetorrent" in response.text.lower():
+            if (
+                "qbittorrent" in response.text.lower()
+                or "vuetorrent" in response.text.lower()
+            ):
                 with DownloadClient() as client:
                     if client.authed:
                         return True
