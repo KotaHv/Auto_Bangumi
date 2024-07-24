@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from sqlmodel import Session, select, and_, desc
+from sqlmodel import Session, and_, desc, select
 
 from module.models import Torrent
 

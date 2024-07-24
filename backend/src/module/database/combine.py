@@ -30,7 +30,7 @@ class Database(Session):
         user_data = self.exec("SELECT * FROM user").all()
         readd_bangumi = []
         for bangumi in bangumi_data:
-            dict_data = bangumi.dict()
+            dict_data = bangumi.model_dump()
             del dict_data["id"]
             readd_bangumi.append(Bangumi(**dict_data))
         self.drop_table()

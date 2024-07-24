@@ -26,11 +26,17 @@ class UserDatabase:
         result = self.session.exec(statement).first()
         if not user.password:
             return ResponseModel(
-                status_code=401, status=False, msg_en="Incorrect password format", msg_zh="密码格式不正确"
+                status_code=401,
+                status=False,
+                msg_en="Incorrect password format",
+                msg_zh="密码格式不正确",
             )
         if not result:
             return ResponseModel(
-                status_code=401, status=False, msg_en="User not found", msg_zh="用户不存在"
+                status_code=401,
+                status=False,
+                msg_en="User not found",
+                msg_zh="用户不存在",
             )
         if not verify_password(user.password, result.password):
             return ResponseModel(

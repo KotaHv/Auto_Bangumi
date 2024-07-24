@@ -42,7 +42,10 @@ def test_bangumi_database():
         assert db.bangumi.search_id(1) == test_data
 
         # search poster
-        assert db.bangumi.match_poster("无职转生，到了异世界就拿出真本事II (2021)") == "/test/test.jpg"
+        assert (
+            db.bangumi.match_poster("无职转生，到了异世界就拿出真本事II (2021)")
+            == "/test/test.jpg"
+        )
 
         # match torrent
         result = db.bangumi.match_torrent(

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from pathlib import Path
@@ -37,16 +36,16 @@ class Settings(Config):
 
     def load(self):
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            config = json.load(f)
-        config_obj = Config.parse_obj(config)
+            config = f.read()
+        config_obj = Config.model_validate_json(config)
         self.__dict__.update(config_obj.__dict__)
         logger.info("Config loaded")
 
-    def save(self, config_dict: dict | None = None):
-        if not config_dict:
-            config_dict = self.dict()
+    def save(self, config_json: str | None = None):
+        if not config_json:
+            config_json = self.model_dump_json(by_alias=True)
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(config_dict, f, indent=4, ensure_ascii=False)
+            f.write(config_json)
 
     def init(self):
         load_dotenv(".env")
@@ -54,7 +53,7 @@ class Settings(Config):
         self.save()
 
     def __load_from_env(self):
-        config_dict = self.dict()
+        config_dict = self.model_dump()
         for key, section in ENV_TO_ATTR.items():
             for env, attr in section.items():
                 if env in os.environ:
@@ -67,7 +66,7 @@ class Settings(Config):
                     else:
                         attr_name = attr[0] if isinstance(attr, tuple) else attr
                         config_dict[key][attr_name] = self.__val_from_env(env, attr)
-        config_obj = Config.parse_obj(config_dict)
+        config_obj = Config.model_validate(config_dict)
         self.__dict__.update(config_obj.__dict__)
         logger.info("Config loaded from env")
 

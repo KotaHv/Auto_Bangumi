@@ -2,9 +2,9 @@ import re
 
 from urllib3.util import parse_url
 
+from module.network import RequestContent
 from module.rss import RSSEngine
 from module.utils import save_image
-from module.network import RequestContent
 
 
 def from_30_to_31():
@@ -43,4 +43,3 @@ def cache_image():
                 img_path = save_image(img, suffix)
                 bangumi.poster_link = img_path
         db.bangumi.update_all(bangumis)
-

@@ -111,10 +111,11 @@ async def enable_rule(bangumi_id: str):
     response_model=APIResponse,
     dependencies=[Depends(get_current_user)],
 )
-async def refresh_poster():
+async def refresh_all_poster():
     with TorrentManager() as manager:
         resp = manager.refresh_poster()
     return u_response(resp)
+
 
 @router.get(
     path="/refresh/poster/{bangumi_id}",
@@ -135,5 +136,8 @@ async def reset_all():
         manager.bangumi.delete_all()
         return JSONResponse(
             status_code=200,
-            content={"msg_en": "Reset all rules successfully.", "msg_zh": "重置所有规则成功。"},
+            content={
+                "msg_en": "Reset all rules successfully.",
+                "msg_zh": "重置所有规则成功。",
+            },
         )

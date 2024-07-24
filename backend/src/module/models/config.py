@@ -1,7 +1,7 @@
 from os.path import expandvars
-from typing import Literal
+from typing import Annotated
 
-from pydantic import BaseModel, Field, validator
+from pydantic import AfterValidator, BaseModel, Field
 
 
 class Program(BaseModel):
@@ -89,16 +89,15 @@ class Notification(BaseModel):
 class ExperimentalOpenAI(BaseModel):
     enable: bool = Field(False, description="Enable experimental OpenAI")
     api_key: str = Field("", description="OpenAI api key")
-    base_url: str = Field(
-        "https://api.openai.com/v1", description="OpenAI api base url"
-    )
+    base_url: Annotated[
+        str,
+        AfterValidator(
+            lambda x: (
+                "https://api.openai.com/v1" if x == "https://api.openai.com/" else x
+            )
+        ),
+    ] = Field("https://api.openai.com/v1", description="OpenAI api base url")
     model: str = Field("gpt-4o-mini", description="OpenAI model")
-
-    @validator("base_url")
-    def validate_api_base(cls, value: str):
-        if value == "https://api.openai.com/":
-            return "https://api.openai.com/v1"
-        return value
 
 
 class Config(BaseModel):
@@ -110,6 +109,3 @@ class Config(BaseModel):
     proxy: Proxy = Proxy()
     notification: Notification = Notification()
     experimental_openai: ExperimentalOpenAI = ExperimentalOpenAI()
-
-    def dict(self, *args, by_alias=True, **kwargs):
-        return super().dict(*args, by_alias=by_alias, **kwargs)

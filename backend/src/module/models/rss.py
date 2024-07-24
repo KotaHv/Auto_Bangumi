@@ -1,11 +1,9 @@
-from typing import Optional
-
 from sqlmodel import Field, SQLModel
 
 
 class RSSItem(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True, alias="id")
-    name: Optional[str] = Field(None, alias="name")
+    name: str | None = Field(None, alias="name")
     url: str = Field("https://mikanani.me", alias="url")
     aggregate: bool = Field(False, alias="aggregate")
     parser: str = Field("mikan", alias="parser")
@@ -13,8 +11,8 @@ class RSSItem(SQLModel, table=True):
 
 
 class RSSUpdate(SQLModel):
-    name: Optional[str] = Field(None, alias="name")
-    url: Optional[str] = Field("https://mikanani.me", alias="url")
-    aggregate: Optional[bool] = Field(True, alias="aggregate")
-    parser: Optional[str] = Field("mikan", alias="parser")
-    enabled: Optional[bool] = Field(True, alias="enabled")
+    name: str | None = Field(None, alias="name")
+    url: str | None = Field("https://mikanani.me", alias="url")
+    aggregate: bool | None = Field(True, alias="aggregate")
+    parser: str | None = Field("mikan", alias="parser")
+    enabled: bool | None = Field(True, alias="enabled")

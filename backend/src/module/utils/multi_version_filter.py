@@ -1,12 +1,11 @@
 from collections import defaultdict
-from typing import List, Tuple
 
 from module.models.torrent import Torrent, TorrentInfo
 from module.parser.analyser import torrent_name_parser
 
 
-def filter_multi_version_torrents(torrents: List[Torrent]):
-    grouped_torrents: List[Tuple[Torrent, TorrentInfo]] = defaultdict(list)
+def filter_multi_version_torrents(torrents: list[Torrent]):
+    grouped_torrents: list[tuple[Torrent, TorrentInfo]] = defaultdict(list)
 
     for torrent in torrents:
         info = torrent_name_parser(torrent.name)

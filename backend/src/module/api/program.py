@@ -97,7 +97,10 @@ async def shutdown_program():
     os.kill(os.getpid(), signal.SIGINT)
     return JSONResponse(
         status_code=200,
-        content={"msg_en": "Shutdown program successfully.", "msg_zh": "关闭程序成功。"},
+        content={
+            "msg_en": "Shutdown program successfully.",
+            "msg_zh": "关闭程序成功。",
+        },
     )
 
 

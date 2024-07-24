@@ -1,6 +1,5 @@
 import logging
 import re
-from typing import List, Optional
 
 from module.database import Database, engine
 from module.downloader import DownloadClient
@@ -100,7 +99,7 @@ class RSSEngine(Database):
         new_torrents = self.torrent.check_new(torrents)
         return new_torrents
 
-    def match_torrent(self, torrent: Torrent) -> Optional[Bangumi]:
+    def match_torrent(self, torrent: Torrent) -> Bangumi | None:
         matched: Bangumi = self.bangumi.match_torrent(torrent.name)
         if matched:
             if matched.filter == "":
@@ -111,7 +110,7 @@ class RSSEngine(Database):
                 return matched
         return None
 
-    def fetch_aggregate_rss(self, rss_item: RSSItem) -> List[Torrent]:
+    def fetch_aggregate_rss(self, rss_item: RSSItem) -> list[Torrent]:
         with RequestContent() as req:
             torrents = req.get_torrents(rss_item.url)
         torrents_to_add = self.bangumi.match_list(torrents.copy(), rss_item.url)
@@ -125,13 +124,13 @@ class RSSEngine(Database):
         if new_data:
             self.bangumi.add_all(new_data)
 
-    def fetch_regular_rss(self, rss_item: RSSItem) -> List[Torrent]:
+    def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
         bangumi = self.bangumi.search_rss(rss_item.url)[0]
         with RequestContent() as req:
             torrents = req.get_torrents(rss_item.url, bangumi.filter.replace(",", "|"))
         return torrents
 
-    def refresh_rss(self, client: DownloadClient, rss_id: Optional[int] = None):
+    def refresh_rss(self, client: DownloadClient, rss_id: int | None = None):
         # Get All RSS Items
         if not rss_id:
             rss_items: list[RSSItem] = self.rss.search_active()

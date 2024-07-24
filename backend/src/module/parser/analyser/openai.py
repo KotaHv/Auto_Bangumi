@@ -1,4 +1,3 @@
-import json
 import logging
 
 from openai import DefaultHttpxClient, OpenAI
@@ -101,9 +100,4 @@ class OpenAIParser:
         )
         result = chat_completion.choices[0].message.content
         result = remove_outside_braces(result)
-        try:
-            episode_data = json.loads(result)
-            return Episode(**episode_data)
-        except json.JSONDecodeError as e:
-            logger.warning(f"Cannot parse result {result} as python dict.")
-            raise e
+        return Episode.model_validate_json(result)

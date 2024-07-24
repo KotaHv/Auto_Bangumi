@@ -2,9 +2,9 @@ import logging
 
 from module.conf import LEGACY_DATA_PATH
 from module.models import Bangumi, Torrent
+from module.network import RequestContent
 from module.rss import RSSEngine
 from module.utils import json_config, torrent_hash
-from module.network import RequestContent
 
 logger = logging.getLogger(__name__)
 

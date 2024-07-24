@@ -1,7 +1,7 @@
 import logging
 
-from module.rss import RSSEngine
 from module.conf import POSTERS_PATH
+from module.rss import RSSEngine
 
 logger = logging.getLogger(__name__)
 

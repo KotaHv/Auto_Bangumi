@@ -1,4 +1,3 @@
-import json
 from typing import TypeAlias
 
 from module.models import Bangumi, RSSItem, Torrent
@@ -41,7 +40,7 @@ class SearchTorrent(RequestContent, RSSAnalyser):
                 if special_link not in exist_list:
                     bangumi.rss_link = special_link
                     exist_list.append(special_link)
-                    yield json.dumps(bangumi.dict(), separators=(",", ":"))
+                    yield bangumi.model_dump_json()
 
     @staticmethod
     def special_url(data: Bangumi, site: str) -> RSSItem:

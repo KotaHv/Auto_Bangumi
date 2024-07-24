@@ -1,18 +1,16 @@
-from typing import Optional
-
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
 
 class Torrent(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True, alias="id")
-    bangumi_id: Optional[int] = Field(None, alias="refer_id", foreign_key="bangumi.id")
-    rss_id: Optional[int] = Field(None, alias="rss_id", foreign_key="rssitem.id")
+    bangumi_id: int | None = Field(None, alias="refer_id", foreign_key="bangumi.id")
+    rss_id: int | None = Field(None, alias="rss_id", foreign_key="rssitem.id")
     name: str = Field("", alias="name")
     url: str = Field("https://example.com/torrent", alias="url")
-    homepage: Optional[str] = Field(None, alias="homepage")
+    homepage: str | None = Field(None, alias="homepage")
     downloaded: bool = Field(False, alias="downloaded")
-    hash: Optional[str] = Field(None, alias="hash")
+    hash: str | None = Field(None, alias="hash")
 
 
 class TorrentUpdate(SQLModel):

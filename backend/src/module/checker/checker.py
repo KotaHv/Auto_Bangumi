@@ -33,7 +33,7 @@ class Checker:
 
     @staticmethod
     def check_first_run() -> bool:
-        if settings.dict() == Config().dict():
+        if settings.model_dump() == Config().model_dump():
             return True
         else:
             return False

@@ -21,7 +21,7 @@ async def get_config():
 )
 async def update_config(config: Config):
     try:
-        settings.save(config_dict=config.dict())
+        settings.save(config.model_dump_json(by_alias=True))
         settings.load()
         # update_rss()
         setup_logger()
