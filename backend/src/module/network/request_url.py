@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class RequestURL:
     def __init__(self):
-        self.header = {"user-agent": "Mozilla/5.0", "Accept": "application/xml"}
+        self.headers = {"user-agent": "Mozilla/5.0", "Accept": "application/xml"}
 
     def get_url(self, url, retry=3):
         try_time = 0
