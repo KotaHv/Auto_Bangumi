@@ -59,18 +59,17 @@ class Notification(BaseModel):
     poster_path: Optional[str] = Field(None, alias="poster_path", title="番剧海报路径")
 
 
-@dataclass
-class Episode:
-    title_en: Optional[str]
-    title_zh: Optional[str]
-    title_jp: Optional[str]
+class Episode(BaseModel):
+    title_en: str | None
+    title_zh: str | None
+    title_jp: str | None
     season: int
     season_raw: str
-    episode: int
-    sub: str
+    episode: int | float
+    sub: str | None
     group: str
-    resolution: str
-    source: str
+    resolution: str | None
+    source: str | None
 
 
 @dataclass

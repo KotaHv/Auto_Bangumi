@@ -5,9 +5,9 @@ from module.models import Episode
 
 logger = logging.getLogger(__name__)
 
-EPISODE_RE = re.compile(r"\d+")
+EPISODE_RE = re.compile(r"\d{1,4}(?:\.\d{1,2})?")
 TITLE_RE = re.compile(
-    r"(.*|\[.*])( -? \d+|\[\d+]|\[\d+.?[vV]\d]|第\d+[话話集]|\[第?\d+[话話集]]|\[\d+.?END]|[Ee][Pp]?\d+)(.*)"
+    r"(.*|\[.*])( -? \d{1,4}(?:\.\d{1,2})?|\[\d{1,4}(?:\.\d{1,2})?]|\[\d{1,4}(?:\.\d{1,2})?.?[vV]\d]|第\d{1,4}(?:\.\d{1,2})?[话話集]|\[第?\d{1,4}(?:\.\d{1,2})?[话話集]]|\[\d{1,4}(?:\.\d{1,2})?.?END]|[Ee][Pp]?\d{1,4}(?:\.\d{1,2})?)(.*)"
 )
 RESOLUTION_RE = re.compile(r"1080|720|2160|4K")
 SOURCE_RE = re.compile(r"B-Global|[Bb]aha|[Bb]ilibili|AT-X|Web")
@@ -155,19 +155,19 @@ def process(raw_title: str):
     raw_episode = EPISODE_RE.search(episode_info)
     episode = 0
     if raw_episode is not None:
-        episode = int(raw_episode.group())
+        episode = raw_episode.group()
     sub, dpi, source = find_tags(other)  # 剩余信息处理
-    return (
-        name_en,
-        name_zh,
-        name_jp,
-        season,
-        season_raw,
-        episode,
-        sub,
-        dpi,
-        source,
-        group,
+    return Episode(
+        title_en=name_en,
+        title_zh=name_zh,
+        title_jp=name_jp,
+        season=season,
+        season_raw=season_raw,
+        episode=episode,
+        sub=sub,
+        group=group,
+        resolution=dpi,
+        source=source,
     )
 
 
@@ -176,10 +176,7 @@ def raw_parser(raw: str) -> Episode | None:
     if ret is None:
         logger.error(f"Parser cannot analyse {raw}")
         return None
-    name_en, name_zh, name_jp, season, sr, episode, sub, dpi, source, group = ret
-    return Episode(
-        name_en, name_zh, name_jp, season, sr, episode, sub, group, dpi, source
-    )
+    return ret
 
 
 if __name__ == "__main__":
