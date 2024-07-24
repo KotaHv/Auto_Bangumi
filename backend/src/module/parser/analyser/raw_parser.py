@@ -2,6 +2,7 @@ import logging
 import re
 
 from module.models import Episode
+from module.utils.text import pre_process
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +32,6 @@ CHINESE_NUMBER_MAP = {
 
 def get_group(name: str) -> str:
     return re.split(r"[\[\]]", name)[1]
-
-
-def pre_process(raw_name: str) -> str:
-    return raw_name.replace("【", "[").replace("】", "]")
 
 
 def prefix_process(raw: str, group: str) -> str:
@@ -131,7 +128,6 @@ def clean_sub(sub: str | None) -> str | None:
 
 
 def process(raw_title: str):
-    raw_title = raw_title.strip().replace("\n", "")
     content_title = pre_process(raw_title)
     # 预处理标题
     group = get_group(content_title)

@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from module.models import EpisodeFile, SubtitleFile, TorrentInfo
+from module.utils.text import pre_process
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ def torrent_parser(
     media_path = get_path_basename(torrent_path)
     match_names = filter(None, [torrent_name, media_path])
     for match_name in match_names:
+        match_name = pre_process(match_name)
         for compiled_rule in compiled_rules:
             match_obj = compiled_rule.match(match_name)
             if match_obj:
@@ -129,6 +131,7 @@ def torrent_parser(
 
 
 def torrent_name_parser(torrent_name: str) -> TorrentInfo:
+    torrent_name = pre_process(torrent_name)
     for compiled_rule in compiled_rules:
         match_obj = compiled_rule.match(torrent_name)
         if match_obj:

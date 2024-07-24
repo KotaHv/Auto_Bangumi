@@ -1,7 +1,7 @@
 import sys
 
 import pytest
-from module.parser.analyser import torrent_parser
+from module.parser.analyser import torrent_name_parser, torrent_parser
 from module.parser.analyser.torrent_parser import get_path_basename
 
 
@@ -77,6 +77,11 @@ def test_torrent_parser():
     assert bf.title == "Scavengers.Reign."
     assert bf.season == 1
     assert bf.episode == 9
+
+    file_name = "鹿乃子乃子乃子虎视眈眈 / Shikanoko Nokonoko Koshitantan\n- 02 [WebRip 1080p HEVC-10bit AAC][简繁内封字幕]"
+    bf = torrent_name_parser(file_name)
+    assert bf.title == "鹿乃子乃子乃子虎视眈眈 / Shikanoko Nokonoko Koshitantan"
+    assert bf.episode == 2
 
 
 class TestGetPathBasename:
