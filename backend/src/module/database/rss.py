@@ -36,7 +36,7 @@ class RSSDatabase:
         if not db_data:
             return False
         # Update
-        dict_data = data.dict(exclude_unset=True)
+        dict_data = data.model_dump(exclude_unset=True)
         for key, value in dict_data.items():
             setattr(db_data, key, value)
         self.session.add(db_data)

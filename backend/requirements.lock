@@ -9,7 +9,6 @@
 #   generate-hashes: false
 #   universal: false
 
--e file:.
 annotated-types==0.7.0
     # via pydantic
 anyio==4.4.0
@@ -19,12 +18,10 @@ anyio==4.4.0
     # via starlette
     # via watchfiles
 bcrypt==4.0.1
-    # via autobangumi
     # via passlib
 beautifulsoup4==4.12.3
     # via bs4
 bs4==0.0.2
-    # via autobangumi
 certifi==2024.7.4
     # via httpcore
     # via httpx
@@ -43,7 +40,6 @@ ecdsa==0.19.0
 email-validator==2.2.0
     # via fastapi
 fastapi==0.111.1
-    # via autobangumi
 fastapi-cli==0.0.4
     # via fastapi
 h11==0.14.0
@@ -58,7 +54,6 @@ httpcore==1.0.5
 httptools==0.6.1
     # via uvicorn
 httpx==0.27.0
-    # via autobangumi
     # via fastapi
     # via openai
 hyperframe==6.0.1
@@ -71,7 +66,6 @@ idna==3.7
 jinja2==3.1.4
     # via fastapi
 lxml==5.2.2
-    # via autobangumi
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
@@ -79,16 +73,13 @@ markupsafe==2.1.5
 mdurl==0.1.2
     # via markdown-it-py
 openai==1.37.0
-    # via autobangumi
 packaging==24.1
     # via qbittorrent-api
 passlib==1.7.4
-    # via autobangumi
 pyasn1==0.6.0
     # via python-jose
     # via rsa
 pydantic==2.8.2
-    # via autobangumi
     # via fastapi
     # via openai
     # via sqlmodel
@@ -97,16 +88,13 @@ pydantic-core==2.20.1
 pygments==2.18.0
     # via rich
 python-dotenv==1.0.1
-    # via autobangumi
     # via uvicorn
 python-jose==3.3.0
-    # via autobangumi
 python-multipart==0.0.9
     # via fastapi
 pyyaml==6.0.1
     # via uvicorn
 qbittorrent-api==2024.7.64
-    # via autobangumi
 requests==2.32.3
     # via qbittorrent-api
 rich==13.7.1
@@ -114,7 +102,6 @@ rich==13.7.1
 rsa==4.9
     # via python-jose
 semver==3.0.2
-    # via autobangumi
 shellingham==1.5.4
     # via typer
 six==1.16.0
@@ -130,14 +117,11 @@ soupsieve==2.5
 sqlalchemy==2.0.31
     # via sqlmodel
 sqlmodel==0.0.21
-    # via autobangumi
 sse-starlette==2.1.2
-    # via autobangumi
 starlette==0.37.2
     # via fastapi
     # via sse-starlette
 torrentool==1.2.0
-    # via autobangumi
 tqdm==4.66.4
     # via openai
 typer==0.12.3
@@ -153,7 +137,6 @@ urllib3==2.2.2
     # via qbittorrent-api
     # via requests
 uvicorn==0.30.3
-    # via autobangumi
     # via fastapi
     # via sse-starlette
 uvloop==0.19.0

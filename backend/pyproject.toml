@@ -34,10 +34,10 @@ dev-dependencies = [
     "pre-commit>=3.7.1",
     "pytest>=8.3.1",
 ]
+virtual = true
 
 [tool.rye.scripts]
-backend = "python src/main.py"
-dev = "uvicorn main:app --reload --port 7892"
+dev = "bash dev.sh"
 
 [tool.hatch.metadata]
 allow-direct-references = true
