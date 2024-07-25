@@ -16,7 +16,6 @@ anyio==4.4.0
     # via openai
     # via sse-starlette
     # via starlette
-    # via watchfiles
 bcrypt==4.0.1
     # via passlib
 beautifulsoup4==4.12.3
@@ -29,19 +28,12 @@ certifi==2024.7.4
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
-    # via typer
     # via uvicorn
 distro==1.9.0
     # via openai
-dnspython==2.6.1
-    # via email-validator
 ecdsa==0.19.0
     # via python-jose
-email-validator==2.2.0
-    # via fastapi
-fastapi==0.111.1
-fastapi-cli==0.0.4
-    # via fastapi
+fastapi-slim==0.111.1
 h11==0.14.0
     # via httpcore
     # via uvicorn
@@ -51,27 +43,15 @@ hpack==4.0.0
     # via h2
 httpcore==1.0.5
     # via httpx
-httptools==0.6.1
-    # via uvicorn
 httpx==0.27.0
-    # via fastapi
     # via openai
 hyperframe==6.0.1
     # via h2
 idna==3.7
     # via anyio
-    # via email-validator
     # via httpx
     # via requests
-jinja2==3.1.4
-    # via fastapi
 lxml==5.2.2
-markdown-it-py==3.0.0
-    # via rich
-markupsafe==2.1.5
-    # via jinja2
-mdurl==0.1.2
-    # via markdown-it-py
 openai==1.37.0
 packaging==24.1
     # via qbittorrent-api
@@ -80,30 +60,20 @@ pyasn1==0.6.0
     # via python-jose
     # via rsa
 pydantic==2.8.2
-    # via fastapi
+    # via fastapi-slim
     # via openai
     # via sqlmodel
 pydantic-core==2.20.1
     # via pydantic
-pygments==2.18.0
-    # via rich
 python-dotenv==1.0.1
-    # via uvicorn
 python-jose==3.3.0
 python-multipart==0.0.9
-    # via fastapi
-pyyaml==6.0.1
-    # via uvicorn
 qbittorrent-api==2024.7.64
 requests==2.32.3
     # via qbittorrent-api
-rich==13.7.1
-    # via typer
 rsa==4.9
     # via python-jose
 semver==3.0.2
-shellingham==1.5.4
-    # via typer
 six==1.16.0
     # via ecdsa
 sniffio==1.3.1
@@ -119,29 +89,19 @@ sqlalchemy==2.0.31
 sqlmodel==0.0.21
 sse-starlette==2.1.2
 starlette==0.37.2
-    # via fastapi
+    # via fastapi-slim
     # via sse-starlette
 torrentool==1.2.0
 tqdm==4.66.4
     # via openai
-typer==0.12.3
-    # via fastapi-cli
 typing-extensions==4.12.2
-    # via fastapi
+    # via fastapi-slim
     # via openai
     # via pydantic
     # via pydantic-core
     # via sqlalchemy
-    # via typer
 urllib3==2.2.2
     # via qbittorrent-api
     # via requests
 uvicorn==0.30.3
-    # via fastapi
     # via sse-starlette
-uvloop==0.19.0
-    # via uvicorn
-watchfiles==0.22.0
-    # via uvicorn
-websockets==12.0
-    # via uvicorn
