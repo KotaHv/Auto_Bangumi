@@ -17,13 +17,17 @@ def setup_logger(level: int = logging.INFO, reset: bool = False):
     logging.addLevelName(logging.DEBUG, "DEBUG:")
     logging.addLevelName(logging.INFO, "INFO:")
     logging.addLevelName(logging.WARNING, "WARNING:")
-    LOGGING_FORMAT = "[%(asctime)s] %(levelname)-8s %(name)s  %(message)s"
+    logging.addLevelName(logging.ERROR, "ERROR:")
+    if level == logging.DEBUG:
+        LOGGING_FORMAT = "[%(asctime)s] [%(name)s] %(levelname)s  %(message)s"
+    else:
+        LOGGING_FORMAT = "[%(asctime)s] %(levelname)-8s  %(message)s"
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
     logger = logging.getLogger()
     if logger.hasHandlers():
         logger.handlers.clear()
     logging.basicConfig(
-        level=level,
+        level=logging.WARNING,
         format=LOGGING_FORMAT,
         datefmt=TIME_FORMAT,
         encoding="utf-8",
@@ -32,5 +36,4 @@ def setup_logger(level: int = logging.INFO, reset: bool = False):
             logging.StreamHandler(),
         ],
     )
-    for name in ["httpx", "httpcore", "hpack", "openai"]:
-        logging.getLogger(name).setLevel(logging.WARNING)
+    logging.getLogger("module").setLevel(level)
