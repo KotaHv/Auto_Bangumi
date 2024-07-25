@@ -2,12 +2,10 @@
 
 # This script is used to run the development environment.
 
-python3 -m venv venv
-
-./venv/bin/python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements-dev.txt
+rye sync
 
 # install git-hooks for pre-commit before committing.
-./venv/bin/pre-commit install
+rye run pre-commit install
 
 cd src || exit
 
@@ -25,4 +23,4 @@ if [ ! -f "$VERSION_FILE" ]; then
 	echo "VERSION='DEV_VERSION'" >>"$VERSION_FILE"
 fi
 
-../venv/bin/uvicorn main:app --reload --port 7892
+rye run uvicorn main:app --reload --port 7892

@@ -10,31 +10,30 @@ ENV LANG="C.UTF-8" \
 
 WORKDIR /app
 
-COPY backend/requirements.txt .
+COPY backend/requirements.lock .
 RUN set -ex && \
     apk add --no-cache \
-        bash \
-        busybox-suid \
-        python3 \
-        py3-aiohttp \
-        py3-bcrypt \
-        py3-pip \
-        su-exec \
-        shadow \
-        tini \
-        openssl \
-        tzdata && \
+    bash \
+    busybox-suid \
+    python3 \
+    py3-aiohttp \
+    py3-bcrypt \
+    py3-pip \
+    su-exec \
+    shadow \
+    tini \
+    openssl \
+    tzdata && \
     python3 -m pip install --no-cache-dir --upgrade pip && \
-    sed -i '/bcrypt/d' requirements.txt && \
-    pip install --no-cache-dir -r requirements.txt && \
+    PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.lock && \
     # Add user
     mkdir -p /home/ab && \
     addgroup -S ab -g 911 && \
     adduser -S ab -G ab -h /home/ab -s /sbin/nologin -u 911 && \
     # Clear
     rm -rf \
-        /root/.cache \
-        /tmp/*
+    /root/.cache \
+    /tmp/*
 
 COPY --chmod=755 backend/src/. .
 COPY --chmod=755 entrypoint.sh /entrypoint.sh

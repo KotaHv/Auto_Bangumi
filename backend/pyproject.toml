@@ -1,3 +1,50 @@
+[project]
+name = "AutoBangumi"
+version = "3.1.14"
+description = "AutoBangumi 是基于 RSS 的全自动追番整理下载工具。只需要在 Mikan Project 等网站上订阅番剧，就可以全自动追番。 并且整理完成的名称和目录可以直接被 Plex、Jellyfin 等媒体库软件识别，无需二次刮削。"
+dependencies = [
+    "uvicorn>=0.30.3",
+    "fastapi>=0.111.1",
+    "sqlmodel>=0.0.21",
+    "torrentool>=1.2.0",
+    "pydantic>=2.8.2",
+    "httpx[socks,http2]>=0.27.0",
+    "lxml>=5.2.2",
+    "openai>=1.37.0",
+    "python-dotenv>=1.0.1",
+    "python-jose>=3.3.0",
+    "qbittorrent-api>=2024.7.64",
+    "bs4>=0.0.2",
+    "semver>=3.0.2",
+    "sse-starlette>=2.1.2",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt==4.0.1",
+]
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.5.4",
+    "black>=24.4.2",
+    "pre-commit>=3.7.1",
+    "pytest>=8.3.1",
+]
+
+[tool.rye.scripts]
+backend = "python src/main.py"
+dev = "uvicorn main:app --reload --port 7892"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/module"]
+
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
