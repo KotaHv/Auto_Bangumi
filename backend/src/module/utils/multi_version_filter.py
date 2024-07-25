@@ -5,6 +5,8 @@ from module.parser.analyser import torrent_name_parser
 
 
 def filter_multi_version_torrents(torrents: list[Torrent]):
+    if not torrents:
+        return
     grouped_torrents: list[tuple[Torrent, TorrentInfo]] = defaultdict(list)
 
     for torrent in torrents:

@@ -123,6 +123,7 @@ class RSSEngine(Database):
         new_data = analyser.torrents_to_data(torrents_to_add, rss_item)
         if new_data:
             self.bangumi.add_all(new_data)
+        return torrents
 
     def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
         bangumi = self.bangumi.search_rss(rss_item.url)[0]
