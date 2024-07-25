@@ -1,6 +1,18 @@
-# syntax=docker/dockerfile:1
+FROM alpine:3.20 AS base
 
-FROM alpine:3.18
+RUN apk add --no-cache --update bash python3 su-exec shadow tini tzdata && \
+    mkdir -p /home/ab && \
+    addgroup -S ab -g 911 && \
+    adduser -S ab -G ab -h /home/ab -s /sbin/nologin -u 911
+
+FROM base AS builder
+
+RUN apk add --no-cache --update py3-pip
+
+COPY backend/requirements.lock .
+RUN PYTHONDONTWRITEBYTECODE=1 pip install --break-system-packages --user -r requirements.lock
+
+FROM base
 
 ENV LANG="C.UTF-8" \
     TZ=Asia/Shanghai \
@@ -10,31 +22,7 @@ ENV LANG="C.UTF-8" \
 
 WORKDIR /app
 
-COPY backend/requirements.lock .
-RUN set -ex && \
-    apk add --no-cache \
-    bash \
-    busybox-suid \
-    python3 \
-    py3-aiohttp \
-    py3-bcrypt \
-    py3-pip \
-    su-exec \
-    shadow \
-    tini \
-    openssl \
-    tzdata && \
-    python3 -m pip install --no-cache-dir --upgrade pip && \
-    PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.lock && \
-    # Add user
-    mkdir -p /home/ab && \
-    addgroup -S ab -g 911 && \
-    adduser -S ab -G ab -h /home/ab -s /sbin/nologin -u 911 && \
-    # Clear
-    rm -rf \
-    /root/.cache \
-    /tmp/*
-
+COPY --from=builder /root/.local /home/ab/.local
 COPY --chmod=755 backend/src/. .
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
