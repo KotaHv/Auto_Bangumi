@@ -1,4 +1,5 @@
 from loguru import logger
+from sqlalchemy.sql import text
 
 from module.conf import LEGACY_DATA_PATH
 from module.models import Bangumi, Torrent
@@ -30,10 +31,9 @@ def database_migration():
 def torrent_migration():
     with RSSEngine() as db, RequestContent() as req:
         engine = db.engine
-        torrents = db.exec("SELECT * FROM torrent").all()
+        torrents = db.exec(text("SELECT * FROM torrent")).mappings().all()
         torrents = [dict(torrent) for torrent in torrents]
         for torrent in torrents:
-            torrent["refer_id"] = torrent["bangumi_id"]
             if torrent.get("hash") or torrent.get("bangumi_id") is None:
                 continue
             logger.debug(f"Get {torrent['name']} Hash")
