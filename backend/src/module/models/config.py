@@ -3,6 +3,8 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field
 
+ExpandedString = Annotated[str, AfterValidator(lambda x: expandvars(x))]
+
 
 class Program(BaseModel):
     rss_time: int = Field(900, description="Sleep time")
@@ -12,25 +14,11 @@ class Program(BaseModel):
 
 class Downloader(BaseModel):
     type: str = Field("qbittorrent", description="Downloader type")
-    host_: str = Field("172.17.0.1:8080", alias="host", description="Downloader host")
-    username_: str = Field("admin", alias="username", description="Downloader username")
-    password_: str = Field(
-        "adminadmin", alias="password", description="Downloader password"
-    )
+    host: ExpandedString = Field("172.17.0.1:8080", description="Downloader host")
+    username: ExpandedString = Field("admin", description="Downloader username")
+    password: ExpandedString = Field("adminadmin", description="Downloader password")
     path: str = Field("/downloads/Bangumi", description="Downloader path")
     ssl: bool = Field(False, description="Downloader ssl")
-
-    @property
-    def host(self):
-        return expandvars(self.host_)
-
-    @property
-    def username(self):
-        return expandvars(self.username_)
-
-    @property
-    def password(self):
-        return expandvars(self.password_)
 
 
 class RSSParser(BaseModel):
@@ -59,31 +47,15 @@ class Proxy(BaseModel):
     type: str = Field("http", description="Proxy type")
     host: str = Field("", description="Proxy host")
     port: int = Field(0, description="Proxy port")
-    username_: str = Field("", alias="username", description="Proxy username")
-    password_: str = Field("", alias="password", description="Proxy password")
-
-    @property
-    def username(self):
-        return expandvars(self.username_)
-
-    @property
-    def password(self):
-        return expandvars(self.password_)
+    username: ExpandedString = Field("", description="Proxy username")
+    password: ExpandedString = Field("", description="Proxy password")
 
 
 class Notification(BaseModel):
     enable: bool = Field(False, description="Enable notification")
     type: str = Field("telegram", description="Notification type")
-    token_: str = Field("", alias="token", description="Notification token")
-    chat_id_: str = Field("", alias="chat_id", description="Notification chat id")
-
-    @property
-    def token(self):
-        return expandvars(self.token_)
-
-    @property
-    def chat_id(self):
-        return expandvars(self.chat_id_)
+    token: ExpandedString = Field("", description="Notification token")
+    chat_id: ExpandedString = Field("", description="Notification chat id")
 
 
 class ExperimentalOpenAI(BaseModel):
