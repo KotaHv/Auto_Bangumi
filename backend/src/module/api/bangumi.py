@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from module.manager import TorrentManager
+from module.manager import Renamer, TorrentManager
 from module.models import APIResponse, Bangumi, BangumiUpdate
 from module.security.api import get_current_user
 
@@ -141,3 +141,21 @@ async def reset_all():
                 "msg_zh": "重置所有规则成功。",
             },
         )
+
+
+@router.post(
+    "/rename",
+    response_model=APIResponse,
+    dependencies=[Depends(get_current_user)],
+)
+async def rename(data: Bangumi):
+    with Renamer() as renamer:
+        bangumi_name, _ = renamer._path_to_bangumi(data.save_path)
+        renamer.rename(bangumi_name)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "msg_en": f"Renamed '{data.official_title}' successfully.",
+            "msg_zh": f"'{data.official_title}' 重命名成功。",
+        },
+    )

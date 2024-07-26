@@ -150,10 +150,10 @@ class Renamer(DownloadClient):
                     if not renamed:
                         logger.warning(f"[Renamer] {subtitle_path} rename failed")
 
-    def check_multi_version(self):
+    def check_multi_version(self, tag=None):
         if not settings.bangumi_manage.retain_latest_media_version:
             return
-        torrents_info = self.get_torrent_info()
+        torrents_info = self.get_torrent_info(tag=tag)
         grouped_torrents = defaultdict(list)
 
         for torrent_info in torrents_info:
@@ -197,12 +197,15 @@ class Renamer(DownloadClient):
                 )
                 self.delete_torrent(torrent_hashes.keys())
 
-    def rename(self) -> list[Notification]:
+    def rename(self, tag="") -> list[Notification]:
         # Get torrent info
         logger.debug("[Renamer] Start rename process.")
-        self.check_multi_version()
+        if tag:
+            self.check_multi_version(tag=tag)
+        else:
+            self.check_multi_version()
         rename_method = settings.bangumi_manage.rename_method
-        torrents_info = self.get_torrent_info()
+        torrents_info = self.get_torrent_info(tag=tag)
         renamed_info: list[Notification] = []
         for info in torrents_info:
             media_list, subtitle_list = self.check_files(info)

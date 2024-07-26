@@ -34,6 +34,7 @@ const forceCollectDialog = reactive({
 
 const loading = reactive({
   collect: false,
+  rename: false,
 });
 
 watch(show, (val) => {
@@ -91,6 +92,24 @@ function emitEnable() {
   emit('enable', rule.value.id);
 }
 
+function rename() {
+  if (rule.value) {
+    useApi(apiBangumi.rename, {
+      showMessage: true,
+      onBeforeExecute() {
+        loading.rename = true;
+      },
+      onSuccess() {
+        getAll();
+        show.value = false;
+      },
+      onFinally() {
+        loading.rename = false;
+      },
+    }).execute(rule.value);
+  }
+}
+
 const popupTitle = computed(() => {
   if (rule.value.deleted) {
     return t('homepage.rule.enable_rule');
@@ -135,6 +154,9 @@ const boxSize = computed(() => {
       <div fx-cer justify-between gap-x-10>
         <ab-button size="small" @click="() => showForceCollectDialog(true)">
           {{ $t('homepage.rule.force_collect') }}
+        </ab-button>
+        <ab-button size="small" :loading="loading.rename" @click="rename">
+          {{ $t('homepage.rule.rename') }}
         </ab-button>
         <div fx-cer justify-end gap-x-10>
           <ab-button-multi

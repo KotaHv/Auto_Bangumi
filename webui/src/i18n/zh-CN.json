@@ -89,7 +89,8 @@
       "yes_btn": "是",
       "force_collect": "强制收集",
       "force_collect_hit": "确定要强制收集吗？",
-      "force_collect_title": "收集"
+      "force_collect_title": "收集",
+      "rename": "重命名"
     }
   },
   "log": {

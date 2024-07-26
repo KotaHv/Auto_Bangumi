@@ -134,4 +134,20 @@ export const apiBangumi = {
     );
     return data;
   },
+  /**
+   * 重新命名
+   * @param bangumiData - Bangumi 数据
+   */
+  async rename(bangumiData: BangumiRule) {
+    const postData: BangumiAPI = {
+      ...bangumiData,
+      filter: bangumiData.filter.join(','),
+      rss_link: bangumiData.rss_link.join(','),
+    };
+    const { data } = await axios.post<ApiSuccess>(
+      'api/v1/bangumi/rename',
+      postData
+    );
+    return data;
+  },
 };
