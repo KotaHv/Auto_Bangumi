@@ -6,6 +6,8 @@ definePage({
 const { onUpdate, offUpdate, reset, copy, getLog } = useLogStore();
 const { log } = storeToRefs(useLogStore());
 const { version } = useAppInfo();
+const { getConfig, getSettingGroup } = useConfigStore();
+const logSetting = getSettingGroup('log');
 
 const formatLog = computed(() => {
   const list = log.value
@@ -18,14 +20,15 @@ const formatLog = computed(() => {
     const parts = i.split('|');
     const [date, type, module_content] = [
       ...parts.slice(0, 2),
-      parts.slice(2).join('-'),
+      parts.slice(2).join('|'),
     ];
-    const content = module_content.split('-').slice(1).join('-');
-    console.log(content);
+    const [module, ...contents] = module_content.split('-');
+    const content = contents.join('-');
     return {
       index,
       date: date.trim(),
       type: type.trim(),
+      module: module.trim(),
       content: content.trim(),
     };
   });
@@ -50,6 +53,7 @@ function backToBottom() {
 }
 
 onActivated(() => {
+  getConfig();
   onUpdate();
 
   if (log.value) {
@@ -81,7 +85,28 @@ onDeactivated(() => {
           max-h-60vh
           min-h-20vh
         >
-          <div min-w-450>
+          <div v-if="logSetting.debug_enable" min-w-450>
+            <template v-for="i in formatLog" :key="i.index">
+              <div
+                p="y-10"
+                leading="1.5em"
+                border="0 b-1 solid"
+                last:border-b-0
+                flex="~ items-center gap-20"
+                :style="{ color: typeColor(i.type) }"
+              >
+                <div flex="~ col items-center gap-10" whitespace-nowrap>
+                  <div text="center">{{ i.type }}</div>
+                  <div>[{{ i.date }}]</div>
+                </div>
+                <div flex-1 break-all style="color: #73bccd">
+                  {{ i.module }}
+                </div>
+                <div flex-1 break-all>{{ i.content }}</div>
+              </div>
+            </template>
+          </div>
+          <div v-else min-w-450>
             <template v-for="i in formatLog" :key="i.index">
               <div
                 p="y-10"
