@@ -123,7 +123,6 @@ class DownloadClient(TorrentPath):
         with RequestContent() as req:
             for t in torrent:
                 t.bangumi_id = bangumi.id
-                t.downloaded = True
                 if "magnet" in t.url:
                     torrent_urls.append(t.url)
                     t.hash = torrent_hash.from_magnet(t.url)
@@ -147,6 +146,8 @@ class DownloadClient(TorrentPath):
             category="Bangumi",
         ):
             logger.debug(f"[Downloader] Add torrent: {bangumi.official_title}")
+            for t in torrent:
+                t.downloaded = True
             return True
         else:
             logger.debug(f"[Downloader] Torrent added before: {bangumi.official_title}")

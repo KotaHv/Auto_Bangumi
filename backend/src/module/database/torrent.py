@@ -11,12 +11,27 @@ class TorrentDatabase:
         self.session = session
 
     def add(self, data: Torrent):
-        self.session.add(data)
+        result = self.session.exec(
+            select(Torrent).where(Torrent.hash == data.hash)
+        ).first()
+        if result is None:
+            result = data
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(result, key, value)
+        self.session.add(result)
         self.session.commit()
-        self.session.refresh(data)
-        logger.debug(f"Insert {data.name} in database.")
+        self.session.refresh(result)
+        logger.debug(f"Insert {result.name} in database.")
 
     def add_all(self, datas: list[Torrent]):
+        for index, data in enumerate(datas):
+            result = self.session.exec(
+                select(Torrent).where(Torrent.hash == data.hash)
+            ).first()
+            if result:
+                for key, value in data.model_dump(exclude_unset=True).items():
+                    setattr(result, key, value)
+                datas[index] = result
         self.session.add_all(datas)
         self.session.commit()
         logger.debug(f"Insert {len(datas)} torrents in database.")
@@ -43,6 +58,9 @@ class TorrentDatabase:
     def search_all(self) -> list[Torrent]:
         return self.session.exec(select(Torrent)).all()
 
+    def search_all_downloaded(self) -> list[Torrent]:
+        return self.session.exec(select(Torrent).where(Torrent.downloaded)).all()
+
     def search_rss(self, rss_id: int) -> list[Torrent]:
         return self.session.exec(select(Torrent).where(Torrent.rss_id == rss_id)).all()
 
@@ -53,10 +71,10 @@ class TorrentDatabase:
 
     def check_new(self, torrents_list: list[Torrent]) -> list[Torrent]:
         new_torrents = []
-        old_torrents = self.search_all()
-        old_urls = [t.url for t in old_torrents]
+        downloaded_torrents = self.search_all_downloaded()
+        downloaded_url = [t.url for t in downloaded_torrents]
         for torrent in torrents_list:
-            if torrent.url not in old_urls:
+            if torrent.url not in downloaded_url:
                 new_torrents.append(torrent)
         return new_torrents
 
