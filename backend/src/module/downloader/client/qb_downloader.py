@@ -7,6 +7,7 @@ from qbittorrentapi.exceptions import (
     Conflict409Error,
     Forbidden403Error,
 )
+from qbittorrentapi.torrents import TorrentStatusesT
 
 from module.ab_decorator import qb_connect_failed_wait
 
@@ -75,9 +76,15 @@ class QbDownloader:
         return self._client.torrents_createCategory(name=category)
 
     @qb_connect_failed_wait
-    def torrents_info(self, status_filter, category, tag=None):
+    def torrents_info(
+        self,
+        status_filter: TorrentStatusesT | None,
+        category: str | None,
+        tag: str | None = None,
+        hash: list[str] | str | None = None,
+    ):
         return self._client.torrents_info(
-            status_filter=status_filter, category=category, tag=tag
+            status_filter=status_filter, category=category, tag=tag, torrent_hashes=hash
         )
 
     def add_torrents(self, torrent_urls, torrent_files, save_path, category):

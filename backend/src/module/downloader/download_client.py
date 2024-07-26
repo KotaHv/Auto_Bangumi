@@ -98,9 +98,15 @@ class DownloadClient(TorrentPath):
             self.set_rule(info)
         logger.debug("[Downloader] Finished.")
 
-    def get_torrent_info(self, category="Bangumi", status_filter="completed", tag=None):
+    def get_torrent_info(
+        self,
+        category: str | None = "Bangumi",
+        status_filter: str | None = "completed",
+        tag: str | None = None,
+        hash: list[str] | str | None = None,
+    ):
         return self.client.torrents_info(
-            status_filter=status_filter, category=category, tag=tag
+            status_filter=status_filter, category=category, tag=tag, hash=hash
         )
 
     def rename_torrent_file(self, _hash, old_path, new_path) -> bool:
@@ -123,6 +129,7 @@ class DownloadClient(TorrentPath):
         with RequestContent() as req:
             for t in torrent:
                 t.bangumi_id = bangumi.id
+                t.downloaded = True
                 if "magnet" in t.url:
                     torrent_urls.append(t.url)
                     t.hash = torrent_hash.from_magnet(t.url)
@@ -138,6 +145,7 @@ class DownloadClient(TorrentPath):
                         logger.error(
                             f'[Downloader] {t.name} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{bangumi.save_path}".'
                         )
+                        t.downloaded = False
 
         if self.client.add_torrents(
             torrent_urls=torrent_urls,
@@ -146,10 +154,12 @@ class DownloadClient(TorrentPath):
             category="Bangumi",
         ):
             logger.debug(f"[Downloader] Add torrent: {bangumi.official_title}")
-            for t in torrent:
-                t.downloaded = True
-            return True
         else:
+            for t in torrent:
+                if not self.get_torrent_info(
+                    category=None, status_filter=None, hash=t.hash
+                ):
+                    t.downloaded = False
             logger.debug(f"[Downloader] Torrent added before: {bangumi.official_title}")
             return False
 

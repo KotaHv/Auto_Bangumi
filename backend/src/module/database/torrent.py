@@ -12,7 +12,7 @@ class TorrentDatabase:
 
     def add(self, data: Torrent):
         result = self.session.exec(
-            select(Torrent).where(Torrent.hash == data.hash)
+            select(Torrent).where(Torrent.url == data.url)
         ).first()
         if result is None:
             result = data
@@ -26,7 +26,7 @@ class TorrentDatabase:
     def add_all(self, datas: list[Torrent]):
         for index, data in enumerate(datas):
             result = self.session.exec(
-                select(Torrent).where(Torrent.hash == data.hash)
+                select(Torrent).where(Torrent.url == data.url)
             ).first()
             if result:
                 for key, value in data.model_dump(exclude_unset=True).items():
