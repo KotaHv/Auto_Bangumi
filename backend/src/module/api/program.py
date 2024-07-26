@@ -8,7 +8,7 @@ from loguru import logger
 from module.conf import VERSION
 from module.core import Program
 from module.models import APIResponse
-from module.security.api import UNAUTHORIZED, get_current_user
+from module.security.api import get_current_user
 
 from .response import u_response
 

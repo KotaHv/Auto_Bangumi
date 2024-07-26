@@ -4,7 +4,7 @@ import httpx
 from loguru import logger
 from sqlalchemy import inspect
 
-from module.conf import VERSION, settings
+from module.conf import settings
 from module.database import Database
 from module.downloader import DownloadClient
 from module.models import Config

@@ -1,8 +1,6 @@
 import re
 from os import PathLike
 
-from loguru import logger
-
 from module.conf import PLATFORM, settings
 from module.models import Bangumi, BangumiUpdate
 

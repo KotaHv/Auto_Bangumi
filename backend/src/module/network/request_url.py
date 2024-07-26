@@ -1,4 +1,3 @@
-import socket
 import time
 
 import httpx

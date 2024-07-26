@@ -2,7 +2,6 @@ from loguru import logger
 
 from module.conf import settings
 from module.models import Bangumi
-from module.models.bangumi import Episode
 from module.parser.analyser import (
     OpenAIParser,
     mikan_parser,

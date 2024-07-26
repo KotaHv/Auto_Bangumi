@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from module.manager import TorrentManager
 from module.models import APIResponse, Bangumi, BangumiUpdate
-from module.security.api import UNAUTHORIZED, get_current_user
+from module.security.api import get_current_user
 
 from .response import u_response
 

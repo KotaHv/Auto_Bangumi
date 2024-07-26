@@ -3,7 +3,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from module.models import Bangumi
 from module.searcher import SEARCH_CONFIG, SearchTorrent
-from module.security.api import UNAUTHORIZED, get_current_user
+from module.security.api import get_current_user
 
 router = APIRouter(prefix="/search", tags=["search"])
 

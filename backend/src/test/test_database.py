@@ -1,6 +1,6 @@
 from module.database.combine import Database
 from module.models import Bangumi, RSSItem, Torrent
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import create_engine
 from sqlmodel.pool import StaticPool
 
 # sqlite mock engine

@@ -1,8 +1,6 @@
 import re
 from pathlib import Path
 
-from loguru import logger
-
 from module.models import EpisodeFile, SubtitleFile, TorrentInfo
 from module.utils.text import pre_process
 

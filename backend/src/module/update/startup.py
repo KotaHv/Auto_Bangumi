@@ -1,5 +1,3 @@
-from loguru import logger
-
 from module.conf import POSTERS_PATH
 from module.rss import RSSEngine
 

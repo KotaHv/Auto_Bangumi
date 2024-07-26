@@ -1,4 +1,3 @@
-from loguru import logger
 from openai import DefaultHttpxClient, OpenAI
 
 from module.conf import settings

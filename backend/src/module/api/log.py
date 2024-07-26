@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response
 from fastapi.responses import JSONResponse
 
 from module.conf import LOG_PATH
 from module.models import APIResponse
-from module.security.api import UNAUTHORIZED, get_current_user
+from module.security.api import get_current_user
 
 router = APIRouter(prefix="/log", tags=["log"])
 

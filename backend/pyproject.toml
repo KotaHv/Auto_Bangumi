@@ -138,7 +138,7 @@ ignore = [
     'E501',
     # F401: https://beta.ruff.rs/docs/rules/unused-import/
     # avoid unused imports lint in `__init__.py`
-    'F401',
+    # 'F401',
 ]
 
 select = [

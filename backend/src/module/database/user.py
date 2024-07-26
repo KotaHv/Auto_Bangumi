@@ -1,9 +1,8 @@
 from fastapi import HTTPException
-from loguru import logger
 from sqlmodel import Session, select
 
 from module.models import ResponseModel
-from module.models.user import User, UserLogin, UserUpdate
+from module.models.user import User, UserUpdate
 from module.security.jwt import get_password_hash, verify_password
 
 

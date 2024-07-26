@@ -1,6 +1,3 @@
-from module.conf import PLATFORM
-
-
 def test_path_to_bangumi():
     # Test for unix-like path
     from module.downloader.path import TorrentPath
