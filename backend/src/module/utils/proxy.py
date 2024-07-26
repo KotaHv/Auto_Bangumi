@@ -1,8 +1,6 @@
-import logging
+from loguru import logger
 
 from module.conf import settings
-
-logger = logging.getLogger(__name__)
 
 
 def build_proxy_url():

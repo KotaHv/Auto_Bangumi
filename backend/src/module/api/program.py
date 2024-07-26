@@ -1,9 +1,9 @@
-import logging
 import os
 import signal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from loguru import logger
 
 from module.conf import VERSION
 from module.core import Program
@@ -12,7 +12,6 @@ from module.security.api import UNAUTHORIZED, get_current_user
 
 from .response import u_response
 
-logger = logging.getLogger(__name__)
 program = Program()
 router = APIRouter(tags=["program"])
 

@@ -1,6 +1,7 @@
-import logging
 import threading
 import time
+
+from loguru import logger
 
 from module.conf import settings
 from module.downloader import DownloadClient
@@ -9,8 +10,6 @@ from module.notification import PostNotification
 from module.rss import RSSAnalyser, RSSEngine
 
 from .status import ProgramStatus
-
-logger = logging.getLogger(__name__)
 
 
 class RSSThread(ProgramStatus):

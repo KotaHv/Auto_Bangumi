@@ -1,11 +1,9 @@
-import logging
 import time
 
 from aria2p import API, Client, ClientException
+from loguru import logger
 
 from module.conf import settings
-
-logger = logging.getLogger(__name__)
 
 
 class QbDownloader:

@@ -1,7 +1,7 @@
-import logging
 import re
 import xml.etree.ElementTree
 
+from loguru import logger
 from lxml import etree
 
 from module.conf import settings
@@ -10,8 +10,6 @@ from module.utils import check_torrent
 
 from .request_url import RequestURL
 from .site import rss_parser
-
-logger = logging.getLogger(__name__)
 
 
 class RequestContent(RequestURL):

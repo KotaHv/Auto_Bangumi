@@ -1,9 +1,7 @@
-import logging
+from loguru import logger
 
 from module.models import Notification
 from module.network import RequestContent
-
-logger = logging.getLogger(__name__)
 
 
 class BarkNotification(RequestContent):

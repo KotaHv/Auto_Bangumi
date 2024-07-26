@@ -1,13 +1,11 @@
-import logging
 import socket
 import time
 
 import httpx
+from loguru import logger
 
 from module.conf import settings
 from module.utils.proxy import build_proxy_url
-
-logger = logging.getLogger(__name__)
 
 
 class RequestURL:

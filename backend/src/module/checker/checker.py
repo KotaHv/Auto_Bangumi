@@ -1,7 +1,7 @@
-import logging
 from pathlib import Path
 
 import httpx
+from loguru import logger
 from sqlalchemy import inspect
 
 from module.conf import VERSION, settings
@@ -9,8 +9,6 @@ from module.database import Database
 from module.downloader import DownloadClient
 from module.models import Config
 from module.update import version_check
-
-logger = logging.getLogger(__name__)
 
 
 class Checker:

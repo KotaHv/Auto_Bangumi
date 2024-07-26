@@ -1,10 +1,7 @@
-import logging
-
+from loguru import logger
 from sqlmodel import Session, and_, delete, select
 
 from module.models import RSSItem, RSSUpdate
-
-logger = logging.getLogger(__name__)
 
 
 class RSSDatabase:

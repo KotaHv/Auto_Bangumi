@@ -1,12 +1,10 @@
-import logging
+from loguru import logger
 
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel
 from module.rss import RSSEngine
 from module.searcher import SEARCH_KEY, SearchTorrent
 from module.utils.multi_version_filter import filter_multi_version_torrents
-
-logger = logging.getLogger(__name__)
 
 
 class SeasonCollector(DownloadClient):

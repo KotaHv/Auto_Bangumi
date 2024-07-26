@@ -1,14 +1,13 @@
-import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from loguru import logger
 
 from module.models.config import Config
 
 from .const import ENV_TO_ATTR
 
-logger = logging.getLogger(__name__)
 CONFIG_ROOT = Path("config")
 
 

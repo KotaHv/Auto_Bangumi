@@ -1,6 +1,6 @@
-import logging
 import time
 
+from loguru import logger
 from qbittorrentapi import Client, LoginFailed
 from qbittorrentapi.exceptions import (
     APIConnectionError,
@@ -9,8 +9,6 @@ from qbittorrentapi.exceptions import (
 )
 
 from module.ab_decorator import qb_connect_failed_wait
-
-logger = logging.getLogger(__name__)
 
 
 class QbDownloader:

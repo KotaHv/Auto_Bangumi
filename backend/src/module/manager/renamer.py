@@ -1,14 +1,13 @@
-import logging
 import re
 from collections import defaultdict
+
+from loguru import logger
 
 from module.conf import settings
 from module.database import Database
 from module.downloader import DownloadClient
 from module.models import EpisodeFile, Notification, SubtitleFile
 from module.parser import TitleParser
-
-logger = logging.getLogger(__name__)
 
 
 class Renamer(DownloadClient):

@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 from module.conf import settings
 from module.models import Bangumi
@@ -11,8 +11,6 @@ from module.parser.analyser import (
     torrent_name_parser,
     torrent_parser,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class TitleParser:

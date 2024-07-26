@@ -52,6 +52,7 @@ idna==3.7
     # via httpx
     # via requests
 jinja2==3.1.4
+loguru==0.7.2
 lxml==5.2.2
 markupsafe==2.1.5
     # via jinja2

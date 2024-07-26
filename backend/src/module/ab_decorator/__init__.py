@@ -1,10 +1,8 @@
-import logging
 import threading
 import time
 
-from .timeout import timeout
+from loguru import logger
 
-logger = logging.getLogger(__name__)
 lock = threading.Lock()
 
 

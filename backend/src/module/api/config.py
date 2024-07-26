@@ -1,14 +1,12 @@
-import logging
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from loguru import logger
 
 from module.conf import settings, setup_logger
 from module.models import APIResponse, Config
 from module.security.api import UNAUTHORIZED, get_current_user
 
 router = APIRouter(prefix="/config", tags=["config"])
-logger = logging.getLogger(__name__)
 
 
 @router.get("/get", response_model=Config, dependencies=[Depends(get_current_user)])

@@ -3,7 +3,7 @@ import os
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from module.api import v1
@@ -57,6 +57,7 @@ if VERSION != "DEV_VERSION":
         else:
             context = {"request": request}
             return templates.TemplateResponse("index.html", context)
+
 else:
 
     @app.get("/", status_code=302, tags=["html"])

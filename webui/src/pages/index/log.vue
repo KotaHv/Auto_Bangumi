@@ -15,15 +15,18 @@ const formatLog = computed(() => {
   const startIndex = list.findIndex((i) => /Version/.test(i));
 
   return list.slice(startIndex === -1 ? 0 : startIndex).map((i, index) => {
-    const date = i.match(/\[\d+-\d+-\d+\ \d+:\d+:\d+\]/)?.[0] || '';
-    const type = i.match(/(INFO)|(WARNING)|(ERROR)|(DEBUG)/)?.[0] || '';
-    const content = i.replace(date, '').replace(`${type}:`, '').trim();
-
+    const parts = i.split('|');
+    const [date, type, module_content] = [
+      ...parts.slice(0, 2),
+      parts.slice(2).join('-'),
+    ];
+    const content = module_content.split('-').slice(1).join('-');
+    console.log(content);
     return {
       index,
-      date,
-      type,
-      content,
+      date: date.trim(),
+      type: type.trim(),
+      content: content.trim(),
     };
   });
 });
@@ -90,7 +93,7 @@ onDeactivated(() => {
               >
                 <div flex="~ col items-center gap-10" whitespace-nowrap>
                   <div text="center">{{ i.type }}</div>
-                  <div>{{ i.date }}</div>
+                  <div>[{{ i.date }}]</div>
                 </div>
 
                 <div flex-1 break-all>{{ i.content }}</div>

@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 from module.conf import settings
 from module.models import Bangumi, Torrent
@@ -6,8 +6,6 @@ from module.network import RequestContent
 from module.utils import torrent_hash
 
 from .path import TorrentPath
-
-logger = logging.getLogger(__name__)
 
 
 class DownloadClient(TorrentPath):

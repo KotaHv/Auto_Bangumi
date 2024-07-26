@@ -1,11 +1,9 @@
-import logging
 from typing import Optional
 
+from loguru import logger
 from sqlmodel import Session, and_, desc, select
 
 from module.models import Torrent
-
-logger = logging.getLogger(__name__)
 
 
 class TorrentDatabase:

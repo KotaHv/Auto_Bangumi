@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 from module.conf import settings
 from module.database import Database
@@ -10,8 +10,6 @@ from .plugin import (
     TelegramNotification,
     WecomNotification,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def getClient(type: str):

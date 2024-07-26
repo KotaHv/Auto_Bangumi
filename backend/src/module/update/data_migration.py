@@ -1,12 +1,10 @@
-import logging
+from loguru import logger
 
 from module.conf import LEGACY_DATA_PATH
 from module.models import Bangumi, Torrent
 from module.network import RequestContent
 from module.rss import RSSEngine
 from module.utils import json_config, torrent_hash
-
-logger = logging.getLogger(__name__)
 
 
 def data_migration():

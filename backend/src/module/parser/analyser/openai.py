@@ -1,13 +1,10 @@
-import logging
-
+from loguru import logger
 from openai import DefaultHttpxClient, OpenAI
 
 from module.conf import settings
 from module.models.bangumi import Episode
 from module.utils.proxy import build_proxy_url
 from module.utils.text import remove_outside_braces
-
-logger = logging.getLogger(__name__)
 
 DEFAULT_PROMPT = """\
 ## Role

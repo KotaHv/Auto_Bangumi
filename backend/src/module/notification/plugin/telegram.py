@@ -1,10 +1,8 @@
-import logging
+from loguru import logger
 
 from module.models import Notification
 from module.network import RequestContent
 from module.utils import load_image
-
-logger = logging.getLogger(__name__)
 
 
 class TelegramNotification(RequestContent):

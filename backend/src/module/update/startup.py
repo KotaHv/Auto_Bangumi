@@ -1,9 +1,7 @@
-import logging
+from loguru import logger
 
 from module.conf import POSTERS_PATH
 from module.rss import RSSEngine
-
-logger = logging.getLogger(__name__)
 
 
 def start_up():

@@ -1,11 +1,9 @@
-import logging
+from loguru import logger
 
 from module.database import Database
 from module.downloader import DownloadClient
 from module.models import Bangumi, BangumiUpdate, ResponseModel
 from module.parser import TitleParser
-
-logger = logging.getLogger(__name__)
 
 
 class TorrentManager(Database):

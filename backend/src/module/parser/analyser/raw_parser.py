@@ -1,10 +1,9 @@
-import logging
 import re
+
+from loguru import logger
 
 from module.models import Episode
 from module.utils.text import pre_process
-
-logger = logging.getLogger(__name__)
 
 EPISODE_RE = re.compile(r"\d{1,4}(?:\.\d{1,2})?")
 TITLE_RE = re.compile(

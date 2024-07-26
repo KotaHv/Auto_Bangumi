@@ -1,12 +1,10 @@
-import logging
 from typing import Optional
 
+from loguru import logger
 from sqlalchemy.sql import func
 from sqlmodel import Session, and_, delete, false, or_, select
 
 from module.models import Bangumi, BangumiUpdate
-
-logger = logging.getLogger(__name__)
 
 
 class BangumiDatabase:

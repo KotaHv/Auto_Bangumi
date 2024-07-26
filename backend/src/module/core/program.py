@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 from module.conf import VERSION, settings
 from module.models import ResponseModel
@@ -12,8 +12,6 @@ from module.update import (
 )
 
 from .sub_thread import RenameThread, RSSThread
-
-logger = logging.getLogger(__name__)
 
 figlet = r"""
                 _        ____                                    _
