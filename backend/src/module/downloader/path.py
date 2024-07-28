@@ -19,6 +19,8 @@ class TorrentPath:
         media_list = []
         subtitle_list = []
         for f in info.files:
+            if f.progress != 1:
+                continue
             file_name = f.name
             suffix = Path(file_name).suffix
             if suffix.lower() in [".mp4", ".mkv"]:
