@@ -14,6 +14,7 @@ RULES = [
     r"(.*)(?:S\d{2})?EP?(\d{1,4}(?:\.\d{1,2})?(?!\d|p))(.*)",
 ]
 
+
 compiled_rules = [re.compile(rule, flags=re.I) for rule in RULES]
 
 SUBTITLE_LANG = {
@@ -97,7 +98,7 @@ def torrent_parser(
             if match_obj:
                 episode_revision = get_episode_revision(match_name)
                 group, title = get_group(match_obj.group(1))
-                if not season:
+                if season is None:
                     title, season = get_season_and_title(title)
                 else:
                     title, _ = get_season_and_title(title)

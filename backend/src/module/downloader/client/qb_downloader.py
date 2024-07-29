@@ -150,6 +150,9 @@ class QbDownloader:
     def set_tag(self, _hash, tag):
         self._client.torrents_add_tags(tags=tag, torrent_hashes=_hash)
 
+    def remove_tag(self, _hash, tag):
+        self._client.torrents_remove_tags(tags=tag, torrent_hashes=_hash)
+
     def check_connection(self):
         return self._client.app_version()
 

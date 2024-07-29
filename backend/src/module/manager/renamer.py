@@ -240,6 +240,7 @@ class Renamer(DownloadClient):
                 self.set_category(info.hash, "BangumiCollection")
             else:
                 logger.warning(f"[Renamer] {info.name} has no media file")
+                self.remove_tag(info.hash, bangumi_name)
         logger.debug("[Renamer] Rename process finished.")
         return renamed_info
 

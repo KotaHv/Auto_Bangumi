@@ -188,6 +188,9 @@ class DownloadClient(TorrentPath):
     def set_tag(self, hashes, tag):
         self.client.set_tag(hashes, tag)
 
+    def remove_tag(self, hashes, tag):
+        self.client.remove_tag(hashes, tag)
+
     def remove_rule(self, rule_name):
         self.client.remove_rule(rule_name)
         logger.info(f"[Downloader] Delete rule: {rule_name}")
