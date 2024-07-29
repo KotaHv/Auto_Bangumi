@@ -23,8 +23,7 @@ class SeasonCollector(DownloadClient):
                     f"Collections of {bangumi.official_title} Season {bangumi.season} completed."
                 )
                 bangumi.eps_collect = True
-                if engine.bangumi.update(bangumi):
-                    engine.bangumi.add(bangumi)
+                engine.bangumi.update(bangumi)
                 engine.torrent.add_all(torrents)
                 return ResponseModel(
                     status=True,
@@ -84,19 +83,23 @@ class SeasonCollector(DownloadClient):
                 )
 
     def force_collect(self, bangumi: Bangumi):
+        logger.info(
+            f"Force collecting {bangumi.official_title} Season {bangumi.season}..."
+        )
         rss_links = filter(None, bangumi.rss_link.split(","))
-        rss_link_to_collect = None
 
-        with RSSEngine() as engine:
+        with SearchTorrent() as st, RSSEngine() as engine:
             for rss_link in rss_links:
                 rss = engine.rss.search_url(rss_link)
                 if rss is None:
                     continue
                 if rss.aggregate:
-                    rss_link_to_collect = None
+                    torrents = st.search_season(bangumi)
                     break
                 else:
-                    rss_link_to_collect = rss_link
+                    torrents = st.get_torrents(
+                        rss_link, bangumi.filter.replace(",", "|")
+                    )
                     break
             else:
                 return ResponseModel(
@@ -105,7 +108,18 @@ class SeasonCollector(DownloadClient):
                     msg_en=f"Collection of {bangumi.official_title} Season {bangumi.season} failed, no valid rss found.",
                     msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 未找到有效rss。",
                 )
-        return self.collect_season(bangumi, rss_link_to_collect)
+            filter_multi_version_torrents(torrents)
+            self.add_torrent(torrents, bangumi)
+            logger.info(
+                f"Collections of {bangumi.official_title} Season {bangumi.season} completed."
+            )
+            engine.torrent.add_all(torrents)
+            return ResponseModel(
+                status=True,
+                status_code=200,
+                msg_en=f"Collections of {bangumi.official_title} Season {bangumi.season} completed.",
+                msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季完成。",
+            )
 
 
 def eps_complete():
