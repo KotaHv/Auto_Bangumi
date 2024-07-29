@@ -154,6 +154,7 @@ class DownloadClient(TorrentPath):
             category="Bangumi",
         ):
             logger.debug(f"[Downloader] Add torrent: {bangumi.official_title}")
+            return True
         else:
             for t in torrent:
                 if not self.get_torrent_info(
