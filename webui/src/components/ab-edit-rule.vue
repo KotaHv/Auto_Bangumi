@@ -35,12 +35,16 @@ const forceCollectDialog = reactive({
 const loading = reactive({
   collect: false,
   rename: false,
+  deleteFileYes: false,
+  deleteFileNo: false,
 });
 
 watch(show, (val) => {
   if (!val) {
     deleteFileDialog.show = false;
     forceCollectDialog.show = false;
+    loading.deleteFileYes = false;
+    loading.deleteFileNo = false;
   }
 });
 
@@ -183,10 +187,29 @@ const boxSize = computed(() => {
       <div line my-8></div>
 
       <div f-cer gap-x-10>
-        <ab-button size="small" type="warn" @click="() => emitdeleteFile(true)">
+        <ab-button
+          size="small"
+          type="warn"
+          :loading="loading.deleteFileYes"
+          @click="
+            () => {
+              loading.deleteFileYes = true;
+              emitdeleteFile(true);
+            }
+          "
+        >
           {{ $t('homepage.rule.yes_btn') }}
         </ab-button>
-        <ab-button size="small" @click="() => emitdeleteFile(false)">
+        <ab-button
+          size="small"
+          :loading="loading.deleteFileNo"
+          @click="
+            () => {
+              loading.deleteFileNo = true;
+              emitdeleteFile(false);
+            }
+          "
+        >
           {{ $t('homepage.rule.no_btn') }}
         </ab-button>
       </div>
