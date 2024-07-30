@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from loguru import logger
+
 from module.models.torrent import Torrent, TorrentInfo
 from module.parser.analyser import torrent_name_parser
 
@@ -11,7 +13,14 @@ def filter_multi_version_torrents(torrents: list[Torrent]):
 
     for torrent in torrents:
         info = torrent_name_parser(torrent.name)
-        key = f"{info.title}+{info.episode}"
+        if info is None:
+            logger.warning(
+                f"Failed to parse torrent name for torrent '{torrent}'. "
+                f"Fallback to using torrent.name: '{torrent.name}'."
+            )
+            key = torrent.name
+        else:
+            key = f"{info.title}+{info.episode}"
         grouped_torrents[key].append((torrent, info))
 
     for torrents_group in grouped_torrents.values():
