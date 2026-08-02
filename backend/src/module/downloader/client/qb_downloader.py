@@ -88,16 +88,20 @@ class QbDownloader:
         )
 
     def add_torrents(self, torrent_urls, torrent_files, save_path, category):
-        resp = self._client.torrents_add(
-            is_paused=False,
-            urls=torrent_urls,
-            torrent_files=torrent_files,
-            save_path=save_path,
-            category=category,
-            use_auto_torrent_management=False,
-            content_layout="NoSubFolder",
-        )
-        return resp == "Ok."
+        try:
+            resp = self._client.torrents_add(
+                is_paused=False,
+                urls=torrent_urls,
+                torrent_files=torrent_files,
+                save_path=save_path,
+                category=category,
+                use_auto_torrent_management=False,
+                content_layout="NoSubFolder",
+            )
+            return resp == "Ok."
+        except Conflict409Error:
+            logger.info("[Downloader] Torrent already exists in qBittorrent")
+            return True
 
     def torrents_delete(self, hash):
         return self._client.torrents_delete(delete_files=True, torrent_hashes=hash)
