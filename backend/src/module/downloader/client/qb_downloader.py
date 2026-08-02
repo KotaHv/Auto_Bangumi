@@ -7,9 +7,10 @@ from qbittorrentapi.exceptions import (
     Conflict409Error,
     Forbidden403Error,
 )
-from qbittorrentapi.torrents import TorrentStatusesT
+from qbittorrentapi.torrents import TorrentsAddedMetadata, TorrentStatusesT
 
 from module.ab_decorator import qb_connect_failed_wait
+from module.utils import torrent_hash
 
 
 class QbDownloader:
@@ -98,10 +99,40 @@ class QbDownloader:
                 use_auto_torrent_management=False,
                 content_layout="NoSubFolder",
             )
-            return resp == "Ok."
+            logger.debug(f"[Downloader] Add torrent response: {resp}")
+            if isinstance(resp, str):
+                return resp == "Ok."
+            if isinstance(resp, TorrentsAddedMetadata):
+                return (
+                    resp.get("pending_count", 0) > 0 or resp.get("success_count", 0) > 0
+                )
+            return False
         except Conflict409Error:
-            logger.info("[Downloader] Torrent already exists in qBittorrent")
-            return True
+            if not torrent_urls:
+                logger.info("[Downloader] Torrent files already exist in qBittorrent")
+                return True
+            torrent_hashes = []
+            for url in torrent_urls:
+                info_hash = torrent_hash.from_magnet(url)
+                if info_hash is None:
+                    logger.warning(
+                        f"[Downloader] Cannot verify conflicting magnet link; failed to extract info hash: {url}"
+                    )
+                    return False
+                torrent_hashes.append(info_hash)
+
+            exists = self.torrents_info(
+                status_filter=None, category=None, hash=torrent_hashes
+            )
+            if len(exists) == len(torrent_urls):
+                logger.info(
+                    "[Downloader] Magnet torrents already exist in qBittorrent."
+                )
+                return True
+            logger.warning(
+                "[Downloader] Torrent add conflict, but torrent was not found"
+            )
+            return False
 
     def torrents_delete(self, hash):
         return self._client.torrents_delete(delete_files=True, torrent_hashes=hash)
