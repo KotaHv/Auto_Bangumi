@@ -1,5 +1,6 @@
 import os
 import signal
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -13,17 +14,16 @@ from module.security.api import get_current_user
 from .response import u_response
 
 program = Program()
-router = APIRouter(tags=["program"])
 
 
-@router.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(_router: APIRouter):
     program.startup()
-
-
-@router.on_event("shutdown")
-async def shutdown():
+    yield
     program.stop()
+
+
+router = APIRouter(tags=["program"], lifespan=lifespan)
 
 
 @router.get(
