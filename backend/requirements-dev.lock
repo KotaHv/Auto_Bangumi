@@ -9,135 +9,153 @@
 #   generate-hashes: false
 #   universal: false
 
-annotated-types==0.7.0
+annotated-doc==0.0.5
+    # via fastapi
+annotated-types==0.8.0
     # via pydantic
-anyio==4.4.0
+anyio==4.14.2
     # via httpx
     # via openai
     # via sse-starlette
     # via starlette
 bcrypt==4.0.1
     # via passlib
-beautifulsoup4==4.12.3
+beautifulsoup4==4.15.0
     # via bs4
-black==24.4.2
+black==26.5.1
 bs4==0.0.2
-certifi==2024.7.4
+certifi==2026.7.22
     # via httpcore
     # via httpx
     # via requests
-cfgv==3.4.0
+cfgv==3.5.0
     # via pre-commit
-charset-normalizer==3.3.2
+charset-normalizer==3.4.9
     # via requests
-click==8.1.7
+click==8.4.2
     # via black
     # via uvicorn
-distlib==0.3.8
+distlib==0.4.3
     # via virtualenv
 distro==1.9.0
     # via openai
-ecdsa==0.19.0
+ecdsa==0.19.2
     # via python-jose
-fastapi-slim==0.111.1
-filelock==3.15.4
+fastapi==0.141.1
+    # via fastapi-slim
+fastapi-slim==0.129.1
+filelock==3.32.2
+    # via python-discovery
     # via virtualenv
-h11==0.14.0
+h11==0.16.0
     # via httpcore
     # via uvicorn
-h2==4.1.0
+h2==4.4.0
     # via httpx
-hpack==4.0.0
+hpack==4.2.0
     # via h2
-httpcore==1.0.5
+httpcore==1.0.9
     # via httpx
-httpx==0.27.0
+httpx==0.28.1
     # via openai
-hyperframe==6.0.1
+hyperframe==6.1.0
     # via h2
-identify==2.6.0
+identify==2.6.19
     # via pre-commit
-idna==3.7
+idna==3.18
     # via anyio
     # via httpx
     # via requests
-iniconfig==2.0.0
+iniconfig==2.3.0
     # via pytest
-jinja2==3.1.4
-loguru==0.7.2
-lxml==5.2.2
-markupsafe==2.1.5
+jinja2==3.1.6
+jiter==0.16.0
+    # via openai
+loguru==0.7.3
+lxml==6.1.1
+markupsafe==3.0.3
     # via jinja2
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via black
-nodeenv==1.9.1
+nodeenv==1.10.0
     # via pre-commit
-openai==1.37.0
-packaging==24.1
+openai==2.52.0
+packaging==26.2
     # via black
     # via pytest
     # via qbittorrent-api
 passlib==1.7.4
-pathspec==0.12.1
+pathspec==1.1.1
     # via black
-platformdirs==4.2.2
+platformdirs==4.11.0
     # via black
     # via virtualenv
-pluggy==1.5.0
+pluggy==1.6.0
     # via pytest
-pre-commit==3.7.1
-pyasn1==0.6.0
+pre-commit==4.6.1
+pyasn1==0.6.4
     # via python-jose
     # via rsa
-pydantic==2.8.2
-    # via fastapi-slim
+pydantic==2.13.4
+    # via fastapi
     # via openai
     # via sqlmodel
-pydantic-core==2.20.1
+pydantic-core==2.46.4
     # via pydantic
-pytest==8.3.1
-python-dotenv==1.0.1
-python-jose==3.3.0
-python-multipart==0.0.9
-pyyaml==6.0.1
+pygments==2.20.0
+    # via pytest
+pytest==9.1.1
+python-discovery==1.5.1
+    # via virtualenv
+python-dotenv==1.2.2
+python-jose==3.5.0
+python-multipart==0.0.32
+pytokens==0.4.1
+    # via black
+pyyaml==6.0.3
     # via pre-commit
-qbittorrent-api==2024.7.64
-requests==2.32.3
+qbittorrent-api==2026.8.0
+requests==2.34.2
     # via qbittorrent-api
-rsa==4.9
+rsa==4.9.1
     # via python-jose
-ruff==0.5.4
-semver==3.0.2
-six==1.16.0
+ruff==0.16.1
+semver==3.0.4
+six==1.17.0
     # via ecdsa
 sniffio==1.3.1
-    # via anyio
-    # via httpx
     # via openai
 socksio==1.0.0
     # via httpx
-soupsieve==2.5
+soupsieve==2.9.1
     # via beautifulsoup4
-sqlalchemy==2.0.31
+sqlalchemy==2.0.51
     # via sqlmodel
-sqlmodel==0.0.21
-sse-starlette==2.1.2
-starlette==0.37.2
-    # via fastapi-slim
+sqlmodel==0.0.39
+sse-starlette==3.4.6
+starlette==1.3.1
+    # via fastapi
     # via sse-starlette
 torrentool==1.2.0
-tqdm==4.66.4
+tqdm==4.70.0
     # via openai
-typing-extensions==4.12.2
-    # via fastapi-slim
+typing-extensions==4.16.0
+    # via anyio
+    # via beautifulsoup4
+    # via fastapi
     # via openai
     # via pydantic
     # via pydantic-core
     # via sqlalchemy
-urllib3==2.2.2
+    # via sqlmodel
+    # via starlette
+    # via typing-inspection
+typing-inspection==0.4.2
+    # via fastapi
+    # via pydantic
+urllib3==2.7.0
     # via qbittorrent-api
     # via requests
-uvicorn==0.30.3
-    # via sse-starlette
-virtualenv==20.26.3
+uvicorn==0.52.1
+virtualenv==21.7.1
     # via pre-commit
