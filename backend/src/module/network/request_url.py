@@ -80,7 +80,7 @@ class RequestURL:
     def __enter__(self):
         proxy = build_proxy_url() if settings.proxy.enable else None
         self.session = httpx.Client(
-            headers=self.headers, http2=True, proxies=proxy, timeout=5
+            headers=self.headers, http2=True, proxy=proxy, timeout=5
         )
         return self
 
