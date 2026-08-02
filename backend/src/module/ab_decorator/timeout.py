@@ -3,7 +3,7 @@ import signal
 
 def timeout(seconds):
     def decorator(func):
-        def handler(signum, frame):
+        def handler(_signum, _frame):
             raise TimeoutError("Function timed out.")
 
         def wrapper(*args, **kwargs):

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from loguru import logger
 from sqlmodel import Session, and_, desc, select
 
@@ -78,7 +76,7 @@ class TorrentDatabase:
                 new_torrents.append(torrent)
         return new_torrents
 
-    def get_bangumi_id(self, torrent_hash: str) -> Optional[int]:
+    def get_bangumi_id(self, torrent_hash: str) -> int | None:
         return self.session.exec(
             select(Torrent.bangumi_id)
             .where(and_(Torrent.hash == torrent_hash, Torrent.bangumi_id.isnot(None)))

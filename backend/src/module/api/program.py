@@ -42,7 +42,7 @@ async def restart():
                 "msg_en": "Failed to restart program.",
                 "msg_zh": "重启程序失败。",
             },
-        )
+        ) from e
 
 
 @router.get(
@@ -61,7 +61,7 @@ async def start():
                 "msg_en": "Failed to start program.",
                 "msg_zh": "启动程序失败。",
             },
-        )
+        ) from e
 
 
 @router.get(

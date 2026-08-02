@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -21,9 +21,9 @@ app_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=1440)
+        expire = datetime.now(UTC) + timedelta(minutes=1440)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, app_pwd_key, algorithm=app_pwd_algorithm)
     return encoded_jwt
@@ -46,7 +46,7 @@ def verify_token(token: str):
     if token_data is None:
         return None
     expires = token_data.get("exp")
-    if datetime.now(timezone.utc) >= datetime.fromtimestamp(expires, tz=timezone.utc):
+    if datetime.now(UTC) >= datetime.fromtimestamp(expires, tz=UTC):
         raise JWTError("Token expired")
     return token_data
 

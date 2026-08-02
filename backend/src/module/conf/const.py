@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 from urllib.parse import parse_qs, urlparse
 
 DEFAULT_SETTINGS = {

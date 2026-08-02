@@ -75,7 +75,7 @@ class OpenAIParser:
             else None
         )
 
-    def __enter__(self) -> "OpenAIParser":
+    def __enter__(self) -> OpenAIParser:
         self.client = OpenAI(
             api_key=self.api_key, base_url=self.base_url, http_client=self.http_client
         )
@@ -87,8 +87,8 @@ class OpenAIParser:
     def parse(self, text: str) -> Episode:
         chat_completion = self.client.chat.completions.create(
             messages=[
-                dict(role="system", content=DEFAULT_PROMPT),
-                dict(role="user", content=text),
+                {"role": "system", "content": DEFAULT_PROMPT},
+                {"role": "user", "content": text},
             ],
             model=self.model,
             temperature=0,

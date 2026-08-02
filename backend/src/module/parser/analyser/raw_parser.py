@@ -133,9 +133,7 @@ def process(raw_title: str):
     # 翻译组的名字
     match_obj = TITLE_RE.match(content_title)
     # 处理标题
-    season_info, episode_info, other = list(
-        map(lambda x: x.strip(), match_obj.groups())
-    )
+    season_info, episode_info, other = [x.strip() for x in match_obj.groups()]
     process_raw = prefix_process(season_info, group)
     # 处理 前缀
     raw_name, season_raw, season = season_process(process_raw)

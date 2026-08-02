@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
@@ -116,7 +118,9 @@ async def disable_many_rss(rss_ids: list[int]):
     dependencies=[Depends(get_current_user)],
 )
 async def update_rss(
-    rss_id: int, data: RSSUpdate, current_user=Depends(get_current_user)
+    rss_id: int,
+    data: RSSUpdate,
+    current_user: Annotated[str, Depends(get_current_user)],
 ):
     if not current_user:
         raise UNAUTHORIZED

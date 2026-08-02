@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from collections.abc import Iterator
 
 from module.models import Bangumi, RSSItem, Torrent
 from module.network import RequestContent
@@ -15,7 +15,7 @@ SEARCH_KEY = [
     "dpi",
 ]
 
-BangumiJSON: TypeAlias = str
+type BangumiJSON = str
 
 
 class SearchTorrent(RequestContent, RSSAnalyser):
@@ -26,7 +26,7 @@ class SearchTorrent(RequestContent, RSSAnalyser):
 
     def analyse_keyword(
         self, keywords: list[str], site: str = "mikan", limit: int = 5
-    ) -> BangumiJSON:
+    ) -> Iterator[BangumiJSON]:
         rss_item = search_url(site, keywords)
         torrents = self.search_torrents(rss_item)
         # yield for EventSourceResponse (Server Send)

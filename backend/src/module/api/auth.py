@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, Response
@@ -20,7 +21,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=dict)
-async def login(response: Response, form_data=Depends(OAuth2PasswordRequestForm)):
+async def login(
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+):
     user = User(username=form_data.username, password=form_data.password)
     resp = auth_user(user)
     if resp.status:

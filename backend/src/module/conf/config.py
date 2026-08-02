@@ -34,7 +34,7 @@ class Settings(Config):
             self.init()
 
     def load(self):
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        with open(CONFIG_PATH, encoding="utf-8") as f:
             config = f.read()
         config_obj = Config.model_validate_json(config)
         self.__dict__.update(config_obj.__dict__)

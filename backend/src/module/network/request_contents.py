@@ -27,7 +27,7 @@ class RequestContent(RequestURL):
             if _filter is None:
                 _filter = "|".join(settings.rss_parser.filter)
             for _title, torrent_url, homepage in zip(
-                torrent_titles, torrent_urls, torrent_homepage
+                torrent_titles, torrent_urls, torrent_homepage, strict=True
             ):
                 if re.search(_filter, _title) is None:
                     torrents.append(

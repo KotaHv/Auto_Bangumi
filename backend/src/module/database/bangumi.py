@@ -1,5 +1,3 @@
-from typing import Optional
-
 from loguru import logger
 from sqlalchemy.sql import func
 from sqlmodel import Session, and_, delete, false, or_, select
@@ -86,7 +84,7 @@ class BangumiDatabase:
         statement = select(Bangumi)
         return self.session.exec(statement).all()
 
-    def search_id(self, _id: int) -> Optional[Bangumi]:
+    def search_id(self, _id: int) -> Bangumi | None:
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = self.session.exec(statement).first()
         if bangumi is None:
@@ -128,7 +126,7 @@ class BangumiDatabase:
                 i += 1
         return torrent_list
 
-    def match_torrent(self, torrent_name: str) -> Optional[Bangumi]:
+    def match_torrent(self, torrent_name: str) -> Bangumi | None:
         statement = select(Bangumi).where(
             and_(
                 func.instr(torrent_name, Bangumi.title_raw) > 0,
