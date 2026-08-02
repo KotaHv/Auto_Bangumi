@@ -1,29 +1,33 @@
-FROM alpine:3.20 AS base
+# syntax=docker/dockerfile:1
 
-RUN apk add --no-cache --update bash python3 su-exec shadow tini tzdata && \
+FROM ghcr.io/astral-sh/uv:0.12.1-python3.14-alpine AS base
+
+RUN apk add --no-cache --update bash su-exec shadow tini tzdata && \
     mkdir -p /home/ab && \
     addgroup -S ab -g 911 && \
     adduser -S ab -G ab -h /home/ab -s /sbin/nologin -u 911
-
-FROM base AS builder
-
-RUN apk add --no-cache --update py3-pip
-
-COPY backend/requirements.lock .
-RUN PYTHONDONTWRITEBYTECODE=1 pip install --break-system-packages --user -r requirements.lock
-
-FROM base
 
 ENV LANG="C.UTF-8" \
     TZ=Asia/Shanghai \
     PUID=1000 \
     PGID=1000 \
-    UMASK=022
+    UMASK=022 \
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_DEV=1 \
+    UV_TOOL_BIN_DIR=/usr/local/bin \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-COPY --from=builder /root/.local /home/ab/.local
-COPY --chmod=755 backend/src/. .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=backend/pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=backend/uv.lock,target=uv.lock \
+    uv sync --locked --no-install-project
+
+COPY backend/pyproject.toml backend/uv.lock ./
+COPY --chmod=755 backend/src/. ./
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["tini", "-g", "--", "/entrypoint.sh"]

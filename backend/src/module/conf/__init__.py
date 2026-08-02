@@ -11,3 +11,17 @@ VERSION_PATH = Path("config/version.info")
 POSTERS_PATH = Path("data/posters")
 
 PLATFORM = "Windows" if "\\" in settings.downloader.path else "Unix"
+
+__all__ = [
+    "VERSION",
+    "settings",
+    "LOG_PATH",
+    "setup_logger",
+    "SEARCH_CONFIG",
+    "TMDB_API",
+    "DATA_PATH",
+    "LEGACY_DATA_PATH",
+    "VERSION_PATH",
+    "POSTERS_PATH",
+    "PLATFORM",
+]

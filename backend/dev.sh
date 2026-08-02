@@ -2,10 +2,10 @@
 
 # This script is used to run the development environment.
 
-rye sync
+uv sync
 
 # install git-hooks for pre-commit before committing.
-rye run pre-commit install
+uv run pre-commit install
 
 cd src || exit
 
@@ -23,4 +23,4 @@ if [ ! -f "$VERSION_FILE" ]; then
 	echo "VERSION='DEV_VERSION'" >>"$VERSION_FILE"
 fi
 
-rye run uvicorn main:app --reload --port 7892
+uv run uvicorn main:app --reload --port 7892

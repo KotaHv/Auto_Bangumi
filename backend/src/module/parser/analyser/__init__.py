@@ -3,3 +3,12 @@ from .openai import OpenAIParser
 from .raw_parser import raw_parser
 from .tmdb_parser import tmdb_parser
 from .torrent_parser import torrent_name_parser, torrent_parser
+
+__all__ = [
+    "mikan_parser",
+    "OpenAIParser",
+    "raw_parser",
+    "tmdb_parser",
+    "torrent_name_parser",
+    "torrent_parser",
+]
