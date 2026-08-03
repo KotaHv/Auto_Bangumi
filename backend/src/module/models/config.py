@@ -7,60 +7,70 @@ ExpandedString = Annotated[str, AfterValidator(lambda x: expandvars(x))]
 
 
 class Program(BaseModel):
-    rss_time: int = Field(900, description="Sleep time")
-    rename_time: int = Field(60, description="Rename times in one loop")
-    webui_port: int = Field(7892, description="WebUI port")
+    rss_time: Annotated[int, Field(description="Sleep time")] = 900
+    rename_time: Annotated[int, Field(description="Rename times in one loop")] = 60
+    webui_port: Annotated[int, Field(description="WebUI port")] = 7892
 
 
 class Downloader(BaseModel):
-    type: str = Field("qbittorrent", description="Downloader type")
-    host: ExpandedString = Field("172.17.0.1:8080", description="Downloader host")
-    username: ExpandedString = Field("admin", description="Downloader username")
-    password: ExpandedString = Field("adminadmin", description="Downloader password")
-    path: str = Field("/downloads/Bangumi", description="Downloader path")
-    ssl: bool = Field(False, description="Downloader ssl")
+    type: Annotated[str, Field(description="Downloader type")] = "qbittorrent"
+    host: Annotated[ExpandedString, Field(description="Downloader host")] = (
+        "172.17.0.1:8080"
+    )
+    username: Annotated[ExpandedString, Field(description="Downloader username")] = (
+        "admin"
+    )
+    password: Annotated[ExpandedString, Field(description="Downloader password")] = (
+        "adminadmin"
+    )
+    path: Annotated[str, Field(description="Downloader path")] = "/downloads/Bangumi"
+    ssl: Annotated[bool, Field(description="Downloader ssl")] = False
 
 
 class RSSParser(BaseModel):
-    enable: bool = Field(True, description="Enable RSS parser")
-    filter: list[str] = Field(["720", r"\d+-\d"], description="Filter")
+    enable: Annotated[bool, Field(description="Enable RSS parser")] = True
+    filter: Annotated[list[str], Field(description="Filter")] = [
+        "720",
+        r"\d+-\d",
+    ]
     language: str = "zh"
 
 
 class BangumiManage(BaseModel):
-    enable: bool = Field(True, description="Enable bangumi manage")
-    eps_complete: bool = Field(False, description="Enable eps complete")
-    rename_method: str = Field("pn", description="Rename method")
-    group_tag: bool = Field(False, description="Enable group tag")
-    remove_bad_torrent: bool = Field(False, description="Remove bad torrent")
-    retain_latest_media_version: bool = Field(
-        False, description="Remove older versions and keep only the latest version"
-    )
+    enable: Annotated[bool, Field(description="Enable bangumi manage")] = True
+    eps_complete: Annotated[bool, Field(description="Enable eps complete")] = False
+    rename_method: Annotated[str, Field(description="Rename method")] = "pn"
+    group_tag: Annotated[bool, Field(description="Enable group tag")] = False
+    remove_bad_torrent: Annotated[bool, Field(description="Remove bad torrent")] = False
+    retain_latest_media_version: Annotated[
+        bool,
+        Field(description="Remove older versions and keep only the latest version"),
+    ] = False
 
 
 class Log(BaseModel):
-    debug_enable: bool = Field(False, description="Enable debug")
+    debug_enable: Annotated[bool, Field(description="Enable debug")] = False
 
 
 class Proxy(BaseModel):
-    enable: bool = Field(False, description="Enable proxy")
-    type: str = Field("http", description="Proxy type")
-    host: str = Field("", description="Proxy host")
-    port: int = Field(0, description="Proxy port")
-    username: ExpandedString = Field("", description="Proxy username")
-    password: ExpandedString = Field("", description="Proxy password")
+    enable: Annotated[bool, Field(description="Enable proxy")] = False
+    type: Annotated[str, Field(description="Proxy type")] = "http"
+    host: Annotated[str, Field(description="Proxy host")] = ""
+    port: Annotated[int, Field(description="Proxy port")] = 0
+    username: Annotated[ExpandedString, Field(description="Proxy username")] = ""
+    password: Annotated[ExpandedString, Field(description="Proxy password")] = ""
 
 
 class Notification(BaseModel):
-    enable: bool = Field(False, description="Enable notification")
-    type: str = Field("telegram", description="Notification type")
-    token: ExpandedString = Field("", description="Notification token")
-    chat_id: ExpandedString = Field("", description="Notification chat id")
+    enable: Annotated[bool, Field(description="Enable notification")] = False
+    type: Annotated[str, Field(description="Notification type")] = "telegram"
+    token: Annotated[ExpandedString, Field(description="Notification token")] = ""
+    chat_id: Annotated[ExpandedString, Field(description="Notification chat id")] = ""
 
 
 class ExperimentalOpenAI(BaseModel):
-    enable: bool = Field(False, description="Enable experimental OpenAI")
-    api_key: str = Field("", description="OpenAI api key")
+    enable: Annotated[bool, Field(description="Enable experimental OpenAI")] = False
+    api_key: Annotated[str, Field(description="OpenAI api key")] = ""
     base_url: Annotated[
         str,
         AfterValidator(
@@ -68,8 +78,9 @@ class ExperimentalOpenAI(BaseModel):
                 "https://api.openai.com/v1" if x == "https://api.openai.com/" else x
             )
         ),
-    ] = Field("https://api.openai.com/v1", description="OpenAI api base url")
-    model: str = Field("gpt-4o-mini", description="OpenAI model")
+        Field(description="OpenAI api base url"),
+    ] = "https://api.openai.com/v1"
+    model: Annotated[str, Field(description="OpenAI model")] = "gpt-4o-mini"
 
 
 class Config(BaseModel):

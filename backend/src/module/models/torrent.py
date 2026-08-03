@@ -1,10 +1,13 @@
-from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
+from sqlmodel import Field as SQLField
+from sqlmodel import SQLModel
 
 
 class Torrent(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    bangumi_id: int | None = Field(None, foreign_key="bangumi.id")
+    id: Annotated[int | None, SQLField(primary_key=True)] = None
+    bangumi_id: Annotated[int | None, SQLField(foreign_key="bangumi.id")] = None
     rss_id: int | None = None
     name: str = ""
     url: str = ""
@@ -24,7 +27,7 @@ class EpisodeFile(BaseModel):
     season: int
     episode: int | float
     episode_revision: int = 1
-    suffix: str = Field(..., regex=r"\.(mkv|mp4|MKV|MP4)$")
+    suffix: Annotated[str, Field(pattern=r"\.(mkv|mp4|MKV|MP4)$")]
 
 
 class SubtitleFile(BaseModel):
@@ -34,8 +37,8 @@ class SubtitleFile(BaseModel):
     season: int
     episode: int | float
     episode_revision: int = 1
-    language: str = Field(..., regex=r"(zh|zh-tw)")
-    suffix: str = Field(..., regex=r"\.(ass|srt|ASS|SRT)$")
+    language: Annotated[str, Field(pattern=r"(zh|zh-tw)")]
+    suffix: Annotated[str, Field(pattern=r"\.(ass|srt|ASS|SRT)$")]
 
 
 class TorrentInfo(BaseModel):

@@ -1,25 +1,28 @@
+from typing import Annotated
+
 from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field as SQLField
+from sqlmodel import SQLModel
 
 
 class User(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    username: str = Field(
-        "admin", min_length=4, max_length=20, regex=r"^[a-zA-Z0-9_| None+$"
-    )
-    password: str = Field("adminadmin", min_length=8)
+    id: Annotated[int | None, SQLField(primary_key=True)] = None
+    username: Annotated[
+        str, SQLField(min_length=4, max_length=20, regex=r"^[a-zA-Z0-9_| None+$")
+    ] = "admin"
+    password: Annotated[str, SQLField(min_length=8)] = "adminadmin"
 
 
 class UserUpdate(SQLModel):
-    username: str | None = Field(
-        None, min_length=4, max_length=20, regex=r"^[a-zA-Z0-9_| None+$"
-    )
-    password: str | None = Field(None, min_length=8)
+    username: Annotated[
+        str | None, SQLField(min_length=4, max_length=20, regex=r"^[a-zA-Z0-9_| None+$")
+    ] = None
+    password: Annotated[str | None, SQLField(min_length=8)] = None
 
 
 class UserLogin(SQLModel):
     username: str
-    password: str = Field(..., min_length=8)
+    password: Annotated[str, SQLField(min_length=8)]
 
 
 class Token(BaseModel):
