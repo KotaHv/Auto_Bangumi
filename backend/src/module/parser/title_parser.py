@@ -81,22 +81,20 @@ class TitleParser:
             else:
                 episode = raw_parser(raw)
 
+            if episode is None:
+                return None
             titles = {
                 "zh": episode.title_zh,
                 "en": episode.title_en,
                 "jp": episode.title_jp,
             }
-            title_raw = episode.title_en if episode.title_en else episode.title_zh
-            if titles[language]:
-                official_title = titles[language]
-            elif titles["zh"]:
-                official_title = titles["zh"]
-            elif titles["en"]:
-                official_title = titles["en"]
-            elif titles["jp"]:
-                official_title = titles["jp"]
-            else:
-                official_title = title_raw
+            title_raw = episode.title_en or episode.title_zh or ""
+            official_title = title_raw
+            for key in (language, "zh", "en", "jp"):
+                candidate = titles[key]
+                if candidate:
+                    official_title = candidate
+                    break
             _season = episode.season
             logger.debug(f"RAW:{raw} >> {title_raw}")
             return Bangumi(

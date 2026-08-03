@@ -1,4 +1,5 @@
-from openai import DefaultHttpxClient, OpenAI
+import httpx
+from openai import OpenAI
 
 from module.conf import settings
 from module.models.bangumi import Episode
@@ -70,9 +71,7 @@ class OpenAIParser:
         self.base_url = base_url
         self.model = model
         self.http_client = (
-            DefaultHttpxClient(proxies=build_proxy_url())
-            if settings.proxy.enable
-            else None
+            httpx.Client(proxy=build_proxy_url()) if settings.proxy.enable else None
         )
 
     def __enter__(self) -> OpenAIParser:
@@ -95,5 +94,5 @@ class OpenAIParser:
             response_format={"type": "json_object"},
         )
         result = chat_completion.choices[0].message.content
-        result = remove_outside_braces(result)
+        result = remove_outside_braces(result or "")
         return Episode.model_validate_json(result)

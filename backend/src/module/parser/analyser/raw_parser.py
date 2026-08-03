@@ -133,6 +133,8 @@ def process(raw_title: str):
     # 翻译组的名字
     match_obj = TITLE_RE.match(content_title)
     # 处理标题
+    if match_obj is None:
+        return None
     season_info, episode_info, other = [x.strip() for x in match_obj.groups()]
     process_raw = prefix_process(season_info, group)
     # 处理 前缀
@@ -148,7 +150,8 @@ def process(raw_title: str):
     raw_episode = EPISODE_RE.search(episode_info)
     episode = 0
     if raw_episode is not None:
-        episode = raw_episode.group()
+        episode_str = raw_episode.group()
+        episode = int(episode_str) if episode_str.isdigit() else float(episode_str)
     sub, dpi, source = find_tags(other)  # 剩余信息处理
     return Episode(
         title_en=name_en,

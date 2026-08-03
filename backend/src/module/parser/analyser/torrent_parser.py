@@ -58,13 +58,14 @@ season_search_pattern = re.compile(r"([Ss]|Season )(\d{1,3})", re.I)
 def get_season_and_title(season_and_title) -> tuple[str, int]:
     title = season_remove_pattern.sub("", season_and_title).strip()
     try:
-        season = season_search_pattern.search(season_and_title).group(2)
+        match = season_search_pattern.search(season_and_title)
+        season = match.group(2) if match else 1
     except AttributeError:
         season = 1
     return title, int(season)
 
 
-def get_subtitle_lang(subtitle_name: str) -> str:
+def get_subtitle_lang(subtitle_name: str) -> str | None:
     for key, value in SUBTITLE_LANG.items():
         for v in value:
             if v in subtitle_name.lower():
@@ -83,12 +84,16 @@ def get_episode_revision(name: str) -> int:
     return 1
 
 
+def parse_episode(episode: str) -> int | float:
+    return int(episode) if episode.isdigit() else float(episode)
+
+
 def torrent_parser(
     torrent_path: str,
     torrent_name: str | None = None,
     season: int | None = None,
     file_type: str = "media",
-) -> EpisodeFile | SubtitleFile:
+) -> EpisodeFile | SubtitleFile | None:
     media_path = get_path_basename(torrent_path)
     match_names = filter(None, [torrent_name, media_path])
     for match_name in match_names:
@@ -103,6 +108,7 @@ def torrent_parser(
                 else:
                     title, _ = get_season_and_title(title)
                 episode = match_obj.group(2)
+                episode = parse_episode(episode)
                 suffix = Path(torrent_path).suffix
                 if file_type == "media":
                     return EpisodeFile(
@@ -116,6 +122,8 @@ def torrent_parser(
                     )
                 elif file_type == "subtitle":
                     language = get_subtitle_lang(media_path)
+                    if language is None:
+                        return None
                     return SubtitleFile(
                         media_path=torrent_path,
                         group=group,
@@ -126,9 +134,10 @@ def torrent_parser(
                         episode_revision=episode_revision,
                         suffix=suffix,
                     )
+    return None
 
 
-def torrent_name_parser(torrent_name: str) -> TorrentInfo:
+def torrent_name_parser(torrent_name: str) -> TorrentInfo | None:
     torrent_name = pre_process(torrent_name)
     for compiled_rule in compiled_rules:
         match_obj = compiled_rule.match(torrent_name)
@@ -136,6 +145,7 @@ def torrent_name_parser(torrent_name: str) -> TorrentInfo:
             episode_revision = get_episode_revision(torrent_name)
             title = match_obj.group(1)
             episode = match_obj.group(2)
+            episode = parse_episode(episode)
             return TorrentInfo(
                 title=title,
                 episode=episode,

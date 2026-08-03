@@ -17,7 +17,7 @@ class TMDBInfo:
     season: list[dict]
     last_season: int
     year: str
-    poster_link: str = None
+    poster_link: str | None = None
 
 
 LANGUAGE = {"zh": "zh-CN", "jp": "ja-JP", "en": "en-US"}
@@ -34,35 +34,47 @@ def info_url(e, key):
 def is_animation(tv_id, language) -> bool:
     url_info = info_url(tv_id, language)
     with RequestContent() as req:
-        type_id = req.get_json(url_info)["genres"]
+        content = req.get_json(url_info)
+        if content is None:
+            return False
+        type_id = content["genres"]
         for type in type_id:
             if type.get("id") == 16:
                 return True
     return False
 
 
-def get_season(seasons: list) -> tuple[int, str]:
+def get_season(seasons: list) -> tuple[int, str | None]:
     ss = [s for s in seasons if s["air_date"] is not None and "特别" not in s["season"]]
     ss = sorted(ss, key=lambda e: e.get("air_date"), reverse=True)
     for season in ss:
+        air_date = season.get("air_date")
+        if air_date is None:
+            continue
         if re.search(r"第 \d 季", season.get("season")) is not None:
-            date = season.get("air_date").split("-")
+            date = air_date.split("-")
             [year, _, _] = date
             now_year = time.localtime().tm_year
             if int(year) <= now_year:
                 return int(re.findall(r"\d", season.get("season"))[0]), season.get(
                     "poster_path"
                 )
-    return len(ss), ss[-1].get("poster_path")
+    return len(ss), (ss[-1].get("poster_path") if ss else None)
 
 
 def tmdb_parser(title, language, test: bool = False) -> TMDBInfo | None:
     with RequestContent() as req:
         url = search_url(title)
-        contents = req.get_json(url).get("results")
-        if contents.__len__() == 0:
+        content = req.get_json(url)
+        if content is None:
+            return None
+        contents = content.get("results")
+        if not contents:
             url = search_url(title.replace(" ", ""))
-            contents = req.get_json(url).get("results")
+            content = req.get_json(url)
+            if content is None:
+                return None
+            contents = content.get("results")
         # 判断动画
         if contents:
             for content in contents:
@@ -71,25 +83,30 @@ def tmdb_parser(title, language, test: bool = False) -> TMDBInfo | None:
                     break
             url_info = info_url(id, language)
             info_content = req.get_json(url_info)
+            if info_content is None:
+                return None
             season = [
                 {
                     "season": s.get("name"),
                     "air_date": s.get("air_date"),
                     "poster_path": s.get("poster_path"),
                 }
-                for s in info_content.get("seasons")
+                for s in (info_content.get("seasons") or [])
             ]
             last_season, poster_path = get_season(season)
             if poster_path is None:
                 poster_path = info_content.get("poster_path")
-            original_title = info_content.get("original_name")
-            official_title = info_content.get("name")
-            year_number = info_content.get("first_air_date").split("-")[0]
+            original_title = info_content.get("original_name") or ""
+            official_title = info_content.get("name") or ""
+            first_air_date = info_content.get("first_air_date")
+            year_number = first_air_date.split("-")[0] if first_air_date else ""
             if poster_path:
                 if not test:
                     img = req.get_content(
                         f"https://image.tmdb.org/t/p/w780{poster_path}"
                     )
+                    if img is None:
+                        return None
                     poster_link = save_image(img, "jpg")
                 else:
                     poster_link = "https://image.tmdb.org/t/p/w780" + poster_path

@@ -11,16 +11,22 @@ def mikan_parser(homepage: str):
     root_path = parse_url(homepage).host
     with RequestContent() as req:
         content = req.get_html(homepage)
+        if content is None:
+            return "", ""
         soup = BeautifulSoup(content, "html.parser")
-        poster_div = soup.find("div", {"class": "bangumi-poster"}).get("style")
-        official_title = soup.select_one(
-            'p.bangumi-title a[href^="/Home/Bangumi/"]'
-        ).text
+        poster = soup.find("div", {"class": "bangumi-poster"})
+        title = soup.select_one('p.bangumi-title a[href^="/Home/Bangumi/"]')
+        if poster is None or title is None:
+            return "", ""
+        poster_div = str(poster.get("style") or "")
+        official_title = title.text
         official_title = re.sub(r"第.*季", "", official_title).strip()
         if poster_div:
             poster_path = poster_div.split("url('")[1].split("')")[0]
             poster_path = poster_path.split("?")[0]
             img = req.get_content(f"https://{root_path}{poster_path}")
+            if img is None:
+                return "", ""
             suffix = poster_path.split(".")[-1]
             poster_link = save_image(img, suffix)
             return poster_link, official_title
