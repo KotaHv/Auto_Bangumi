@@ -46,6 +46,8 @@ def verify_token(token: str):
     if token_data is None:
         return None
     expires = token_data.get("exp")
+    if expires is None:
+        return None
     if datetime.now(UTC) >= datetime.fromtimestamp(expires, tz=UTC):
         raise JWTError("Token expired")
     return token_data
