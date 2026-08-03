@@ -15,6 +15,8 @@
 
 # 项目说明
 
+> 本仓库为 [AutoBangumi](https://github.com/EstrellaXD/Auto_Bangumi) 的分支（fork），基于上游 `3.1.14` 独立维护，版本号与上游无关，请以本仓库 Release 为准。
+
 <p align="center">
     <img title="AutoBangumi" src="docs/image/preview/window.png" alt="" width=75%>
 </p>
