@@ -9,7 +9,7 @@
   "[markdown]": {
     "editor.wordWrap": "off",
   },
-  "python.venvPath": "./backend/venv",
+  "python.venvPath": "./backend/.venv",
   "cSpell.words": [
     "Bangumi",
     "fastapi",
