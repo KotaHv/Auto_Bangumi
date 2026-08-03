@@ -1,5 +1,5 @@
 from loguru import logger
-from sqlmodel import Session, and_, delete, select
+from sqlmodel import Session, and_, delete, select, true
 
 from module.models import RSSItem, RSSUpdate
 
@@ -63,25 +63,31 @@ class RSSDatabase:
         self.session.refresh(db_data)
         return True
 
-    def search_id(self, _id: int) -> RSSItem:
+    def search_id(self, _id: int) -> RSSItem | None:
         return self.session.get(RSSItem, _id)
 
     def search_all(self) -> list[RSSItem]:
-        return self.session.exec(select(RSSItem)).all()
+        return list(self.session.exec(select(RSSItem)).all())
 
     def search_active(self) -> list[RSSItem]:
-        return self.session.exec(select(RSSItem).where(RSSItem.enabled)).all()
+        return list(
+            self.session.exec(select(RSSItem).where(RSSItem.enabled == true())).all()
+        )
 
     def search_aggregate(self) -> list[RSSItem]:
-        return self.session.exec(
-            select(RSSItem).where(and_(RSSItem.aggregate, RSSItem.enabled))
-        ).all()
+        return list(
+            self.session.exec(
+                select(RSSItem).where(
+                    and_(RSSItem.aggregate == true(), RSSItem.enabled == true())
+                )
+            ).all()
+        )
 
     def search_url(self, url: str) -> RSSItem | None:
         return self.session.exec(select(RSSItem).where(RSSItem.url == url)).first()
 
     def delete(self, _id: int) -> bool:
-        condition = delete(RSSItem).where(RSSItem.id == _id)
+        condition = delete(RSSItem).where(RSSItem.id == _id)  # type: ignore[arg-type]
         try:
             self.session.exec(condition)
             self.session.commit()

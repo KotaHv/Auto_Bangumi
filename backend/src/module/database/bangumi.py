@@ -25,7 +25,7 @@ class BangumiDatabase:
         self.session.commit()
         logger.debug(f"[Database] Insert {len(datas)} bangumi into database.")
 
-    def update(self, data: Bangumi | BangumiUpdate, _id: int = None) -> bool:
+    def update(self, data: Bangumi | BangumiUpdate, _id: int | None = None) -> bool:
         if _id and isinstance(data, BangumiUpdate):
             db_data = self.session.get(Bangumi, _id)
         elif isinstance(data, Bangumi):
@@ -52,6 +52,8 @@ class BangumiDatabase:
         # Update rss and added
         statement = select(Bangumi).where(Bangumi.title_raw == title_raw)
         bangumi = self.session.exec(statement).first()
+        if bangumi is None:
+            return
         bangumi.rss_link = rss_set
         bangumi.added = False
         self.session.add(bangumi)
@@ -62,6 +64,8 @@ class BangumiDatabase:
     def update_poster(self, title_raw, poster_link: str):
         statement = select(Bangumi).where(Bangumi.title_raw == title_raw)
         bangumi = self.session.exec(statement).first()
+        if bangumi is None:
+            return
         bangumi.poster_link = poster_link
         self.session.add(bangumi)
         self.session.commit()
@@ -82,7 +86,7 @@ class BangumiDatabase:
 
     def search_all(self) -> list[Bangumi]:
         statement = select(Bangumi)
-        return self.session.exec(statement).all()
+        return list(self.session.exec(statement).all())
 
     def search_id(self, _id: int) -> Bangumi | None:
         statement = select(Bangumi).where(Bangumi.id == _id)
@@ -94,7 +98,7 @@ class BangumiDatabase:
             logger.debug(f"[Database] Find bangumi id: {_id}.")
             return self.session.exec(statement).first()
 
-    def match_poster(self, bangumi_name: str) -> str:
+    def match_poster(self, bangumi_name: str) -> str | None:
         # Use like to match
         statement = select(Bangumi).where(
             func.instr(bangumi_name, Bangumi.official_title) > 0
@@ -145,7 +149,7 @@ class BangumiDatabase:
             and_(Bangumi.eps_collect == false(), Bangumi.deleted == false())
         )
         datas = self.session.exec(condition).all()
-        return datas
+        return list(datas)
 
     def not_added(self) -> list[Bangumi]:
         conditions = select(Bangumi).where(
@@ -154,11 +158,13 @@ class BangumiDatabase:
             )
         )
         datas = self.session.exec(conditions).all()
-        return datas
+        return list(datas)
 
     def disable_rule(self, _id: int):
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = self.session.exec(statement).first()
+        if bangumi is None:
+            return
         bangumi.deleted = True
         self.session.add(bangumi)
         self.session.commit()
@@ -167,7 +173,7 @@ class BangumiDatabase:
 
     def search_rss(self, rss_link: str) -> list[Bangumi]:
         statement = select(Bangumi).where(func.instr(rss_link, Bangumi.rss_link) > 0)
-        return self.session.exec(statement).all()
+        return list(self.session.exec(statement).all())
 
     def get_offset(self, _id: int) -> int:
         offset = self.session.exec(

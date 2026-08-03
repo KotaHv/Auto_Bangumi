@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlmodel import Session, SQLModel
 
 from module.models import Bangumi, User
@@ -27,7 +28,7 @@ class Database(Session):
     def migrate(self):
         # Run migration online
         bangumi_data = self.bangumi.search_all()
-        user_data = self.exec("SELECT * FROM user").all()
+        user_data = self.execute(text("SELECT * FROM user")).all()
         readd_bangumi = []
         for bangumi in bangumi_data:
             dict_data = bangumi.model_dump()
@@ -38,5 +39,5 @@ class Database(Session):
         self.commit()
         bangumi_data = self.bangumi.search_all()
         self.bangumi.add_all(readd_bangumi)
-        self.add(User(**user_data[0]))
+        self.add(User(**dict(user_data[0]._mapping)))
         self.commit()

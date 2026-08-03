@@ -50,22 +50,26 @@ class TorrentDatabase:
         self.session.refresh(data)
         logger.debug(f"Update {data.name} in database.")
 
-    def search(self, _id: int) -> Torrent:
+    def search(self, _id: int) -> Torrent | None:
         return self.session.exec(select(Torrent).where(Torrent.id == _id)).first()
 
     def search_all(self) -> list[Torrent]:
-        return self.session.exec(select(Torrent)).all()
+        return list(self.session.exec(select(Torrent)).all())
 
     def search_all_downloaded(self) -> list[Torrent]:
-        return self.session.exec(select(Torrent).where(Torrent.downloaded)).all()
+        return list(self.session.exec(select(Torrent).where(Torrent.downloaded)).all())
 
     def search_rss(self, rss_id: int) -> list[Torrent]:
-        return self.session.exec(select(Torrent).where(Torrent.rss_id == rss_id)).all()
+        return list(
+            self.session.exec(select(Torrent).where(Torrent.rss_id == rss_id)).all()
+        )
 
     def search_bangumi(self, bangumi_id: int) -> list[Torrent]:
-        return self.session.exec(
-            select(Torrent).where(Torrent.bangumi_id == bangumi_id)
-        ).all()
+        return list(
+            self.session.exec(
+                select(Torrent).where(Torrent.bangumi_id == bangumi_id)
+            ).all()
+        )
 
     def check_new(self, torrents_list: list[Torrent]) -> list[Torrent]:
         new_torrents = []
@@ -79,7 +83,12 @@ class TorrentDatabase:
     def get_bangumi_id(self, torrent_hash: str) -> int | None:
         return self.session.exec(
             select(Torrent.bangumi_id)
-            .where(and_(Torrent.hash == torrent_hash, Torrent.bangumi_id.isnot(None)))
+            .where(
+                and_(
+                    Torrent.hash == torrent_hash,
+                    Torrent.bangumi_id.isnot(None),  # type: ignore[attr-defined, optional-member-access]
+                )
+            )
             .order_by(desc(Torrent.id))
         ).first()
 

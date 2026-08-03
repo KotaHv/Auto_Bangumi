@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import text
 from sqlmodel import Session, select
 
 from module.models import ResponseModel
@@ -64,16 +65,16 @@ class UserDatabase:
         statement = """
         SELECT * FROM user
         """
-        result = self.session.exec(statement).first()
+        result = self.session.execute(text(statement)).mappings().first()
         if not result:
             return
         # add new data
-        user = User(username=result.username, password=result.password)
+        user = User(username=result["username"], password=result["password"])
         # Drop old table
         statement = """
         DROP TABLE user
         """
-        self.session.exec(statement)
+        self.session.execute(text(statement))
         # Create new table
         statement = """
         CREATE TABLE user (
@@ -82,7 +83,7 @@ class UserDatabase:
             password VARCHAR NOT NULL
         )
         """
-        self.session.exec(statement)
+        self.session.execute(text(statement))
         self.session.add(user)
         self.session.commit()
 
