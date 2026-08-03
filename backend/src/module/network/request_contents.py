@@ -21,7 +21,7 @@ class RequestContent(RequestURL):
         retry: int = 3,
     ) -> list[Torrent]:
         soup = self.get_xml(_url, retry)
-        if soup:
+        if soup is not None:
             torrent_titles, torrent_urls, torrent_homepage = rss_parser(soup)
             torrents: list[Torrent] = []
             if _filter is None:
@@ -74,7 +74,7 @@ class RequestContent(RequestURL):
 
     def get_rss_title(self, _url):
         soup = self.get_xml(_url)
-        if soup:
+        if soup is not None:
             return soup.find("./channel/title").text
 
     def get_magnet(self, _url) -> str | None:
