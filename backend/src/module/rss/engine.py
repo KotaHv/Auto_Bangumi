@@ -99,7 +99,7 @@ class RSSEngine(Database):
         return new_torrents
 
     def match_torrent(self, torrent: Torrent) -> Bangumi | None:
-        matched: Bangumi = self.bangumi.match_torrent(torrent.name)
+        matched: Bangumi | None = self.bangumi.match_torrent(torrent.name)
         if matched:
             if matched.filter == "":
                 return matched

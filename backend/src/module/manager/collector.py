@@ -8,7 +8,7 @@ from module.utils.multi_version_filter import filter_multi_version_torrents
 
 
 class SeasonCollector(DownloadClient):
-    def collect_season(self, bangumi: Bangumi, link: str = None):
+    def collect_season(self, bangumi: Bangumi, link: str | None = None):
         logger.info(
             f"Start collecting {bangumi.official_title} Season {bangumi.season}..."
         )
@@ -64,6 +64,13 @@ class SeasonCollector(DownloadClient):
             engine.bangumi.add(data)
             if torrents:
                 rss_item = engine.rss.search_url(data.rss_link)
+                if rss_item is None:
+                    return ResponseModel(
+                        status=False,
+                        status_code=406,
+                        msg_en=f"[Engine] RSS {data.rss_link} not found.",
+                        msg_zh=f"[Engine] 未找到 RSS {data.rss_link}。",
+                    )
                 for torrent in torrents:
                     torrent.rss_id = rss_item.id
                 self.add_torrent(torrents, data)

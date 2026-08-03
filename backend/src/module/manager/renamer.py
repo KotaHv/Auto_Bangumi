@@ -33,6 +33,7 @@ class Renamer(DownloadClient):
     ) -> str:
         season = str(file_info.season).zfill(2)
         episode = str(file_info.episode + offset).zfill(2)
+        language = file_info.language if isinstance(file_info, SubtitleFile) else ""
         if (
             not settings.bangumi_manage.retain_latest_media_version
             and file_info.episode_revision != 1
@@ -48,9 +49,9 @@ class Renamer(DownloadClient):
             logger.warning("[Renamer] Normal rename method is deprecated.")
             return file_info.media_path
         elif method == "subtitle_pn":
-            return f"{file_info.title} S{season}E{episode}.{file_info.language}{file_info.suffix}"
+            return f"{file_info.title} S{season}E{episode}.{language}{file_info.suffix}"
         elif method == "subtitle_advance":
-            return f"{bangumi_name} S{season}E{episode}.{file_info.language}{file_info.suffix}"
+            return f"{bangumi_name} S{season}E{episode}.{language}{file_info.suffix}"
         else:
             logger.error(f"[Renamer] Unknown rename method: {method}")
             return file_info.media_path
@@ -166,6 +167,8 @@ class Renamer(DownloadClient):
                     torrent_name=torrent_info.name,
                     season=season,
                 )
+                if ep is None:
+                    continue
                 key = f"{bangumi_name} S{season:02d}E{str(ep.episode).zfill(2)}"
                 grouped_torrents[key].append((torrent_info, ep))
 

@@ -31,7 +31,7 @@ def database_migration():
 def torrent_migration():
     with RSSEngine() as db, RequestContent() as req:
         engine = db.engine
-        torrents = db.exec(text("SELECT * FROM torrent")).mappings().all()
+        torrents = db.execute(text("SELECT * FROM torrent")).mappings().all()
         torrents = [dict(torrent) for torrent in torrents]
         for torrent in torrents:
             if torrent.get("hash") or torrent.get("bangumi_id") is None:
@@ -42,11 +42,14 @@ def torrent_migration():
                 info_hash = torrent_hash.from_magnet(url)
             else:
                 content = req.get_content(url)
+                if content is None:
+                    continue
                 info_hash = torrent_hash.from_torrent(content)
             torrent["hash"] = info_hash
         readd_torrents = [Torrent(**torrent) for torrent in torrents]
-        Torrent.__table__.drop(engine)
-        Torrent.__table__.create(engine)
+        table = Torrent.__table__  # type: ignore[attr-defined]
+        table.drop(engine)
+        table.create(engine)
         db.commit()
         db.torrent.add_all(readd_torrents)
         db.commit()

@@ -1,4 +1,5 @@
 from loguru import logger
+from qbittorrentapi.torrents import TorrentStatusesT
 
 from module.conf import settings
 from module.models import Bangumi, Torrent
@@ -74,7 +75,7 @@ class DownloadClient(TorrentPath):
         rule = {
             "enable": True,
             "mustContain": data.title_raw,
-            "mustNotContain": "|".join(data.filter),
+            "mustNotContain": data.filter.replace(",", "|"),
             "useRegex": True,
             "episodeFilter": "",
             "smartFilter": False,
@@ -101,7 +102,7 @@ class DownloadClient(TorrentPath):
     def get_torrent_info(
         self,
         category: str | None = "Bangumi",
-        status_filter: str | None = "completed",
+        status_filter: TorrentStatusesT | None = "completed",
         tag: str | None = None,
         hash: list[str] | str | None = None,
     ):

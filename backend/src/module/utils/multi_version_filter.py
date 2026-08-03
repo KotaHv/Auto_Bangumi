@@ -9,7 +9,9 @@ from module.parser.analyser import torrent_name_parser
 def filter_multi_version_torrents(torrents: list[Torrent]):
     if not torrents:
         return
-    grouped_torrents: list[tuple[Torrent, TorrentInfo]] = defaultdict(list)
+    grouped_torrents: defaultdict[str, list[tuple[Torrent, TorrentInfo | None]]] = (
+        defaultdict(list)
+    )
 
     for torrent in torrents:
         info = torrent_name_parser(torrent.name)
@@ -25,7 +27,14 @@ def filter_multi_version_torrents(torrents: list[Torrent]):
 
     for torrents_group in grouped_torrents.values():
         if len(torrents_group) > 1:
-            highest_revision = max(info.episode_revision for _, info in torrents_group)
+            highest_revision = max(
+                (
+                    info.episode_revision
+                    for _, info in torrents_group
+                    if info is not None
+                ),
+                default=0,
+            )
             for torrent, info in torrents_group:
-                if info.episode_revision < highest_revision:
+                if info is not None and info.episode_revision < highest_revision:
                     torrents.remove(torrent)

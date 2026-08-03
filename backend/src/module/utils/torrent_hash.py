@@ -5,12 +5,15 @@ from torrentool.bencode import Bencode
 from torrentool.torrent import Torrent
 
 
-def from_torrent(content: bytes):
-    torrent = Torrent(Bencode.decode(content))
+def from_torrent(content: bytes) -> str | None:
+    decoded = Bencode.decode(content)
+    if not isinstance(decoded, dict):
+        return None
+    torrent = Torrent(decoded)
     return torrent.info_hash
 
 
-def from_magnet(magnet_link: str):
+def from_magnet(magnet_link: str) -> str | None:
     magnet_params = urllib.parse.urlparse(magnet_link)
     magnet_params = urllib.parse.parse_qs(magnet_params.query)
     for info_hash in magnet_params.get("xt", []):

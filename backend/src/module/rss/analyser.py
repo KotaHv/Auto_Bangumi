@@ -13,13 +13,17 @@ from .engine import RSSEngine
 class RSSAnalyser(TitleParser):
     def official_title_parser(self, bangumi: Bangumi, rss: RSSItem, torrent: Torrent):
         if rss.parser == "mikan":
-            try:
-                bangumi.poster_link, bangumi.official_title = self.mikan_parser(
-                    torrent.homepage
-                )
-            except AttributeError:
+            if torrent.homepage is None:
                 logger.warning("[Parser] Mikan torrent has no homepage info.")
-                pass
+            else:
+                try:
+                    bangumi.poster_link, bangumi.official_title = self.mikan_parser(
+                        torrent.homepage
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"[Parser] Mikan parser failed with error: {e}. Use raw title instead."
+                    )
         elif rss.parser == "tmdb":
             tmdb_title, season, year, poster_link = self.tmdb_parser(
                 bangumi.official_title, bangumi.season, settings.rss_parser.language
@@ -55,7 +59,7 @@ class RSSAnalyser(TitleParser):
                 logger.info(f"[RSS] New bangumi founded: {bangumi.official_title}")
         return new_data
 
-    def torrent_to_data(self, torrent: Torrent, rss: RSSItem) -> Bangumi:
+    def torrent_to_data(self, torrent: Torrent, rss: RSSItem) -> Bangumi | None:
         bangumi = self.raw_parser(raw=torrent.name)
         if bangumi:
             self.official_title_parser(bangumi=bangumi, rss=rss, torrent=torrent)

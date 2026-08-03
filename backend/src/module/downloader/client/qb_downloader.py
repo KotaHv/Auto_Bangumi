@@ -97,7 +97,7 @@ class QbDownloader:
                 save_path=save_path,
                 category=category,
                 use_auto_torrent_management=False,
-                content_layout="NoSubFolder",
+                content_layout="NoSubfolder",
             )
             logger.debug(f"[Downloader] Add torrent response: {resp}")
             if isinstance(resp, str):

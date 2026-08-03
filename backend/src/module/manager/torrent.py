@@ -41,11 +41,11 @@ class TorrentManager(Database):
                 rss_links = filter(None, data.rss_link.split(","))
                 for rss_link in rss_links:
                     rss = self.rss.search_url(rss_link)
-                    if rss is None or rss.aggregate:
+                    if rss is None or rss.aggregate or rss.id is None:
                         continue
                     self.rss.delete(rss.id)
                 if data.offset != 0:
-                    torrents = self.torrent.search_bangumi(_id)
+                    torrents = self.torrent.search_bangumi(int(_id))
                     hashes = {torrent.hash for torrent in torrents if torrent.hash}
                     with DownloadClient() as client:
                         client.set_category(hashes, "BangumiFixed")
@@ -114,7 +114,7 @@ class TorrentManager(Database):
             )
 
     def update_rule(self, bangumi_id, data: BangumiUpdate):
-        old_data: Bangumi = self.bangumi.search_id(bangumi_id)
+        old_data: Bangumi | None = self.bangumi.search_id(bangumi_id)
         if old_data:
             # Move torrent
             match_list = self.__match_torrents_list(old_data)
@@ -154,6 +154,13 @@ class TorrentManager(Database):
 
     def refind_poster(self, bangumi_id: int):
         bangumi = self.bangumi.search_id(bangumi_id)
+        if bangumi is None:
+            return ResponseModel(
+                status_code=406,
+                status=False,
+                msg_en=f"Can't find data with {bangumi_id}",
+                msg_zh=f"无法找到 id {bangumi_id} 的数据",
+            )
         TitleParser().tmdb_poster_parser(bangumi)
         self.bangumi.update(bangumi)
         return ResponseModel(
