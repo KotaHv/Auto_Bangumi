@@ -11,16 +11,16 @@ router = APIRouter(prefix="/search", tags=["search"])
 @router.get(
     "/bangumi", response_model=list[Bangumi], dependencies=[Depends(get_current_user)]
 )
-async def search_torrents(site: str = "mikan", keywords: str = Query(None)):
+async def search_torrents(site: str = "mikan", keywords: str | None = Query(None)):
     """
     Server Send Event for per Bangumi item
     """
     if not keywords:
         return []
-    keywords = keywords.split(" ")
+    keyword_list = keywords.split(" ")
     with SearchTorrent() as st:
         return EventSourceResponse(
-            content=st.analyse_keyword(keywords=keywords, site=site),
+            content=st.analyse_keyword(keywords=keyword_list, site=site),
         )
 
 

@@ -37,7 +37,8 @@ class Settings(Config):
         with open(CONFIG_PATH, encoding="utf-8") as f:
             config = f.read()
         config_obj = Config.model_validate_json(config)
-        self.__dict__.update(config_obj.__dict__)
+        for key, value in config_obj.__dict__.items():
+            object.__setattr__(self, key, value)
         logger.info("Config loaded")
 
     def save(self, config_json: str | None = None):
@@ -66,7 +67,8 @@ class Settings(Config):
                         attr_name = attr[0] if isinstance(attr, tuple) else attr
                         config_dict[key][attr_name] = self.__val_from_env(env, attr)
         config_obj = Config.model_validate(config_dict)
-        self.__dict__.update(config_obj.__dict__)
+        for key, value in config_obj.__dict__.items():
+            object.__setattr__(self, key, value)
         logger.info("Config loaded from env")
 
     @staticmethod

@@ -10,12 +10,6 @@ from .response import u_response
 router = APIRouter(prefix="/bangumi", tags=["bangumi"])
 
 
-def str_to_list(data: Bangumi):
-    data.filter = data.filter.split(",")
-    data.rss_link = data.rss_link.split(",")
-    return data
-
-
 @router.get(
     "/get/all", response_model=list[Bangumi], dependencies=[Depends(get_current_user)]
 )
@@ -150,6 +144,14 @@ async def reset_all():
 )
 async def rename(data: Bangumi):
     with Renamer() as renamer:
+        if data.save_path is None:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "msg_en": "No save path provided.",
+                    "msg_zh": "缺少保存路径。",
+                },
+            )
         bangumi_name, _ = renamer._path_to_bangumi(data.save_path)
         renamer.rename(bangumi_name)
     return JSONResponse(
