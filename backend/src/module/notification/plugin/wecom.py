@@ -36,5 +36,7 @@ class WecomNotification(RequestContent):
             "picurl": picurl,
         }
         resp = self.post_data(self.notification_url, data)
+        if resp is None:
+            return False
         logger.debug(f"Wecom notification: {resp.status_code}")
         return resp.status_code == 200

@@ -26,5 +26,7 @@ class BarkNotification(RequestContent):
             "device_key": self.token,
         }
         resp = self.post_data(self.notification_url, data)
+        if resp is None:
+            return False
         logger.debug(f"Bark notification: {resp.status_code}")
         return resp.status_code == 200

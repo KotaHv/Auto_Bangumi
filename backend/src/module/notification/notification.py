@@ -28,6 +28,10 @@ def getClient(type: str):
 class PostNotification:
     def __init__(self):
         Notifier = getClient(settings.notification.type)
+        if Notifier is None:
+            raise ValueError(
+                f"Unsupported notification type: {settings.notification.type}"
+            )
         self.notifier = Notifier(
             token=settings.notification.token, chat_id=settings.notification.chat_id
         )
@@ -46,6 +50,7 @@ class PostNotification:
         except Exception as e:
             logger.warning(f"Failed to send notification: {e}")
             return False
+        return True
 
     def __enter__(self):
         self.notifier.__enter__()
