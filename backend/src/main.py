@@ -53,7 +53,6 @@ if VERSION != "DEV_VERSION":
     @app.get("/{path:path}")
     def html(request: Request, path: str):
         files = os.listdir("dist")
-        print(files)
         if path in files:
             return FileResponse(f"dist/{path}")
         else:
