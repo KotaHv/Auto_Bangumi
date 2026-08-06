@@ -4,9 +4,7 @@ from module.conf import VERSION, settings
 from module.models import ResponseModel
 from module.update import (
     cache_image,
-    data_migration,
     first_run,
-    from_30_to_31,
     start_up,
     torrent_migration,
 )
@@ -38,15 +36,6 @@ class Program(RenameThread, RSSThread):
             first_run()
             logger.info("[Core] No db file exists, create database file.")
             return {"status": "First run detected."}
-        if self.legacy_data:
-            logger.info(
-                "[Core] Legacy data detected, starting data migration, please wait patiently."
-            )
-            data_migration()
-        elif self.version_update:
-            # Update database
-            from_30_to_31()
-            logger.info("[Core] Database updated.")
         if not self.img_cache:
             logger.info("[Core] No image cache exists, create image cache.")
             cache_image()

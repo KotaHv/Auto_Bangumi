@@ -2,7 +2,6 @@ import asyncio
 import threading
 
 from module.checker import Checker
-from module.conf import LEGACY_DATA_PATH
 
 
 class ProgramStatus(Checker):
@@ -42,10 +41,6 @@ class ProgramStatus(Checker):
     @property
     def first_run(self):
         return self.check_first_run()
-
-    @property
-    def legacy_data(self):
-        return LEGACY_DATA_PATH.exists()
 
     @property
     def version_update(self):
