@@ -10,28 +10,46 @@ const { getConfig, getSettingGroup } = useConfigStore();
 const logSetting = getSettingGroup('log');
 
 const formatLog = computed(() => {
-  const list = log.value
+  const lines = log.value
     .trim()
     .split('\n')
     .filter((i) => i !== '');
-  const startIndex = list.findIndex((i) => /Version/.test(i));
+  const startIndex = lines.findIndex((i) => /Version/.test(i));
+  const logs = lines.slice(startIndex === -1 ? 0 : startIndex);
 
-  return list.slice(startIndex === -1 ? 0 : startIndex).map((i, index) => {
-    const parts = i.split('|');
-    const [date, type, module_content] = [
-      ...parts.slice(0, 2),
-      parts.slice(2).join('|'),
-    ];
-    const [module, ...contents] = module_content.split('-');
-    const content = contents.join('-');
-    return {
-      index,
-      date: date.trim(),
-      type: type.trim(),
-      module: module.trim(),
-      content: content.trim(),
-    };
-  });
+  const list: Array<{
+    index: number;
+    date: string;
+    type: string;
+    module: string;
+    content: string;
+  }> = [];
+
+  for (const line of logs) {
+    const parts = line.split('|');
+    if (parts.length >= 3) {
+      const [module, ...contents] = parts.slice(2).join('|').split('-');
+      list.push({
+        index: list.length,
+        date: parts[0].trim(),
+        type: parts[1].trim(),
+        module: module.trim(),
+        content: contents.join('-').trim(),
+      });
+    } else if (list.length > 0) {
+      list[list.length - 1].content += `\n${line}`;
+    } else {
+      list.push({
+        index: list.length,
+        date: '',
+        type: '',
+        module: '',
+        content: line,
+      });
+    }
+  }
+
+  return list;
 });
 
 function typeColor(type: string) {
@@ -102,7 +120,7 @@ onDeactivated(() => {
                 <div flex-1 break-all style="color: #73bccd">
                   {{ i.module }}
                 </div>
-                <div flex-1 break-all>{{ i.content }}</div>
+                <div flex-1 break-all whitespace-pre-wrap>{{ i.content }}</div>
               </div>
             </template>
           </div>
@@ -121,7 +139,7 @@ onDeactivated(() => {
                   <div>[{{ i.date }}]</div>
                 </div>
 
-                <div flex-1 break-all>{{ i.content }}</div>
+                <div flex-1 break-all whitespace-pre-wrap>{{ i.content }}</div>
               </div>
             </template>
           </div>
