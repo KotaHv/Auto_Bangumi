@@ -94,11 +94,7 @@
     }
   },
   "log": {
-    "bug_repo": "Bug Report",
-    "contact_info": "Contact Infomation",
     "copy": "Copy",
-    "go": "Go",
-    "join": "Join",
     "reset": "Reset",
     "title": "Log",
     "update_now": "Update Now"

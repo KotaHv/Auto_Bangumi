@@ -94,11 +94,7 @@
     }
   },
   "log": {
-    "bug_repo": "Bug 反馈",
-    "contact_info": "联系方式",
     "copy": "复制",
-    "go": "访问",
-    "join": "加入",
     "reset": "重置",
     "title": "日志",
     "update_now": "立即更新"
