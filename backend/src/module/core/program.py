@@ -30,11 +30,7 @@ class Program(RenameThread, RSSThread):
     def __start_info():
         for line in figlet.splitlines():
             logger.info(line.strip("\n"))
-        logger.info(
-            f"Version {VERSION}  Author: EstrellaXD Twitter: https://twitter.com/Estrella_Pan"
-        )
-        logger.info("GitHub: https://github.com/EstrellaXD/Auto_Bangumi/")
-        logger.info("Starting AutoBangumi...")
+        logger.info(f"Starting AutoBangumi Version {VERSION}...")
 
     def startup(self):
         self.__start_info()
