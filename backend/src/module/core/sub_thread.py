@@ -37,7 +37,8 @@ class RSSThread(ProgramStatus):
             eps_complete()
 
     def rss_start(self):
-        self.rss_thread.start()
+        if not self._rss_thread.is_alive():
+            self.rss_thread.start()
 
     def rss_stop(self):
         if self._rss_thread.is_alive():
@@ -78,7 +79,8 @@ class RenameThread(ProgramStatus):
                     time.sleep(2)
 
     def rename_start(self):
-        self.rename_thread.start()
+        if not self._rename_thread.is_alive():
+            self.rename_thread.start()
 
     def rename_stop(self):
         if self._rename_thread.is_alive():

@@ -1,3 +1,5 @@
+import threading
+
 from loguru import logger
 
 from module.conf import VERSION, settings
@@ -22,8 +24,15 @@ figlet = r"""
                                            |___/
 """
 
+DOWNLOADER_RETRY_INTERVAL = 60
+
 
 class Program(RenameThread, RSSThread):
+    def __init__(self):
+        super().__init__()
+        self._retry_stop_event = threading.Event()
+        self._retry_thread: threading.Thread | None = None
+
     @staticmethod
     def __start_info():
         for line in figlet.splitlines():
@@ -47,31 +56,43 @@ class Program(RenameThread, RSSThread):
         self.start()
 
     def start(self):
-        self.stop_event.clear()
-        settings.load()
-        if self.downloader_status:
-            if self.enable_renamer:
-                self.rename_start()
-            if self.enable_rss:
-                self.rss_start()
-            logger.info("Program running.")
-            return ResponseModel(
-                status=True,
-                status_code=200,
-                msg_en="Program started.",
-                msg_zh="程序启动成功。",
-            )
-        else:
-            self.stop_event.set()
-            logger.warning("Program failed to start.")
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="Program failed to start.",
-                msg_zh="程序启动失败。",
-            )
+        with self.lock:
+            self.stop_event.clear()
+            settings.load()
+            # Reset cached status so every start attempt performs a fresh check.
+            self._downloader_status = False
+            if self.downloader_status:
+                self._stop_retry()
+                if self.enable_renamer:
+                    self.rename_start()
+                if self.enable_rss:
+                    self.rss_start()
+                logger.info("Program running.")
+                return ResponseModel(
+                    status=True,
+                    status_code=200,
+                    msg_en="Program started.",
+                    msg_zh="程序启动成功。",
+                )
+            else:
+                self.stop_event.set()
+                if self._retry_thread and self._retry_thread.is_alive():
+                    logger.debug("[Core] Downloader is still unavailable, retrying...")
+                else:
+                    self._start_retry()
+                    logger.warning(
+                        "Program failed to start, will keep retrying in the "
+                        "background until the downloader is ready."
+                    )
+                return ResponseModel(
+                    status=False,
+                    status_code=406,
+                    msg_en="Program failed to start, will retry automatically.",
+                    msg_zh="程序启动失败，将自动重试。",
+                )
 
     def stop(self):
+        self._stop_retry()
         if self.is_running:
             self.stop_event.set()
             self.rename_stop()
@@ -89,6 +110,24 @@ class Program(RenameThread, RSSThread):
                 msg_en="Program is not running.",
                 msg_zh="程序未运行。",
             )
+
+    def _start_retry(self):
+        self._retry_stop_event.clear()
+        if self._retry_thread and self._retry_thread.is_alive():
+            return
+        self._retry_thread = threading.Thread(
+            target=self._retry_loop,
+            name="DownloaderRetryThread",
+            daemon=True,
+        )
+        self._retry_thread.start()
+
+    def _retry_loop(self):
+        while not self._retry_stop_event.wait(DOWNLOADER_RETRY_INTERVAL):
+            self.start()
+
+    def _stop_retry(self):
+        self._retry_stop_event.set()
 
     def restart(self):
         self.stop()
