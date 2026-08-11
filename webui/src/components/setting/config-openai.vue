@@ -37,7 +37,7 @@ const openAIItems: SettingItem<ExperimentalOpenAI>[] = [
     label: () => t('config.experimental_openai_set.model'),
     type: 'input',
     prop: {
-      placeholder: 'gpt-4o-mini',
+      placeholder: 'gpt-5.6-luna',
     },
   },
 ];

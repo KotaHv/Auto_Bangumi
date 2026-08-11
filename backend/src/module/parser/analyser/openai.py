@@ -65,7 +65,7 @@ class OpenAIParser:
         *,
         api_key: str,
         base_url: str = "https://api.openai.com/v1",
-        model: str = "gpt-4o-mini",
+        model: str = "gpt-5.6-luna",
     ) -> None:
         self.api_key = api_key
         self.base_url = base_url

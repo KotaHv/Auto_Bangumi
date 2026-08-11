@@ -106,7 +106,7 @@ export const initConfig: Config = {
     enable: false,
     api_key: '',
     base_url: 'https://api.openai.com/v1/',
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.6-luna',
   },
 };
 

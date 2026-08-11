@@ -79,7 +79,7 @@ class ExperimentalOpenAI(BaseModel):
         ),
         Field(description="OpenAI api base url"),
     ] = "https://api.openai.com/v1"
-    model: Annotated[str, Field(description="OpenAI model")] = "gpt-4o-mini"
+    model: Annotated[str, Field(description="OpenAI model")] = "gpt-5.6-luna"
 
 
 class Config(BaseModel):
