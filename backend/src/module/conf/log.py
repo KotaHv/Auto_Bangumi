@@ -39,3 +39,4 @@ def setup_logger(level: str = "INFO", reset: bool = False):
     logger.add(sys.stderr, level=level)
     logger.add(LOG_PATH, level=level)
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+    logging.getLogger("urllib3").setLevel(logging.ERROR)
