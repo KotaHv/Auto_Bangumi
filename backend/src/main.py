@@ -2,16 +2,61 @@ import logging
 import os
 
 import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from qbittorrentapi.exceptions import (
+    APIConnectionError,
+    Conflict409Error,
+    Forbidden403Error,
+    LoginFailed,
+    Unauthorized401Error,
+)
+from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from module.api import v1
 from module.conf import VERSION, settings, setup_logger
 
 setup_logger(reset=True)
 logger = logging.getLogger(__name__)
+
+# Order matters: LoginFailed/Forbidden403Error/etc. all inherit from
+# APIConnectionError, so specific subclasses must come first.
+ERROR_MESSAGES: tuple[tuple[type[Exception], str, str], ...] = (
+    (
+        LoginFailed,
+        "Failed to log in to the downloader. Check username/password or API key.",
+        "下载器登录失败,请检查用户名/密码或 API Key。",
+    ),
+    (
+        Unauthorized401Error,
+        "Downloader authentication failed. Check the API key.",
+        "下载器认证失败,请检查 API Key。",
+    ),
+    (
+        Forbidden403Error,
+        "Downloader refused access (IP may be banned).",
+        "下载器拒绝访问(IP 可能被封禁)。",
+    ),
+    (
+        Conflict409Error,
+        "Downloader rejected the operation (resource conflict).",
+        "下载器拒绝了操作(资源冲突)。",
+    ),
+    (
+        APIConnectionError,
+        "Failed to connect to the downloader.",
+        "无法连接下载器。",
+    ),
+    (
+        RequestsConnectionError,
+        "Network connection failed.",
+        "网络连接失败。",
+    ),
+)
+
+INTERNAL_SERVER_ERROR = ("Internal server error.", "服务器内部错误。")
 uvicorn_logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -29,6 +74,29 @@ uvicorn_logging_config = {
 
 def create_app() -> FastAPI:
     app = FastAPI()
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        logger.exception(
+            "Unhandled exception on %s %s", request.method, request.url.path
+        )
+        msg_en, msg_zh = INTERNAL_SERVER_ERROR
+        for exc_type, mapped_en, mapped_zh in ERROR_MESSAGES:
+            if isinstance(exc, exc_type):
+                msg_en, msg_zh = mapped_en, mapped_zh
+                break
+        return JSONResponse(
+            status_code=500,
+            content={"msg_en": msg_en, "msg_zh": msg_zh},
+        )
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(_request: Request, exc: HTTPException):
+        if isinstance(exc.detail, dict):
+            content = exc.detail
+        else:
+            content = {"msg_en": str(exc.detail), "msg_zh": str(exc.detail)}
+        return JSONResponse(status_code=exc.status_code, content=content)
 
     # mount routers
     app.include_router(v1, prefix="/api")
