@@ -1,6 +1,6 @@
 import time
 
-import httpx
+import httpx2
 from loguru import logger
 
 from module.conf import settings
@@ -21,7 +21,7 @@ class RequestURL:
                 )
                 req.raise_for_status()
                 return req
-            except httpx.RequestError:
+            except httpx2.RequestError:
                 logger.debug(f"[Network] Cannot connect to {url}. Wait for 5 seconds.")
                 try_time += 1
                 if try_time >= retry:
@@ -42,7 +42,7 @@ class RequestURL:
                 req = self.session.post(url=url, data=data)
                 req.raise_for_status()
                 return req
-            except httpx.RequestError:
+            except httpx2.RequestError:
                 logger.warning(
                     f"[Network] Cannot connect to {url}. Wait for 5 seconds."
                 )
@@ -61,10 +61,10 @@ class RequestURL:
         if "://" not in url:
             url = f"http://{url}"
         try:
-            req = httpx.head(url=url)
+            req = httpx2.head(url=url)
             req.raise_for_status()
             return True
-        except httpx.RequestError:
+        except httpx2.RequestError:
             logger.debug(f"[Network] Cannot connect to {url}.")
             return False
 
@@ -73,13 +73,13 @@ class RequestURL:
             req = self.session.post(url=url, data=data, files=files)
             req.raise_for_status()
             return req
-        except httpx.RequestError:
+        except httpx2.RequestError:
             logger.warning(f"[Network] Cannot connect to {url}.")
             return None
 
     def __enter__(self):
         proxy = build_proxy_url() if settings.proxy.enable else None
-        self.session = httpx.Client(
+        self.session = httpx2.Client(
             headers=self.headers, http2=True, proxy=proxy, timeout=5
         )
         return self

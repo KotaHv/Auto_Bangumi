@@ -1,7 +1,7 @@
 import re
 import xml.etree.ElementTree
 
-import httpx
+import httpx2
 import lxml.etree as etree
 from loguru import logger
 
@@ -58,10 +58,10 @@ class RequestContent(RequestURL):
         if req:
             return req.json()
 
-    def post_data(self, _url, data: dict) -> httpx.Response | None:
+    def post_data(self, _url, data: dict) -> httpx2.Response | None:
         return self.post_url(_url, data)
 
-    def post_files(self, _url, data: dict, files: dict) -> httpx.Response | None:
+    def post_files(self, _url, data: dict, files: dict) -> httpx2.Response | None:
         return self.post_form(_url, data, files)
 
     def get_html(self, _url) -> str | None:

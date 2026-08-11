@@ -40,5 +40,5 @@ def setup_logger(level: str = "INFO", reset: bool = False):
     logger.add(LOG_PATH, level=level)
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
     logging.getLogger("urllib3").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)

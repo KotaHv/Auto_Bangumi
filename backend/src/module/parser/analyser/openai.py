@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 from openai import OpenAI
 
 from module.conf import settings
@@ -71,12 +71,14 @@ class OpenAIParser:
         self.base_url = base_url
         self.model = model
         self.http_client = (
-            httpx.Client(proxy=build_proxy_url()) if settings.proxy.enable else None
+            httpx2.Client(proxy=build_proxy_url()) if settings.proxy.enable else None
         )
 
     def __enter__(self) -> OpenAIParser:
         self.client = OpenAI(
-            api_key=self.api_key, base_url=self.base_url, http_client=self.http_client
+            api_key=self.api_key,
+            base_url=self.base_url,
+            http_client=self.http_client,  # type: ignore[arg-type]  # openai SDK supports httpx2 at runtime
         )
         return self
 
