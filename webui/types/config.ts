@@ -7,7 +7,6 @@ export interface Config {
     webui_port: number;
   };
   downloader: {
-    type: 'qbittorrent';
     host: string;
     username: string;
     password: string;
@@ -63,7 +62,6 @@ export const initConfig: Config = {
     webui_port: 0,
   },
   downloader: {
-    type: 'qbittorrent',
     host: '',
     username: '',
     password: '',
@@ -123,8 +121,6 @@ export type Proxy = getItem<'proxy'>;
 export type Notification = getItem<'notification'>;
 export type ExperimentalOpenAI = getItem<'experimental_openai'>;
 
-/** 下载方式 */
-export type DownloaderType = UnionToTuple<Downloader['type']>;
 /** rss parser 源 */
 export type RssParserType = UnionToTuple<RssParser['type']>;
 /** rss parser 方法 */

@@ -9,7 +9,6 @@ import module.core.sub_thread as sub_thread_module
 from module.checker import Checker
 from module.core.sub_thread import RSSThread
 from module.downloader import DownloadClient
-from module.downloader.client.qb_downloader import QbDownloader
 
 
 def connection_error():
@@ -20,34 +19,35 @@ def connection_error():
 
 
 def test_auth_success_returns_true():
-    qb = object.__new__(QbDownloader)
-    qb._client = MagicMock()
-    assert qb.auth() is True
-    qb._client.auth_log_in.assert_called_once()
+    client = object.__new__(DownloadClient)
+    client._client = MagicMock()
+    client.auth()
+    assert client.authed is True
+    client._client.auth_log_in.assert_called_once()
 
 
 @pytest.mark.parametrize("error", [LoginFailed, Forbidden403Error])
 def test_auth_raises_typed_errors(error):
-    qb = object.__new__(QbDownloader)
-    qb._client = MagicMock()
-    qb._client.auth_log_in.side_effect = error()
+    client = object.__new__(DownloadClient)
+    client._client = MagicMock()
+    client._client.auth_log_in.side_effect = error()
     with pytest.raises(error):
-        qb.auth()
+        client.auth()
 
 
 def test_auth_raises_connection_error():
-    qb = object.__new__(QbDownloader)
-    qb._client = MagicMock()
-    qb._client.auth_log_in.side_effect = connection_error
+    client = object.__new__(DownloadClient)
+    client._client = MagicMock()
+    client._client.auth_log_in.side_effect = connection_error
     with pytest.raises(APIConnectionError) as exc_info:
-        qb.auth()
+        client.auth()
     assert isinstance(exc_info.value.__context__, ConnectionError)
 
 
 def test_download_client_enter_propagates_auth_failure():
     client = DownloadClient()
-    client.client._client = MagicMock()
-    client.client._client.auth_log_in.side_effect = LoginFailed()
+    client._client = MagicMock()
+    client._client.auth_log_in.side_effect = LoginFailed()
     with pytest.raises(LoginFailed):
         with client:
             pass

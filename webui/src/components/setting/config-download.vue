@@ -1,23 +1,13 @@
 <script lang="ts" setup>
-import type { Downloader, DownloaderType } from '#/config';
+import type { Downloader } from '#/config';
 import type { SettingItem } from '#/components';
 
 const { t } = useMyI18n();
 const { getSettingGroup } = useConfigStore();
 
 const downloader = getSettingGroup('downloader');
-const downloaderType: DownloaderType = ['qbittorrent'];
 
 const items: SettingItem<Downloader>[] = [
-  {
-    configKey: 'type',
-    label: () => t('config.downloader_set.type'),
-    type: 'select',
-    css: 'w-115',
-    prop: {
-      items: downloaderType,
-    },
-  },
   {
     configKey: 'host',
     label: () => t('config.downloader_set.host'),

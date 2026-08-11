@@ -58,16 +58,3 @@ class TorrentPath:
         )
         save_path = Path(settings.downloader.path) / folder / f"Season {data.season}"
         return str(save_path)
-
-    @staticmethod
-    def _rule_name(data: Bangumi):
-        rule_name = (
-            f"[{data.group_name}] {data.official_title} S{data.season}"
-            if settings.bangumi_manage.group_tag
-            else f"{data.official_title} S{data.season}"
-        )
-        return rule_name
-
-    @staticmethod
-    def _join_path(*args):
-        return str(Path(*args))

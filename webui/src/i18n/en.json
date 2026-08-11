@@ -7,8 +7,7 @@
       "password": "Password",
       "path": "Download Path",
       "ssl": "SSL",
-      "title": "Downloader Setting",
-      "type": "Downloader Type",
+      "title": "qBittorrent Setting",
       "username": "Username"
     },
     "experimental_openai_set": {

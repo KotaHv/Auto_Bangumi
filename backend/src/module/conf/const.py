@@ -8,7 +8,6 @@ DEFAULT_SETTINGS = {
         "data_version": 4.0,
     },
     "downloader": {
-        "type": "qbittorrent",
         "host": "127.0.0.1:8080",
         "username": "admin",
         "password": "adminadmin",

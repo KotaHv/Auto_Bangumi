@@ -7,8 +7,7 @@
       "password": "密码",
       "path": "下载地址",
       "ssl": "SSL",
-      "title": "下载设置",
-      "type": "下载器类型",
+      "title": "qBittorrent 设置",
       "username": "用户名"
     },
     "experimental_openai_set": {

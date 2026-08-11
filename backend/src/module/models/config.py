@@ -13,7 +13,6 @@ class Program(BaseModel):
 
 
 class Downloader(BaseModel):
-    type: Annotated[str, Field(description="Downloader type")] = "qbittorrent"
     host: Annotated[ExpandedString, Field(description="Downloader host")] = (
         "172.17.0.1:8080"
     )

@@ -72,7 +72,6 @@ class TorrentManager(Database):
         data = self.bangumi.search_id(int(_id))
         if isinstance(data, Bangumi):
             with DownloadClient() as client:
-                # client.remove_rule(data.rule_name)
                 data.deleted = True
                 self.bangumi.update(data)
                 if file:
