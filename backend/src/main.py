@@ -80,14 +80,18 @@ def create_app() -> FastAPI:
         logger.exception(
             "Unhandled exception on %s %s", request.method, request.url.path
         )
-        msg_en, msg_zh = INTERNAL_SERVER_ERROR
         for exc_type, mapped_en, mapped_zh in ERROR_MESSAGES:
             if isinstance(exc, exc_type):
-                msg_en, msg_zh = mapped_en, mapped_zh
-                break
+                return JSONResponse(
+                    status_code=406,
+                    content={"msg_en": mapped_en, "msg_zh": mapped_zh},
+                )
         return JSONResponse(
             status_code=500,
-            content={"msg_en": msg_en, "msg_zh": msg_zh},
+            content={
+                "msg_en": INTERNAL_SERVER_ERROR[0],
+                "msg_zh": INTERNAL_SERVER_ERROR[1],
+            },
         )
 
     @app.exception_handler(HTTPException)
