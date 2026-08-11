@@ -34,12 +34,12 @@ axios.interceptors.response.use(
         if (errorMsg) message.error(errorMsg);
         break;
       case 500:
-        isLoggedIn.value = false;
         message.error(
-          returnUserLangText({
-            en: 'Server error!',
-            'zh-CN': '服务器错误！',
-          })
+          errorMsg ||
+            returnUserLangText({
+              en: 'Server error!',
+              'zh-CN': '服务器错误！',
+            })
         );
         break;
     }
