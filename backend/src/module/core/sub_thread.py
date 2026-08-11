@@ -1,8 +1,6 @@
 import threading
 import time
 
-from loguru import logger
-
 from module.conf import settings
 from module.downloader import DownloadClient
 from module.manager import Renamer, eps_complete
@@ -21,13 +19,7 @@ class RSSThread(ProgramStatus):
         self.analyser = RSSAnalyser()
 
     def rss_loop(self):
-        while not self.stop_event.is_set():
-            try:
-                self._rss_loop()
-            except Exception as e:
-                logger.exception(f"[RSS] error: {e}")
-            finally:
-                self.stop_event.wait(settings.program.rss_time)
+        self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
 
     def _rss_loop(self):
         with DownloadClient() as client, RSSEngine() as engine:
@@ -61,13 +53,7 @@ class RenameThread(ProgramStatus):
         )
 
     def rename_loop(self):
-        while not self.stop_event.is_set():
-            try:
-                self._rename_loop()
-            except Exception as e:
-                logger.exception(f"[Renamer] error: {e}")
-            finally:
-                self.stop_event.wait(settings.program.rename_time)
+        self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
 
     def _rename_loop(self):
         with Renamer() as renamer:

@@ -1,15 +1,11 @@
-import time
-
 from loguru import logger
-from qbittorrentapi import Client, LoginFailed
+from qbittorrentapi import Client
 from qbittorrentapi.exceptions import (
     APIConnectionError,
     Conflict409Error,
-    Forbidden403Error,
 )
 from qbittorrentapi.torrents import TorrentsAddedMetadata, TorrentStatusesT
 
-from module.ab_decorator import qb_connect_failed_wait
 from module.utils import torrent_hash
 
 
@@ -26,31 +22,9 @@ class QbDownloader:
         self.host = host
         self.username = username
 
-    def auth(self, retry=3):
-        times = 0
-        while times < retry:
-            try:
-                self._client.auth_log_in()
-                return True
-            except LoginFailed:
-                logger.error(
-                    f"Can't login qBittorrent Server {self.host} by {self.username}, retry in {5} seconds."
-                )
-                time.sleep(5)
-                times += 1
-            except Forbidden403Error:
-                logger.error("Login refused by qBittorrent Server")
-                logger.info("Please release the IP in qBittorrent Server")
-                break
-            except APIConnectionError:
-                logger.error("Cannot connect to qBittorrent Server")
-                logger.info("Please check the IP and port in WebUI settings")
-                time.sleep(10)
-                times += 1
-            except Exception as e:
-                logger.error(f"Unknown error: {e}")
-                break
-        return False
+    def auth(self):
+        self._client.auth_log_in()
+        return True
 
     def logout(self):
         self._client.auth_log_out()
@@ -65,18 +39,15 @@ class QbDownloader:
     def check_rss(self, rss_link: str):
         pass
 
-    @qb_connect_failed_wait
     def prefs_init(self, prefs):
         return self._client.app_set_preferences(prefs=prefs)
 
-    @qb_connect_failed_wait
     def get_app_prefs(self):
         return self._client.app_preferences()
 
     def add_category(self, category):
         return self._client.torrents_createCategory(name=category)
 
-    @qb_connect_failed_wait
     def torrents_info(
         self,
         status_filter: TorrentStatusesT | None,

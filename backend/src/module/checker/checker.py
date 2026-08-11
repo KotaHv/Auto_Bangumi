@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import httpx
-from loguru import logger
 from sqlalchemy import inspect
 
 from module.conf import settings
@@ -51,32 +49,9 @@ class Checker:
     @staticmethod
     def check_downloader() -> bool:
         try:
-            url = (
-                f"http://{settings.downloader.host}"
-                if "://" not in settings.downloader.host
-                else f"{settings.downloader.host}"
-            )
-            response = httpx.get(url, timeout=2)
-            # if settings.downloader.type in response.text.lower():
-            if (
-                "qbittorrent" in response.text.lower()
-                or "vuetorrent" in response.text.lower()
-            ):
-                with DownloadClient() as client:
-                    if client.authed:
-                        return True
-                    else:
-                        return False
-            else:
-                return False
-        except httpx.ReadTimeout:
-            logger.error("[Checker] Downloader connect timeout.")
-            return False
-        except httpx.ConnectError:
-            logger.error("[Checker] Downloader connect failed.")
-            return False
-        except Exception as e:
-            logger.error(f"[Checker] Downloader connect failed: {e}")
+            with DownloadClient() as client:
+                return client.authed
+        except Exception:
             return False
 
     @staticmethod
