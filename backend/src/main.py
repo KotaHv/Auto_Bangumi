@@ -1,4 +1,3 @@
-import logging
 import os
 
 import uvicorn
@@ -6,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 from qbittorrentapi.exceptions import (
     APIConnectionError,
     Conflict409Error,
@@ -19,7 +19,6 @@ from module.api import v1
 from module.conf import VERSION, settings, setup_logger
 
 setup_logger(reset=True)
-logger = logging.getLogger(__name__)
 
 # Order matters: LoginFailed/Forbidden403Error/etc. all inherit from
 # APIConnectionError, so specific subclasses must come first.
@@ -66,21 +65,6 @@ def _downloader_error_handler(msg_en: str, msg_zh: str):
         )
 
     return handler
-
-
-uvicorn_logging_config = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": logger.handlers,
-    "loggers": {
-        "uvicorn": {
-            "level": logger.level,
-        },
-        "uvicorn.access": {
-            "level": "WARNING",
-        },
-    },
-}
 
 
 def create_app() -> FastAPI:
@@ -142,5 +126,5 @@ if __name__ == "__main__":
         app,
         host=host,
         port=settings.program.webui_port,
-        log_config=uvicorn_logging_config,
+        log_config=None,
     )
