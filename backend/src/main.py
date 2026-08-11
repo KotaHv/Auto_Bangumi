@@ -56,7 +56,18 @@ ERROR_MESSAGES: tuple[tuple[type[Exception], str, str], ...] = (
     ),
 )
 
-INTERNAL_SERVER_ERROR = ("Internal server error.", "服务器内部错误。")
+
+def _downloader_error_handler(msg_en: str, msg_zh: str):
+    async def handler(_request: Request, exc: Exception):
+        logger.warning("Handled downloader error %s: %s", type(exc).__name__, exc)
+        return JSONResponse(
+            status_code=406,
+            content={"msg_en": msg_en, "msg_zh": msg_zh},
+        )
+
+    return handler
+
+
 uvicorn_logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -75,25 +86,6 @@ uvicorn_logging_config = {
 def create_app() -> FastAPI:
     app = FastAPI()
 
-    @app.exception_handler(Exception)
-    async def unhandled_exception_handler(request: Request, exc: Exception):
-        logger.exception(
-            "Unhandled exception on %s %s", request.method, request.url.path
-        )
-        for exc_type, mapped_en, mapped_zh in ERROR_MESSAGES:
-            if isinstance(exc, exc_type):
-                return JSONResponse(
-                    status_code=406,
-                    content={"msg_en": mapped_en, "msg_zh": mapped_zh},
-                )
-        return JSONResponse(
-            status_code=500,
-            content={
-                "msg_en": INTERNAL_SERVER_ERROR[0],
-                "msg_zh": INTERNAL_SERVER_ERROR[1],
-            },
-        )
-
     @app.exception_handler(HTTPException)
     async def http_exception_handler(_request: Request, exc: HTTPException):
         if isinstance(exc.detail, dict):
@@ -101,6 +93,9 @@ def create_app() -> FastAPI:
         else:
             content = {"msg_en": str(exc.detail), "msg_zh": str(exc.detail)}
         return JSONResponse(status_code=exc.status_code, content=content)
+
+    for exc_type, msg_en, msg_zh in ERROR_MESSAGES:
+        app.add_exception_handler(exc_type, _downloader_error_handler(msg_en, msg_zh))
 
     # mount routers
     app.include_router(v1, prefix="/api")
