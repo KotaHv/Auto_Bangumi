@@ -37,12 +37,14 @@ class RequestURL:
             try:
                 req = await self.session.get(url=url)
                 logger.debug(
-                    f"[Network] Successfully connected to {url}. Status: {req.status_code}"
+                    "[Network] Successfully connected to {}. Status: {}",
+                    url,
+                    req.status_code,
                 )
                 req.raise_for_status()
                 return req
             except httpx2.RequestError:
-                logger.debug(f"[Network] Cannot connect to {url}. Wait for 5 seconds.")
+                logger.debug("[Network] Cannot connect to {}. Wait for 5 seconds.", url)
                 try_time += 1
                 if try_time >= retry:
                     break
@@ -51,7 +53,7 @@ class RequestURL:
                 logger.debug(e)
                 break
         logger.error(
-            f"[Network] Unable to connect to {url}, Please check your network settings"
+            "[Network] Unable to connect to {}, Please check your network settings", url
         )
         return None
 
@@ -64,7 +66,7 @@ class RequestURL:
                 return req
             except httpx2.RequestError:
                 logger.warning(
-                    f"[Network] Cannot connect to {url}. Wait for 5 seconds."
+                    "[Network] Cannot connect to {}. Wait for 5 seconds.", url
                 )
                 try_time += 1
                 if try_time >= retry:
@@ -73,7 +75,7 @@ class RequestURL:
             except Exception as e:
                 logger.debug(e)
                 break
-        logger.error(f"[Network] Failed connecting to {url}")
+        logger.error("[Network] Failed connecting to {}", url)
         logger.warning("[Network] Please check DNS/Connection settings")
         return None
 
@@ -83,5 +85,5 @@ class RequestURL:
             req.raise_for_status()
             return req
         except httpx2.RequestError:
-            logger.warning(f"[Network] Cannot connect to {url}.")
+            logger.warning("[Network] Cannot connect to {}.", url)
             return None

@@ -46,9 +46,9 @@ class PostNotification:
         await self._get_poster(notify)
         try:
             await self.notifier.post_msg(notify)
-            logger.debug(f"Send notification: {notify.official_title}")
+            logger.debug("Send notification: {}", notify.official_title)
         except Exception as e:
-            logger.warning(f"Failed to send notification: {e}")
+            logger.warning("Failed to send notification: {}", e)
             return False
         return True
 

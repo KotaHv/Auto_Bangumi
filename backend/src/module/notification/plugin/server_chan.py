@@ -27,5 +27,5 @@ class ServerChanNotification(RequestContent):
         resp = await self.post_data(self.notification_url, data)
         if resp is None:
             return False
-        logger.debug(f"ServerChan notification: {resp.status_code}")
+        logger.debug("ServerChan notification: {}", resp.status_code)
         return resp.status_code == 200

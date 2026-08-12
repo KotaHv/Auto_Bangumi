@@ -15,7 +15,7 @@ def build_proxy_url():
     )
 
     if proxy_type is None:
-        logger.error(f"[Network] Unsupported proxy type: {settings.proxy.type}")
+        logger.error("[Network] Unsupported proxy type: {}", settings.proxy.type)
         return None
 
     return f"{proxy_type}://{auth}{settings.proxy.host}:{settings.proxy.port}"

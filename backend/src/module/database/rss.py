@@ -14,10 +14,10 @@ class RSSDatabase:
         statement = select(RSSItem).where(RSSItem.url == data.url)
         db_data = (await self.session.exec(statement)).first()
         if db_data:
-            logger.debug(f"RSS Item {data.url} already exists.")
+            logger.debug("RSS Item {} already exists.", data.url)
             return False
         else:
-            logger.debug(f"RSS Item {data.url} not exists, adding...")
+            logger.debug("RSS Item {} not exists, adding...", data.url)
             self.session.add(data)
             await self.session.commit()
             await self.session.refresh(data)
@@ -91,7 +91,7 @@ class RSSDatabase:
             await self.session.commit()
             return True
         except Exception as e:
-            logger.error(f"Delete RSS Item failed. Because: {e}")
+            logger.error("Delete RSS Item failed. Because: {}", e)
             return False
 
     async def delete_all(self):

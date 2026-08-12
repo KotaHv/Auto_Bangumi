@@ -53,9 +53,8 @@ class ProgramStatus(Checker):
                 await work()
             except LoginFailed, Unauthorized401Error:
                 logger.error(
-                    f"[{component}] qBittorrent rejected credentials: "
-                    "username/password or API key may be incorrect. "
-                    "Will retry next cycle."
+                    "[{}] qBittorrent rejected credentials: username/password or API key may be incorrect. Will retry next cycle.",
+                    component,
                 )
             except Forbidden403Error:
                 await self._wait_recovery(
@@ -71,7 +70,7 @@ class ProgramStatus(Checker):
                 continue
             except APIConnectionError as e:
                 if not isinstance(e.__context__, ConnectionError):
-                    logger.exception(f"[{component}] error: {e}")
+                    logger.exception("[{}] error: {}", component, e)
                 else:
                     await self._wait_recovery(
                         interval=DOWNLOADER_RETRY_INTERVAL,
@@ -87,7 +86,7 @@ class ProgramStatus(Checker):
                     waiting_recovery = True
                     continue
             except Exception as e:
-                logger.exception(f"[{component}] error: {e}")
+                logger.exception("[{}] error: {}", component, e)
             waiting_recovery = False
             await asyncio.sleep(cycle_seconds)
 

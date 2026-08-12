@@ -139,7 +139,7 @@ class RSSEngine(Database):
             rss_item = await self.rss.search_id(rss_id)
             rss_items = [rss_item] if rss_item else []
         # From RSS Items, get all torrents
-        logger.debug(f"[Engine] Get {len(rss_items)} RSS items")
+        logger.debug("[Engine] Get {} RSS items", len(rss_items))
         for rss_item in rss_items:
             if rss_item.aggregate:
                 torrents = await self.fetch_aggregate_rss(rss_item)
@@ -153,7 +153,7 @@ class RSSEngine(Database):
                 matched_data = await self.match_torrent(torrent)
                 if matched_data:
                     if await client.add_torrent(torrent, matched_data):
-                        logger.debug(f"[Engine] Add torrent {torrent.name} to client")
+                        logger.debug("[Engine] Add torrent {} to client", torrent.name)
             # Add all torrents to database
             await self.torrent.add_all(new_torrents)
 

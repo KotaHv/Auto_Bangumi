@@ -18,13 +18,13 @@ class BangumiDatabase:
             return False
         self.session.add(data)
         await self.session.commit()
-        logger.debug(f"[Database] Insert {data.official_title} into database.")
+        logger.debug("[Database] Insert {} into database.", data.official_title)
         return True
 
     async def add_all(self, datas: list[Bangumi]):
         self.session.add_all(datas)
         await self.session.commit()
-        logger.debug(f"[Database] Insert {len(datas)} bangumi into database.")
+        logger.debug("[Database] Insert {} bangumi into database.", len(datas))
 
     async def update(
         self, data: Bangumi | BangumiUpdate, _id: int | None = None
@@ -43,13 +43,13 @@ class BangumiDatabase:
         self.session.add(db_data)
         await self.session.commit()
         await self.session.refresh(db_data)
-        logger.debug(f"[Database] Update {data.official_title}")
+        logger.debug("[Database] Update {}", data.official_title)
         return True
 
     async def update_all(self, datas: list[Bangumi]):
         self.session.add_all(datas)
         await self.session.commit()
-        logger.debug(f"[Database] Update {len(datas)} bangumi.")
+        logger.debug("[Database] Update {} bangumi.", len(datas))
 
     async def update_rss(self, title_raw, rss_set: str):
         # Update rss and added
@@ -62,14 +62,14 @@ class BangumiDatabase:
         self.session.add(bangumi)
         await self.session.commit()
         await self.session.refresh(bangumi)
-        logger.debug(f"[Database] Update {title_raw} rss_link to {rss_set}.")
+        logger.debug("[Database] Update {} rss_link to {}.", title_raw, rss_set)
 
     async def delete_one(self, _id: int):
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = (await self.session.exec(statement)).first()
         await self.session.delete(bangumi)
         await self.session.commit()
-        logger.debug(f"[Database] Delete bangumi id: {_id}.")
+        logger.debug("[Database] Delete bangumi id: {}.", _id)
 
     async def delete_all(self):
         statement = delete(Bangumi)
@@ -84,10 +84,10 @@ class BangumiDatabase:
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = (await self.session.exec(statement)).first()
         if bangumi is None:
-            logger.warning(f"[Database] Cannot find bangumi id: {_id}.")
+            logger.warning("[Database] Cannot find bangumi id: {}.", _id)
             return None
         else:
-            logger.debug(f"[Database] Find bangumi id: {_id}.")
+            logger.debug("[Database] Find bangumi id: {}.", _id)
             return (await self.session.exec(statement)).first()
 
     async def match_poster(self, bangumi_name: str) -> str | None:
@@ -150,7 +150,7 @@ class BangumiDatabase:
         self.session.add(bangumi)
         await self.session.commit()
         await self.session.refresh(bangumi)
-        logger.debug(f"[Database] Disable rule {bangumi.title_raw}.")
+        logger.debug("[Database] Disable rule {}.", bangumi.title_raw)
 
     async def search_rss(self, rss_link: str) -> list[Bangumi]:
         statement = select(Bangumi).where(func.instr(rss_link, Bangumi.rss_link) > 0)

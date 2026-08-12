@@ -20,7 +20,7 @@ class TorrentDatabase:
         self.session.add(result)
         await self.session.commit()
         await self.session.refresh(result)
-        logger.debug(f"Insert {result.name} in database.")
+        logger.debug("Insert {} in database.", result.name)
 
     async def add_all(self, datas: list[Torrent]):
         for index, data in enumerate(datas):
@@ -33,13 +33,13 @@ class TorrentDatabase:
                 datas[index] = result
         self.session.add_all(datas)
         await self.session.commit()
-        logger.debug(f"Insert {len(datas)} torrents in database.")
+        logger.debug("Insert {} torrents in database.", len(datas))
 
     async def update(self, data: Torrent):
         self.session.add(data)
         await self.session.commit()
         await self.session.refresh(data)
-        logger.debug(f"Update {data.name} in database.")
+        logger.debug("Update {} in database.", data.name)
 
     async def update_all(self, datas: list[Torrent]):
         self.session.add_all(datas)
@@ -101,6 +101,6 @@ class TorrentDatabase:
         statement = select(Torrent).where(Torrent.bangumi_id == bangumi_id)
         torrents = (await self.session.exec(statement)).all()
         for torrent in torrents:
-            logger.debug(f"[Database] Delete torrent name: {torrent.name}.")
+            logger.debug("[Database] Delete torrent name: {}.", torrent.name)
             await self.session.delete(torrent)
         await self.session.commit()

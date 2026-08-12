@@ -58,7 +58,7 @@ ERROR_MESSAGES: tuple[tuple[type[Exception], str, str], ...] = (
 
 def _downloader_error_handler(msg_en: str, msg_zh: str):
     async def handler(_request: Request, exc: Exception):
-        logger.warning("Handled downloader error %s: %s", type(exc).__name__, exc)
+        logger.warning("Handled downloader error {}: {}", type(exc).__name__, exc)
         return JSONResponse(
             status_code=406,
             content={"msg_en": msg_en, "msg_zh": msg_zh},

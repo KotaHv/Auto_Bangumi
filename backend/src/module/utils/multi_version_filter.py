@@ -17,8 +17,9 @@ def filter_multi_version_torrents(torrents: list[Torrent]):
         info = torrent_name_parser(torrent.name)
         if info is None:
             logger.warning(
-                f"Failed to parse torrent name for torrent '{torrent}'. "
-                f"Fallback to using torrent.name: '{torrent.name}'."
+                "Failed to parse torrent name for torrent '{}'. Fallback to using torrent.name: '{}'.",
+                torrent,
+                torrent.name,
             )
             key = torrent.name
         else:

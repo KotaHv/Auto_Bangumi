@@ -170,7 +170,7 @@ def process(raw_title: str):
 def raw_parser(raw: str) -> Episode | None:
     ret = process(raw)
     if ret is None:
-        logger.error(f"Parser cannot analyse {raw}")
+        logger.error("Parser cannot analyse {}", raw)
         return None
     return ret
 

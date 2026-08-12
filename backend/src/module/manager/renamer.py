@@ -45,7 +45,7 @@ class Renamer(DownloadClient):
         elif method == "subtitle_advance":
             return f"{bangumi_name} S{season}E{episode}.{language}{file_info.suffix}"
         else:
-            logger.error(f"[Renamer] Unknown rename method: {method}")
+            logger.error("[Renamer] Unknown rename method: {}", method)
             return file_info.media_path
 
     async def rename_file(
@@ -80,7 +80,7 @@ class Renamer(DownloadClient):
                             episode=ep.episode,
                         )
         else:
-            logger.warning(f"[Renamer] {media_path} parse failed")
+            logger.warning("[Renamer] {} parse failed", media_path)
             if settings.bangumi_manage.remove_bad_torrent:
                 await self.delete_torrent(_hash)
         return None
@@ -112,7 +112,7 @@ class Renamer(DownloadClient):
                             new_path=new_path,
                         )
                         if not renamed:
-                            logger.warning(f"[Renamer] {media_path} rename failed")
+                            logger.warning("[Renamer] {} rename failed", media_path)
                             # Delete bad torrent.
                             if settings.bangumi_manage.remove_bad_torrent:
                                 await self.delete_torrent(_hash)
@@ -148,7 +148,7 @@ class Renamer(DownloadClient):
                         new_path=new_path,
                     )
                     if not renamed:
-                        logger.warning(f"[Renamer] {subtitle_path} rename failed")
+                        logger.warning("[Renamer] {} rename failed", subtitle_path)
 
     async def check_multi_version(self, tag=None):
         if not settings.bangumi_manage.retain_latest_media_version:
@@ -241,7 +241,7 @@ class Renamer(DownloadClient):
                     await self.rename_subtitles(subtitle_list=subtitle_list, **kwargs)
                 await self.set_category(info.hash, "BangumiCollection")
             else:
-                logger.warning(f"[Renamer] {info.name} has no media file")
+                logger.warning("[Renamer] {} has no media file", info.name)
                 await self.remove_tag(info.hash, bangumi_name)
         logger.debug("[Renamer] Rename process finished.")
         return renamed_info

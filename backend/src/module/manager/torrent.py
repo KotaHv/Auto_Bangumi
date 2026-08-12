@@ -19,7 +19,7 @@ class TorrentManager(Database):
         hash_list = await self.__match_torrents_list(data)
         if hash_list:
             await client.delete_torrent(hash_list)
-            logger.info(f"Delete rule and torrents for {data.official_title}")
+            logger.info("Delete rule and torrents for {}", data.official_title)
             return ResponseModel(
                 status_code=200,
                 status=True,
@@ -52,7 +52,7 @@ class TorrentManager(Database):
                 await self.torrent.delete_by_bangumi_id(int(_id))
                 if file:
                     torrent_message = await self.delete_torrents(data, client)
-                logger.info(f"[Manager] Delete rule for {data.official_title}")
+                logger.info("[Manager] Delete rule for {}", data.official_title)
                 return ResponseModel(
                     status_code=200,
                     status=True,
@@ -76,7 +76,7 @@ class TorrentManager(Database):
                 if file:
                     torrent_message = await self.delete_torrents(data, client)
                     return torrent_message
-                logger.info(f"[Manager] Disable rule for {data.official_title}")
+                logger.info("[Manager] Disable rule for {}", data.official_title)
                 return ResponseModel(
                     status_code=200,
                     status=True,
@@ -96,7 +96,7 @@ class TorrentManager(Database):
         if data:
             data.deleted = False
             await self.bangumi.update(data)
-            logger.info(f"[Manager] Enable rule for {data.official_title}")
+            logger.info("[Manager] Enable rule for {}", data.official_title)
             return ResponseModel(
                 status_code=200,
                 status=True,
@@ -129,7 +129,7 @@ class TorrentManager(Database):
                 msg_zh=f"更新 {data.official_title} 规则",
             )
         else:
-            logger.error(f"[Manager] Can't find data with {bangumi_id}")
+            logger.error("[Manager] Can't find data with {}", bangumi_id)
             return ResponseModel(
                 status_code=406,
                 status=False,
@@ -177,7 +177,7 @@ class TorrentManager(Database):
     async def search_one(self, _id: int | str):
         data = await self.bangumi.search_id(int(_id))
         if not data:
-            logger.error(f"[Manager] Can't find data with {_id}")
+            logger.error("[Manager] Can't find data with {}", _id)
             return ResponseModel(
                 status_code=406,
                 status=False,

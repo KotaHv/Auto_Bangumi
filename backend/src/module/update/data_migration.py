@@ -22,7 +22,7 @@ async def torrent_migration():
             for torrent in torrents:
                 if torrent.get("hash") or torrent.get("bangumi_id") is None:
                     continue
-                logger.debug(f"Get {torrent['name']} Hash")
+                logger.debug("Get {} Hash", torrent["name"])
                 url = torrent["url"]
                 if url.startswith("magnet"):
                     info_hash = torrent_hash.from_magnet(url)

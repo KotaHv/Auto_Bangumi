@@ -34,5 +34,5 @@ class TelegramNotification(RequestContent):
             resp = await self.post_data(self.message_url, data)
         if resp is None:
             return False
-        logger.debug(f"Telegram notification: {resp.status_code}")
+        logger.debug("Telegram notification: {}", resp.status_code)
         return resp.status_code == 200

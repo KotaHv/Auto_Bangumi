@@ -39,7 +39,7 @@ class RequestContent(RequestURL):
                         break
             return torrents
         else:
-            logger.warning(f"[Network] Failed to get torrents: {_url}")
+            logger.warning("[Network] Failed to get torrents: {}", _url)
             return []
 
     async def get_xml(

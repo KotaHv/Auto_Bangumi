@@ -29,7 +29,7 @@ class Program(RenameThread, RSSThread):
     def __start_info():
         for line in figlet.splitlines():
             logger.info(line.strip("\n"))
-        logger.info(f"Starting AutoBangumi Version {VERSION}...")
+        logger.info("Starting AutoBangumi Version {}...", VERSION)
 
     async def startup(self):
         self.__start_info()

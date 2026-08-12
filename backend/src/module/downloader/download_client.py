@@ -59,7 +59,7 @@ class DownloadClient(TorrentPath):
         )
 
     async def rename_torrent_file(self, _hash, old_path, new_path) -> bool:
-        logger.info(f"{old_path} >> {new_path}")
+        logger.info("{} >> {}", old_path, new_path)
         try:
             await asyncio.to_thread(
                 self._client.torrents_rename_file,
@@ -69,7 +69,7 @@ class DownloadClient(TorrentPath):
             )
             return True
         except Conflict409Error:
-            logger.debug(f"Conflict409Error: {old_path} >> {new_path}")
+            logger.debug("Conflict409Error: {} >> {}", old_path, new_path)
             return False
 
     async def delete_torrent(self, hashes):
@@ -92,7 +92,7 @@ class DownloadClient(TorrentPath):
                 use_auto_torrent_management=False,
                 content_layout="NoSubfolder",
             )
-            logger.debug(f"[Downloader] Add torrent response: {resp}")
+            logger.debug("[Downloader] Add torrent response: {}", resp)
             if isinstance(resp, str):
                 return resp == "Ok."
             if isinstance(resp, TorrentsAddedMetadata):
@@ -109,7 +109,8 @@ class DownloadClient(TorrentPath):
                 info_hash = torrent_hash.from_magnet(url)
                 if info_hash is None:
                     logger.warning(
-                        f"[Downloader] Cannot verify conflicting magnet link; failed to extract info hash: {url}"
+                        "[Downloader] Cannot verify conflicting magnet link; failed to extract info hash: {}",
+                        url,
                     )
                     return False
                 torrent_hashes.append(info_hash)
@@ -151,7 +152,9 @@ class DownloadClient(TorrentPath):
                         t.hash = torrent_hash.from_magnet(torrent_data)
                     else:
                         logger.error(
-                            f'[Downloader] {t.name} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{bangumi.save_path}".'
+                            '[Downloader] {} torrent is corrupted; it is recommended to manually add the magnet link to qBittorrent, with the save path: "{}".',
+                            t.name,
+                            bangumi.save_path,
                         )
                         t.downloaded = False
 
@@ -161,7 +164,7 @@ class DownloadClient(TorrentPath):
             save_path=bangumi.save_path,
             category="Bangumi",
         ):
-            logger.debug(f"[Downloader] Add torrent: {bangumi.official_title}")
+            logger.debug("[Downloader] Add torrent: {}", bangumi.official_title)
             return True
         else:
             for t in torrent:
@@ -169,7 +172,9 @@ class DownloadClient(TorrentPath):
                     category=None, status_filter=None, hash=t.hash
                 ):
                     t.downloaded = False
-            logger.debug(f"[Downloader] Torrent added before: {bangumi.official_title}")
+            logger.debug(
+                "[Downloader] Torrent added before: {}", bangumi.official_title
+            )
             return False
 
     async def move_torrent(self, hashes, location):
@@ -186,7 +191,7 @@ class DownloadClient(TorrentPath):
                 self._client.torrents_set_category, category, hashes=hashes
             )
         except Conflict409Error:
-            logger.warning(f"[Downloader] Category {category} does not exist")
+            logger.warning("[Downloader] Category {} does not exist", category)
             await asyncio.to_thread(self._client.torrents_createCategory, name=category)
             await asyncio.to_thread(
                 self._client.torrents_set_category, category, hashes=hashes

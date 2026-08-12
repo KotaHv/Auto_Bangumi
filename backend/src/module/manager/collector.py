@@ -10,7 +10,7 @@ from module.utils.multi_version_filter import filter_multi_version_torrents
 class SeasonCollector(DownloadClient):
     async def collect_season(self, bangumi: Bangumi, link: str | None = None):
         logger.info(
-            f"Start collecting {bangumi.official_title} Season {bangumi.season}..."
+            "Start collecting {} Season {}...", bangumi.official_title, bangumi.season
         )
         async with SearchTorrent() as st, RSSEngine() as engine:
             if not link:
@@ -20,7 +20,9 @@ class SeasonCollector(DownloadClient):
             filter_multi_version_torrents(torrents)
             if await self.add_torrent(torrents, bangumi):
                 logger.info(
-                    f"Collections of {bangumi.official_title} Season {bangumi.season} completed."
+                    "Collections of {} Season {} completed.",
+                    bangumi.official_title,
+                    bangumi.season,
                 )
                 bangumi.eps_collect = True
                 await engine.bangumi.update(bangumi)
@@ -33,7 +35,9 @@ class SeasonCollector(DownloadClient):
                 )
             else:
                 logger.warning(
-                    f"Already collected {bangumi.official_title} Season {bangumi.season}."
+                    "Already collected {} Season {}.",
+                    bangumi.official_title,
+                    bangumi.season,
                 )
                 return ResponseModel(
                     status=False,
@@ -92,7 +96,7 @@ class SeasonCollector(DownloadClient):
 
     async def force_collect(self, bangumi: Bangumi):
         logger.info(
-            f"Force collecting {bangumi.official_title} Season {bangumi.season}..."
+            "Force collecting {} Season {}...", bangumi.official_title, bangumi.season
         )
         rss_links = filter(None, bangumi.rss_link.split(","))
 
@@ -119,7 +123,9 @@ class SeasonCollector(DownloadClient):
             filter_multi_version_torrents(torrents)
             await self.add_torrent(torrents, bangumi)
             logger.info(
-                f"Collections of {bangumi.official_title} Season {bangumi.season} completed."
+                "Collections of {} Season {} completed.",
+                bangumi.official_title,
+                bangumi.season,
             )
             await engine.torrent.add_all(torrents)
             return ResponseModel(

@@ -23,7 +23,8 @@ class RSSAnalyser(TitleParser):
                     ) = await self.mikan_parser(torrent.homepage)
                 except Exception as e:
                     logger.warning(
-                        f"[Parser] Mikan parser failed with error: {e}. Use raw title instead."
+                        "[Parser] Mikan parser failed with error: {}. Use raw title instead.",
+                        e,
                     )
         elif rss.parser == "tmdb":
             tmdb_title, season, year, poster_link = await self.tmdb_parser(
@@ -59,7 +60,7 @@ class RSSAnalyser(TitleParser):
                 if not full_parse:
                     return [bangumi]
                 new_data.append(bangumi)
-                logger.info(f"[RSS] New bangumi founded: {bangumi.official_title}")
+                logger.info("[RSS] New bangumi founded: {}", bangumi.official_title)
         return new_data
 
     async def torrent_to_data(self, torrent: Torrent, rss: RSSItem) -> Bangumi | None:

@@ -26,7 +26,7 @@ class TitleParser:
         try:
             return torrent_parser(torrent_path, torrent_name, season, file_type)
         except Exception as e:
-            logger.warning(f"Cannot parse {torrent_path} with error {e}")
+            logger.warning("Cannot parse {} with error {}", torrent_path, e)
 
     @staticmethod
     def torrent_name_parser(
@@ -35,17 +35,17 @@ class TitleParser:
         try:
             return torrent_name_parser(torrent_name)
         except Exception as e:
-            logger.warning(f"Cannot parse {torrent_name} with error {e}")
+            logger.warning("Cannot parse {} with error {}", torrent_name, e)
 
     @staticmethod
     async def tmdb_parser(title: str, season: int, language: str):
         tmdb_info = await tmdb_parser(title, language)
         if tmdb_info:
-            logger.debug(f"TMDB Matched, official title is {tmdb_info.title}")
+            logger.debug("TMDB Matched, official title is {}", tmdb_info.title)
             tmdb_season = tmdb_info.last_season if tmdb_info.last_season else season
             return tmdb_info.title, tmdb_season, tmdb_info.year, tmdb_info.poster_link
         else:
-            logger.warning(f"Cannot match {title} in TMDB. Use raw title instead.")
+            logger.warning("Cannot match {} in TMDB. Use raw title instead.", title)
             logger.warning("Please change bangumi info manually.")
             return title, season, None, None
 
@@ -55,11 +55,12 @@ class TitleParser:
             bangumi.official_title, settings.rss_parser.language
         )
         if tmdb_info:
-            logger.debug(f"TMDB Matched, official title is {tmdb_info.title}")
+            logger.debug("TMDB Matched, official title is {}", tmdb_info.title)
             bangumi.poster_link = tmdb_info.poster_link
         else:
             logger.warning(
-                f"Cannot match {bangumi.official_title} in TMDB. Use raw title instead."
+                "Cannot match {} in TMDB. Use raw title instead.",
+                bangumi.official_title,
             )
             logger.warning("Please change bangumi info manually.")
 
@@ -77,7 +78,7 @@ class TitleParser:
                         episode = await gpt.parse(raw)
                 except Exception as e:
                     logger.warning(
-                        f"OpenAIParser failed: {e}, Falling back to raw_parser."
+                        "OpenAIParser failed: {}, Falling back to raw_parser.", e
                     )
                     episode = raw_parser(raw)
             else:
@@ -98,7 +99,7 @@ class TitleParser:
                     official_title = candidate
                     break
             _season = episode.season
-            logger.debug(f"RAW:{raw} >> {title_raw}")
+            logger.debug("RAW:{} >> {}", raw, title_raw)
             return Bangumi(
                 official_title=official_title,
                 title_raw=title_raw,
@@ -114,7 +115,7 @@ class TitleParser:
             )
         except Exception as e:
             logger.debug(e)
-            logger.warning(f"Cannot parse {raw}.")
+            logger.warning("Cannot parse {}.", raw)
             return None
 
     @staticmethod
