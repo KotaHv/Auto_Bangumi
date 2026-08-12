@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from module.models.config import Config
+from module.utils.atomic_write import atomic_write
 
 from .const import ENV_TO_ATTR
 
@@ -44,8 +45,7 @@ class Settings(Config):
     def save(self, config_json: str | None = None):
         if not config_json:
             config_json = self.model_dump_json(by_alias=True)
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            f.write(config_json)
+        atomic_write(CONFIG_PATH, lambda f: f.write(config_json))
 
     def init(self):
         load_dotenv(".env")
