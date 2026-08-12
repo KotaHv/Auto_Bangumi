@@ -37,7 +37,7 @@ class ProgramStatus(Checker):
     def is_stopped(self):
         return self.stop_event.is_set()
 
-    def _wait_recovery(
+    async def _wait_recovery(
         self,
         interval: int,
         first_message: str,
@@ -49,14 +49,19 @@ class ProgramStatus(Checker):
             logger.error(first_message)
         else:
             logger.debug(debug_message)
-        self.stop_event.wait(interval)
+        deadline = time.monotonic() + interval
+        while not self.stop_event.is_set():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            await asyncio.sleep(min(remaining, 1))
 
-    def _run_loop(self, work, cycle_seconds: int, component: str):
+    async def _run_loop(self, work, cycle_seconds: int, component: str):
         """Run a worker in a loop, waiting for the downloader when needed."""
         waiting_recovery = False
         while not self.stop_event.is_set():
             try:
-                work()
+                await work()
             except LoginFailed, Unauthorized401Error:
                 logger.error(
                     f"[{component}] qBittorrent rejected credentials: "
@@ -64,7 +69,7 @@ class ProgramStatus(Checker):
                     "Will retry next cycle."
                 )
             except Forbidden403Error:
-                self._wait_recovery(
+                await self._wait_recovery(
                     interval=IP_BAN_RETRY_INTERVAL,
                     first_message=(
                         f"[{component}] qBittorrent refused access (IP may be banned), "
@@ -79,7 +84,7 @@ class ProgramStatus(Checker):
                 if not isinstance(e.__context__, ConnectionError):
                     logger.exception(f"[{component}] error: {e}")
                 else:
-                    self._wait_recovery(
+                    await self._wait_recovery(
                         interval=DOWNLOADER_RETRY_INTERVAL,
                         first_message=(
                             f"[{component}] Cannot connect to downloader, "
@@ -95,16 +100,16 @@ class ProgramStatus(Checker):
             except Exception as e:
                 logger.exception(f"[{component}] error: {e}")
             waiting_recovery = False
-            self._wait_cycle(cycle_seconds)
+            await self._wait_cycle(cycle_seconds)
 
-    def _wait_cycle(self, timeout: int):
+    async def _wait_cycle(self, timeout: int):
         """Sleep until the next cycle, or return early when stopped."""
         deadline = time.monotonic() + timeout
         while not self.stop_event.is_set():
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return
-            time.sleep(min(remaining, 1))
+            await asyncio.sleep(min(remaining, 1))
 
     @property
     def downloader_status(self):

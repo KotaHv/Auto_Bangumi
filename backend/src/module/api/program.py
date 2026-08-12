@@ -18,7 +18,7 @@ program = Program()
 
 @asynccontextmanager
 async def lifespan(_router: APIRouter):
-    program.startup()
+    await program.startup()
     yield
     program.stop()
 
@@ -29,7 +29,7 @@ router = APIRouter(tags=["program"], lifespan=lifespan)
 @router.get(
     "/restart", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def restart():
+def restart():
     try:
         resp = program.restart()
         return u_response(resp)
@@ -48,7 +48,7 @@ async def restart():
 @router.get(
     "/start", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def start():
+def start():
     try:
         resp = program.start()
         return u_response(resp)
@@ -67,7 +67,7 @@ async def start():
 @router.get(
     "/stop", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def stop():
+def stop():
     return u_response(program.stop())
 
 
@@ -90,7 +90,7 @@ async def program_status():
 @router.get(
     "/shutdown", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def shutdown_program():
+def shutdown_program():
     program.stop()
     logger.info("Shutting down program...")
     os.kill(os.getpid(), signal.SIGINT)
@@ -110,5 +110,5 @@ async def shutdown_program():
     response_model=bool,
     dependencies=[Depends(get_current_user)],
 )
-async def check_downloader_status():
+def check_downloader_status():
     return program.check_downloader()

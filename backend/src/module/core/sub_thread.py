@@ -1,5 +1,5 @@
+import asyncio
 import threading
-import time
 
 from module.conf import settings
 from module.downloader import DownloadClient
@@ -19,14 +19,18 @@ class RSSThread(ProgramStatus):
         self.analyser = RSSAnalyser()
 
     def rss_loop(self):
-        self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
+        asyncio.run(self._async_rss_loop())
 
-    def _rss_loop(self):
-        with DownloadClient() as client, RSSEngine() as engine:
-            # Run RSS Engine
-            engine.refresh_rss(client)
+    async def _async_rss_loop(self):
+        await self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
+
+    async def _rss_loop(self):
+        async with DownloadClient() as client:
+            with RSSEngine() as engine:
+                # Run RSS Engine
+                await engine.refresh_rss(client)
         if settings.bangumi_manage.eps_complete:
-            eps_complete()
+            await eps_complete()
 
     def rss_start(self):
         if not self._rss_thread.is_alive():
@@ -53,16 +57,19 @@ class RenameThread(ProgramStatus):
         )
 
     def rename_loop(self):
-        self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
+        asyncio.run(self._async_rename_loop())
 
-    def _rename_loop(self):
-        with Renamer() as renamer:
-            renamed_info = renamer.rename()
+    async def _async_rename_loop(self):
+        await self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
+
+    async def _rename_loop(self):
+        async with Renamer() as renamer:
+            renamed_info = await asyncio.to_thread(renamer.rename)
         if settings.notification.enable:
-            with PostNotification() as notifier:
+            async with PostNotification() as notifier:
                 for info in renamed_info:
-                    notifier.send_msg(info)
-                    time.sleep(2)
+                    await notifier.send_msg(info)
+                    await asyncio.sleep(2)
 
     def rename_start(self):
         if not self._rename_thread.is_alive():

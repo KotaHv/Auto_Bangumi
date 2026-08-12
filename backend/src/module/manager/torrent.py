@@ -138,11 +138,11 @@ class TorrentManager(Database):
                 msg_zh=f"无法找到 id {bangumi_id} 的数据",
             )
 
-    def refresh_poster(self):
+    async def refresh_poster(self):
         bangumis = self.bangumi.search_all()
         for bangumi in bangumis:
             if not bangumi.poster_link:
-                TitleParser().tmdb_poster_parser(bangumi)
+                await TitleParser().tmdb_poster_parser(bangumi)
         self.bangumi.update_all(bangumis)
         return ResponseModel(
             status_code=200,
@@ -151,7 +151,7 @@ class TorrentManager(Database):
             msg_zh="刷新海报链接成功。",
         )
 
-    def refind_poster(self, bangumi_id: int):
+    async def refind_poster(self, bangumi_id: int):
         bangumi = self.bangumi.search_id(bangumi_id)
         if bangumi is None:
             return ResponseModel(
@@ -160,7 +160,7 @@ class TorrentManager(Database):
                 msg_en=f"Can't find data with {bangumi_id}",
                 msg_zh=f"无法找到 id {bangumi_id} 的数据",
             )
-        TitleParser().tmdb_poster_parser(bangumi)
+        await TitleParser().tmdb_poster_parser(bangumi)
         self.bangumi.update(bangumi)
         return ResponseModel(
             status_code=200,
@@ -190,5 +190,7 @@ class TorrentManager(Database):
 
 
 if __name__ == "__main__":
+    import asyncio
+
     with TorrentManager() as manager:
-        manager.refresh_poster()
+        asyncio.run(manager.refresh_poster())

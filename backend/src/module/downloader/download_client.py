@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 from qbittorrentapi import Client
 from qbittorrentapi.exceptions import Conflict409Error
@@ -35,6 +37,13 @@ class DownloadClient(TorrentPath):
         if self.authed:
             self._client.auth_log_out()
             self.authed = False
+
+    async def __aenter__(self):
+        await asyncio.to_thread(self.__enter__)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await asyncio.to_thread(self.__exit__, exc_type, exc_val, exc_tb)
 
     def auth(self):
         self._client.auth_log_in()
@@ -113,14 +122,14 @@ class DownloadClient(TorrentPath):
             )
             return False
 
-    def add_torrent(self, torrent: Torrent | list, bangumi: Bangumi) -> bool:
+    async def add_torrent(self, torrent: Torrent | list, bangumi: Bangumi) -> bool:
         if not bangumi.save_path:
             bangumi.save_path = self._gen_save_path(bangumi)
         if isinstance(torrent, Torrent):
             torrent = [torrent]
         torrent_files = []
         torrent_urls = []
-        with RequestContent() as req:
+        async with RequestContent() as req:
             for t in torrent:
                 t.bangumi_id = bangumi.id
                 t.downloaded = True
@@ -128,7 +137,7 @@ class DownloadClient(TorrentPath):
                     torrent_urls.append(t.url)
                     t.hash = torrent_hash.from_magnet(t.url)
                 else:
-                    torrent_data = req.get_torrent_or_magnet(t)
+                    torrent_data = await req.get_torrent_or_magnet(t)
                     if isinstance(torrent_data, bytes):
                         torrent_files.append(torrent_data)
                         t.hash = torrent_hash.from_torrent(torrent_data)
@@ -141,7 +150,8 @@ class DownloadClient(TorrentPath):
                         )
                         t.downloaded = False
 
-        if self._add_torrents(
+        if await asyncio.to_thread(
+            self._add_torrents,
             torrent_urls=torrent_urls,
             torrent_files=torrent_files,
             save_path=bangumi.save_path,
@@ -151,8 +161,11 @@ class DownloadClient(TorrentPath):
             return True
         else:
             for t in torrent:
-                if not self.get_torrent_info(
-                    category=None, status_filter=None, hash=t.hash
+                if not await asyncio.to_thread(
+                    self.get_torrent_info,
+                    category=None,
+                    status_filter=None,
+                    hash=t.hash,
                 ):
                     t.downloaded = False
             logger.debug(f"[Downloader] Torrent added before: {bangumi.official_title}")

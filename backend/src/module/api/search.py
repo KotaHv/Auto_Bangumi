@@ -18,10 +18,13 @@ async def search_torrents(site: str = "mikan", keywords: str | None = Query(None
     if not keywords:
         return []
     keyword_list = keywords.split(" ")
-    with SearchTorrent() as st:
-        return EventSourceResponse(
-            content=st.analyse_keyword(keywords=keyword_list, site=site),
-        )
+
+    async def event_stream():
+        async with SearchTorrent() as st:
+            async for item in st.analyse_keyword(keywords=keyword_list, site=site):
+                yield item
+
+    return EventSourceResponse(content=event_stream())
 
 
 @router.get(

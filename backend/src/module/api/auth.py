@@ -21,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=dict)
-async def login(
+def login(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
@@ -60,7 +60,7 @@ async def logout(response: Response):
 
 
 @router.post("/update", response_model=dict, dependencies=[Depends(get_current_user)])
-async def update_user(user_data: UserUpdate, response: Response):
+def update_user(user_data: UserUpdate, response: Response):
     old_user = active_user[0]
     if update_user_info(user_data, old_user):
         token = create_access_token(

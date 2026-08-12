@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -66,7 +67,7 @@ def test_check_downloader_uses_download_client(monkeypatch):
 
 def test_rss_loop_fails_before_rss_engine(monkeypatch):
     mock_download_client = MagicMock()
-    mock_download_client.__enter__.side_effect = LoginFailed()
+    mock_download_client.__aenter__.side_effect = LoginFailed()
     monkeypatch.setattr(
         sub_thread_module, "DownloadClient", lambda: mock_download_client
     )
@@ -74,5 +75,5 @@ def test_rss_loop_fails_before_rss_engine(monkeypatch):
     monkeypatch.setattr(sub_thread_module, "RSSEngine", mock_engine)
     rss_thread = RSSThread()
     with pytest.raises(LoginFailed):
-        rss_thread._rss_loop()
+        asyncio.run(rss_thread._rss_loop())
     mock_engine.assert_not_called()

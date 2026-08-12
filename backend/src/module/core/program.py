@@ -30,7 +30,7 @@ class Program(RenameThread, RSSThread):
             logger.info(line.strip("\n"))
         logger.info(f"Starting AutoBangumi Version {VERSION}...")
 
-    def startup(self):
+    async def startup(self):
         self.__start_info()
         if not self.database:
             first_run()
@@ -38,12 +38,12 @@ class Program(RenameThread, RSSThread):
             return {"status": "First run detected."}
         if not self.img_cache:
             logger.info("[Core] No image cache exists, create image cache.")
-            cache_image()
+            await cache_image()
         if not self.torrent_hash:
             logger.info(
                 "[Core] The hash field of the torrent table does not exist or its value is empty, get torrent hash."
             )
-            torrent_migration()
+            await torrent_migration()
         self.start()
 
     def start(self):

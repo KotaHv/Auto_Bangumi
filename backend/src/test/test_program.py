@@ -29,6 +29,10 @@ def connection_error():
         raise APIConnectionError("cannot connect") from None
 
 
+async def _noop(_):
+    return None
+
+
 @pytest.fixture
 def log_sink():
     records = []
@@ -54,10 +58,8 @@ def make_program(monkeypatch):
         monkeypatch.setattr(
             Checker, "check_downloader", staticmethod(lambda: downloader_online)
         )
-        monkeypatch.setattr(RSSThread, "_rss_loop", rss_work or (lambda self: None))
-        monkeypatch.setattr(
-            RenameThread, "_rename_loop", rename_work or (lambda self: None)
-        )
+        monkeypatch.setattr(RSSThread, "_rss_loop", rss_work or _noop)
+        monkeypatch.setattr(RenameThread, "_rename_loop", rename_work or _noop)
         program = Program()
         programs.append(program)
         return program
@@ -92,7 +94,7 @@ def test_start_offline_returns_406_fast_and_threads_wait(make_program):
 def test_connection_error_waits_and_retries(make_program, log_sink):
     calls = {"n": 0}
 
-    def conn_down(_):
+    async def conn_down(_):
         calls["n"] += 1
         raise connection_error()
 
@@ -117,7 +119,7 @@ def test_connection_error_waits_and_retries(make_program, log_sink):
 def test_credentials_error_uses_cycle_not_recovery_interval(make_program, log_sink):
     calls = {"n": 0}
 
-    def bad_credentials(_):
+    async def bad_credentials(_):
         calls["n"] += 1
         raise LoginFailed()
 
@@ -133,7 +135,7 @@ def test_credentials_error_uses_cycle_not_recovery_interval(make_program, log_si
 def test_forbidden_error_waits_until_ip_released(make_program, log_sink):
     calls = {"n": 0}
 
-    def banned(_):
+    async def banned(_):
         calls["n"] += 1
         raise Forbidden403Error()
 
@@ -152,7 +154,7 @@ def test_forbidden_error_waits_until_ip_released(make_program, log_sink):
 def test_non_connection_api_error_is_not_recovery(make_program, log_sink):
     calls = {"n": 0}
 
-    def bad_host(_):
+    async def bad_host(_):
         calls["n"] += 1
         raise APIConnectionError("bad host")
 
@@ -167,7 +169,7 @@ def test_non_connection_api_error_is_not_recovery(make_program, log_sink):
 def test_stop_during_connection_wait_exits_promptly(make_program):
     calls = {"n": 0}
 
-    def conn_down(_):
+    async def conn_down(_):
         calls["n"] += 1
         raise connection_error()
 
@@ -184,7 +186,7 @@ def test_stop_during_connection_wait_exits_promptly(make_program):
 def test_rename_loop_shares_recovery_logic(make_program, log_sink):
     calls = {"n": 0}
 
-    def bad_credentials(_):
+    async def bad_credentials(_):
         calls["n"] += 1
         raise LoginFailed()
 

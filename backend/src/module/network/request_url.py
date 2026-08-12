@@ -1,4 +1,5 @@
-import time
+import asyncio
+from typing import Self
 
 import httpx2
 from loguru import logger
@@ -10,12 +11,31 @@ from module.utils.proxy import build_proxy_url
 class RequestURL:
     def __init__(self):
         self.headers = {"user-agent": "Mozilla/5.0", "Accept": "application/xml"}
+        self._client: httpx2.AsyncClient | None = None
 
-    def get_url(self, url, retry=3):
+    @property
+    def session(self) -> httpx2.AsyncClient:
+        if self._client is None:
+            raise RuntimeError("RequestURL must be used inside an 'async with' block.")
+        return self._client
+
+    async def __aenter__(self) -> Self:
+        proxy = build_proxy_url() if settings.proxy.enable else None
+        self._client = httpx2.AsyncClient(
+            headers=self.headers, http2=True, proxy=proxy, timeout=5
+        )
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
+
+    async def get_url(self, url, retry=3):
         try_time = 0
         while True:
             try:
-                req = self.session.get(url=url)
+                req = await self.session.get(url=url)
                 logger.debug(
                     f"[Network] Successfully connected to {url}. Status: {req.status_code}"
                 )
@@ -26,7 +46,7 @@ class RequestURL:
                 try_time += 1
                 if try_time >= retry:
                     break
-                time.sleep(5)
+                await asyncio.sleep(5)
             except Exception as e:
                 logger.debug(e)
                 break
@@ -35,11 +55,11 @@ class RequestURL:
         )
         return None
 
-    def post_url(self, url: str, data: dict, retry=3):
+    async def post_url(self, url: str, data: dict, retry=3):
         try_time = 0
         while True:
             try:
-                req = self.session.post(url=url, data=data)
+                req = await self.session.post(url=url, data=data)
                 req.raise_for_status()
                 return req
             except httpx2.RequestError:
@@ -49,7 +69,7 @@ class RequestURL:
                 try_time += 1
                 if try_time >= retry:
                     break
-                time.sleep(5)
+                await asyncio.sleep(5)
             except Exception as e:
                 logger.debug(e)
                 break
@@ -57,32 +77,23 @@ class RequestURL:
         logger.warning("[Network] Please check DNS/Connection settings")
         return None
 
-    def check_url(self, url: str):
+    async def check_url(self, url: str):
         if "://" not in url:
             url = f"http://{url}"
         try:
-            req = httpx2.head(url=url)
+            async with httpx2.AsyncClient(headers=self.headers, timeout=5) as client:
+                req = await client.head(url=url)
             req.raise_for_status()
             return True
         except httpx2.RequestError:
             logger.debug(f"[Network] Cannot connect to {url}.")
             return False
 
-    def post_form(self, url: str, data: dict, files):
+    async def post_form(self, url: str, data: dict, files):
         try:
-            req = self.session.post(url=url, data=data, files=files)
+            req = await self.session.post(url=url, data=data, files=files)
             req.raise_for_status()
             return req
         except httpx2.RequestError:
             logger.warning(f"[Network] Cannot connect to {url}.")
             return None
-
-    def __enter__(self):
-        proxy = build_proxy_url() if settings.proxy.enable else None
-        self.session = httpx2.Client(
-            headers=self.headers, http2=True, proxy=proxy, timeout=5
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()

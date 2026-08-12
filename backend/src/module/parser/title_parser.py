@@ -38,8 +38,8 @@ class TitleParser:
             logger.warning(f"Cannot parse {torrent_name} with error {e}")
 
     @staticmethod
-    def tmdb_parser(title: str, season: int, language: str):
-        tmdb_info = tmdb_parser(title, language)
+    async def tmdb_parser(title: str, season: int, language: str):
+        tmdb_info = await tmdb_parser(title, language)
         if tmdb_info:
             logger.debug(f"TMDB Matched, official title is {tmdb_info.title}")
             tmdb_season = tmdb_info.last_season if tmdb_info.last_season else season
@@ -50,8 +50,10 @@ class TitleParser:
             return title, season, None, None
 
     @staticmethod
-    def tmdb_poster_parser(bangumi: Bangumi):
-        tmdb_info = tmdb_parser(bangumi.official_title, settings.rss_parser.language)
+    async def tmdb_poster_parser(bangumi: Bangumi):
+        tmdb_info = await tmdb_parser(
+            bangumi.official_title, settings.rss_parser.language
+        )
         if tmdb_info:
             logger.debug(f"TMDB Matched, official title is {tmdb_info.title}")
             bangumi.poster_link = tmdb_info.poster_link
@@ -62,17 +64,17 @@ class TitleParser:
             logger.warning("Please change bangumi info manually.")
 
     @staticmethod
-    def raw_parser(raw: str) -> Bangumi | None:
+    async def raw_parser(raw: str) -> Bangumi | None:
         language = settings.rss_parser.language
         try:
             if settings.experimental_openai.enable:
                 try:
-                    with OpenAIParser(
+                    async with OpenAIParser(
                         api_key=settings.experimental_openai.api_key,
                         base_url=settings.experimental_openai.base_url,
                         model=settings.experimental_openai.model,
                     ) as gpt:
-                        episode = gpt.parse(raw)
+                        episode = await gpt.parse(raw)
                 except Exception as e:
                     logger.warning(
                         f"OpenAIParser failed: {e}, Falling back to raw_parser."
@@ -116,5 +118,5 @@ class TitleParser:
             return None
 
     @staticmethod
-    def mikan_parser(homepage: str) -> tuple[str, str]:
-        return mikan_parser(homepage)
+    async def mikan_parser(homepage: str) -> tuple[str, str]:
+        return await mikan_parser(homepage)

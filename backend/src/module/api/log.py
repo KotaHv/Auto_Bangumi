@@ -9,7 +9,7 @@ router = APIRouter(prefix="/log", tags=["log"])
 
 
 @router.get("", response_model=str, dependencies=[Depends(get_current_user)])
-async def get_log():
+def get_log():
     if LOG_PATH.exists():
         with open(LOG_PATH, "rb") as f:
             return Response(f.read(), media_type="text/plain")
@@ -20,7 +20,7 @@ async def get_log():
 @router.get(
     "/clear", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def clear_log():
+def clear_log():
     if LOG_PATH.exists():
         LOG_PATH.write_text("")
         return JSONResponse(

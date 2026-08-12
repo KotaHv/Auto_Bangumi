@@ -17,7 +17,7 @@ async def get_config():
 @router.patch(
     "/update", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-async def update_config(config: Config):
+def update_config(config: Config):
     try:
         settings.save(config.model_dump_json(by_alias=True))
         settings.load()

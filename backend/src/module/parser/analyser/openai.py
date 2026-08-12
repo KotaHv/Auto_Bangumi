@@ -1,5 +1,5 @@
 import httpx2
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from module.conf import settings
 from module.models.bangumi import Episode
@@ -71,22 +71,24 @@ class OpenAIParser:
         self.base_url = base_url
         self.model = model
         self.http_client = (
-            httpx2.Client(proxy=build_proxy_url()) if settings.proxy.enable else None
+            httpx2.AsyncClient(proxy=build_proxy_url())
+            if settings.proxy.enable
+            else None
         )
 
-    def __enter__(self) -> OpenAIParser:
-        self.client = OpenAI(
+    async def __aenter__(self) -> OpenAIParser:
+        self.client = AsyncOpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
             http_client=self.http_client,  # type: ignore[arg-type]  # openai SDK supports httpx2 at runtime
         )
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self.client.close()
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        await self.client.close()
 
-    def parse(self, text: str) -> Episode:
-        chat_completion = self.client.chat.completions.create(
+    async def parse(self, text: str) -> Episode:
+        chat_completion = await self.client.chat.completions.create(
             messages=[
                 {"role": "system", "content": DEFAULT_PROMPT},
                 {"role": "user", "content": text},

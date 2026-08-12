@@ -7,10 +7,10 @@ from module.network import RequestContent
 from module.utils import save_image
 
 
-def mikan_parser(homepage: str):
+async def mikan_parser(homepage: str):
     root_path = parse_url(homepage).host
-    with RequestContent() as req:
-        content = req.get_html(homepage)
+    async with RequestContent() as req:
+        content = await req.get_html(homepage)
         if content is None:
             return "", ""
         soup = BeautifulSoup(content, "html.parser")
@@ -24,7 +24,7 @@ def mikan_parser(homepage: str):
         if poster_div:
             poster_path = poster_div.split("url('")[1].split("')")[0]
             poster_path = poster_path.split("?")[0]
-            img = req.get_content(f"https://{root_path}{poster_path}")
+            img = await req.get_content(f"https://{root_path}{poster_path}")
             if img is None:
                 return "", ""
             suffix = poster_path.split(".")[-1]
@@ -37,4 +37,6 @@ if __name__ == "__main__":
     homepage = (
         "https://mikanani.me/Home/Episode/c89b3c6f0c1c0567a618f5288b853823c87a9862"
     )
-    print(mikan_parser(homepage))
+    import asyncio
+
+    print(asyncio.run(mikan_parser(homepage)))
