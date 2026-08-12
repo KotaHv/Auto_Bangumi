@@ -7,8 +7,6 @@ from module.models import Bangumi, ResponseModel, RSSItem, Torrent
 from module.network import RequestContent
 from module.parser import TitleParser
 
-from .engine import RSSEngine
-
 
 class RSSAnalyser(TitleParser):
     async def official_title_parser(
@@ -70,23 +68,6 @@ class RSSAnalyser(TitleParser):
             await self.official_title_parser(bangumi=bangumi, rss=rss, torrent=torrent)
             bangumi.rss_link = rss.url
             return bangumi
-
-    async def rss_to_data(
-        self, rss: RSSItem, engine: RSSEngine, full_parse: bool = True
-    ) -> list[Bangumi]:
-        rss_torrents = await self.get_rss_torrents(rss.url, full_parse)
-        torrents_to_add = await engine.bangumi.match_list(rss_torrents, rss.url)
-        if not torrents_to_add:
-            logger.debug("[RSS] No new title has been found.")
-            return []
-        # New List
-        new_data = await self.torrents_to_data(torrents_to_add, rss, full_parse)
-        if new_data:
-            # Add to database
-            await engine.bangumi.add_all(new_data)
-            return new_data
-        else:
-            return []
 
     async def link_to_data(self, rss: RSSItem) -> Bangumi | ResponseModel:
         torrents = await self.get_rss_torrents(rss.url, False)

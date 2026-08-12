@@ -1,5 +1,5 @@
 from loguru import logger
-from sqlmodel import and_, delete, select, true
+from sqlmodel import delete, select, true
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import RSSItem, RSSUpdate
@@ -75,17 +75,6 @@ class RSSDatabase:
             (
                 await self.session.exec(
                     select(RSSItem).where(RSSItem.enabled == true())
-                )
-            ).all()
-        )
-
-    async def search_aggregate(self) -> list[RSSItem]:
-        return list(
-            (
-                await self.session.exec(
-                    select(RSSItem).where(
-                        and_(RSSItem.aggregate == true(), RSSItem.enabled == true())
-                    )
                 )
             ).all()
         )

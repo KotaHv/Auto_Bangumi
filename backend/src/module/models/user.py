@@ -1,6 +1,5 @@
 from typing import Annotated
 
-from pydantic import BaseModel
 from sqlmodel import Field as SQLField
 from sqlmodel import SQLModel
 
@@ -18,17 +17,3 @@ class UserUpdate(SQLModel):
         str | None, SQLField(min_length=4, max_length=20, regex=r"^[a-zA-Z0-9_| None+$")
     ] = None
     password: Annotated[str | None, SQLField(min_length=8)] = None
-
-
-class UserLogin(SQLModel):
-    username: str
-    password: Annotated[str, SQLField(min_length=8)]
-
-
-class Token(BaseModel):
-    token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None

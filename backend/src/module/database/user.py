@@ -14,13 +14,6 @@ class UserDatabase:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user(self, username):
-        statement = select(User).where(User.username == username)
-        result = (await self.session.exec(statement)).first()
-        if not result:
-            raise HTTPException(status_code=404, detail="User not found")
-        return result
-
     async def auth_user(self, user: User):
         statement = select(User).where(User.username == user.username)
         result = (await self.session.exec(statement)).first()

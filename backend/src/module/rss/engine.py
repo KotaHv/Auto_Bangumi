@@ -12,7 +12,6 @@ from module.utils.multi_version_filter import filter_multi_version_torrents
 class RSSEngine(Database):
     def __init__(self, _engine=engine):
         super().__init__(_engine)
-        self._to_refresh = False
 
     @staticmethod
     async def _get_torrents(rss: RSSItem) -> list[Torrent]:

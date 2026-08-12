@@ -24,7 +24,6 @@ class ProgramStatus(Checker):
         self.lock = threading.Lock()
         self._downloader_status = False
         self._torrents_status = False
-        self.event = asyncio.Event()
 
     @property
     def is_running(self):
@@ -32,10 +31,6 @@ class ProgramStatus(Checker):
             return False
         else:
             return True
-
-    @property
-    def is_stopped(self):
-        return self.stop_event.is_set()
 
     async def _wait_recovery(
         self,
@@ -128,10 +123,6 @@ class ProgramStatus(Checker):
     @property
     def first_run(self):
         return self.check_first_run()
-
-    @property
-    def version_update(self):
-        return not self.check_version()
 
     @property
     def database(self):

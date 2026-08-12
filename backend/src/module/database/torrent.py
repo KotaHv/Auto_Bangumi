@@ -45,12 +45,6 @@ class TorrentDatabase:
         self.session.add_all(datas)
         await self.session.commit()
 
-    async def update_one_user(self, data: Torrent):
-        self.session.add(data)
-        await self.session.commit()
-        await self.session.refresh(data)
-        logger.debug(f"Update {data.name} in database.")
-
     async def search(self, _id: int) -> Torrent | None:
         return (
             await self.session.exec(select(Torrent).where(Torrent.id == _id))

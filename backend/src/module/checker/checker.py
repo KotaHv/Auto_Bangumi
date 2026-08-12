@@ -7,7 +7,6 @@ from module.conf import settings
 from module.database import Database
 from module.downloader import DownloadClient
 from module.models import Config, Torrent
-from module.update import version_check
 
 
 class Checker:
@@ -34,10 +33,6 @@ class Checker:
             return True
         else:
             return False
-
-    @staticmethod
-    def check_version() -> bool:
-        return version_check()
 
     @staticmethod
     def check_database() -> bool:

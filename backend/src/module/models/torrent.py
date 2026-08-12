@@ -16,10 +16,6 @@ class Torrent(SQLModel, table=True):
     hash: str | None = None
 
 
-class TorrentUpdate(SQLModel):
-    downloaded: bool = False
-
-
 class EpisodeFile(BaseModel):
     media_path: str
     group: str | None = None

@@ -6,7 +6,6 @@ from .search_provider import SEARCH_CONFIG
 
 TMDB_API = "32b19d6a05b512190a056fa4e747cbbc"
 DATA_PATH = "sqlite+aiosqlite:///data/data.db"
-VERSION_PATH = Path("config/version.info")
 POSTERS_PATH = Path("data/posters")
 
 PLATFORM = "Windows" if "\\" in settings.downloader.path else "Unix"
@@ -19,7 +18,6 @@ __all__ = [
     "SEARCH_CONFIG",
     "TMDB_API",
     "DATA_PATH",
-    "VERSION_PATH",
     "POSTERS_PATH",
     "PLATFORM",
 ]

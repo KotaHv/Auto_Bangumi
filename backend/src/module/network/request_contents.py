@@ -76,9 +76,6 @@ class RequestContent(RequestURL):
         if req:
             return req.content
 
-    async def check_connection(self, _url):
-        return await self.check_url(_url)
-
     async def get_rss_title(self, _url) -> str | None:
         soup = await self.get_xml(_url)
         if soup is not None:

@@ -77,18 +77,6 @@ class RequestURL:
         logger.warning("[Network] Please check DNS/Connection settings")
         return None
 
-    async def check_url(self, url: str):
-        if "://" not in url:
-            url = f"http://{url}"
-        try:
-            async with httpx2.AsyncClient(headers=self.headers, timeout=5) as client:
-                req = await client.head(url=url)
-            req.raise_for_status()
-            return True
-        except httpx2.RequestError:
-            logger.debug(f"[Network] Cannot connect to {url}.")
-            return False
-
     async def post_form(self, url: str, data: dict, files):
         try:
             req = await self.session.post(url=url, data=data, files=files)

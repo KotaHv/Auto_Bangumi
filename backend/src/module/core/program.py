@@ -5,7 +5,6 @@ from module.models import ResponseModel
 from module.update import (
     cache_image,
     first_run,
-    start_up,
     torrent_migration,
 )
 
@@ -108,10 +107,3 @@ class Program(RenameThread, RSSThread):
             msg_en="Program restarted.",
             msg_zh="程序重启成功。",
         )
-
-    async def update_database(self):
-        if not self.version_update:
-            return {"status": "No update found."}
-        else:
-            await start_up()
-            return {"status": "Database updated."}

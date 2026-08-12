@@ -1,6 +1,6 @@
 from loguru import logger
 from sqlalchemy.sql import func
-from sqlmodel import and_, delete, false, or_, select
+from sqlmodel import and_, delete, false, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import Bangumi, BangumiUpdate
@@ -64,17 +64,6 @@ class BangumiDatabase:
         await self.session.refresh(bangumi)
         logger.debug(f"[Database] Update {title_raw} rss_link to {rss_set}.")
 
-    async def update_poster(self, title_raw, poster_link: str):
-        statement = select(Bangumi).where(Bangumi.title_raw == title_raw)
-        bangumi = (await self.session.exec(statement)).first()
-        if bangumi is None:
-            return
-        bangumi.poster_link = poster_link
-        self.session.add(bangumi)
-        await self.session.commit()
-        await self.session.refresh(bangumi)
-        logger.debug(f"[Database] Update {title_raw} poster_link to {poster_link}.")
-
     async def delete_one(self, _id: int):
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = (await self.session.exec(statement)).first()
@@ -125,8 +114,6 @@ class BangumiDatabase:
                     if rss_link not in match_data.rss_link:
                         match_data.rss_link += f",{rss_link}"
                         await self.update_rss(match_data.title_raw, match_data.rss_link)
-                    # if not match_data.poster_link:
-                    #     self.update_poster(match_data.title_raw, torrent.poster_link)
                     torrent_list.pop(i)
                     break
             else:
@@ -152,15 +139,6 @@ class BangumiDatabase:
             and_(Bangumi.eps_collect == false(), Bangumi.deleted == false())
         )
         datas = (await self.session.exec(condition)).all()
-        return list(datas)
-
-    async def not_added(self) -> list[Bangumi]:
-        conditions = select(Bangumi).where(
-            or_(
-                Bangumi.added == 0, Bangumi.rule_name is None, Bangumi.save_path is None
-            )
-        )
-        datas = (await self.session.exec(conditions)).all()
         return list(datas)
 
     async def disable_rule(self, _id: int):
