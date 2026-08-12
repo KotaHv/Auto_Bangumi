@@ -1,6 +1,8 @@
+import asyncio
 import time
 
 import pytest
+import pytest_asyncio
 from loguru import logger
 from qbittorrentapi.exceptions import APIConnectionError, Forbidden403Error, LoginFailed
 from requests.exceptions import ConnectionError
@@ -13,12 +15,12 @@ from module.core import Program
 from module.core.sub_thread import RenameThread, RSSThread
 
 
-def wait_until(condition, timeout=5):
+async def wait_until(condition, timeout=5):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if condition():
             return True
-        time.sleep(0.02)
+        await asyncio.sleep(0.02)
     return False
 
 
@@ -45,8 +47,8 @@ def log_sink():
     logger.remove(sink_id)
 
 
-@pytest.fixture
-def make_program(monkeypatch):
+@pytest_asyncio.fixture
+async def make_program(monkeypatch):
     programs = []
     monkeypatch.setattr(status_module, "DOWNLOADER_RETRY_INTERVAL", 0.1)
     monkeypatch.setattr(status_module, "IP_BAN_RETRY_INTERVAL", 0.1)
@@ -66,32 +68,44 @@ def make_program(monkeypatch):
 
     yield _make
     for program in programs:
-        program.stop()
+        await program.stop()
 
 
-def test_start_online_starts_threads(make_program):
+@pytest.mark.asyncio
+async def test_start_online_starts_tasks(make_program):
     program = make_program()
-    assert program.start().status is True
-    assert program._rss_thread.is_alive()
-    assert program._rename_thread.is_alive()
-    program.stop()
-    assert not program._rss_thread.is_alive()
-    assert not program._rename_thread.is_alive()
+    assert (await program.start()).status is True
+    assert program.is_running
+    assert program._workers.is_running
+    await program.stop()
+    assert not program.is_running
+    assert not program._workers.is_running
 
 
-def test_start_offline_returns_406_fast_and_threads_wait(make_program):
+@pytest.mark.asyncio
+async def test_start_offline_returns_406_fast_and_tasks_wait(make_program):
     program = make_program(downloader_online=False)
     start_time = time.monotonic()
-    response = program.start()
+    response = await program.start()
     assert response.status is False
     assert response.status_code == 406
     assert time.monotonic() - start_time < 3
-    assert program._rss_thread.is_alive()
-    assert program._rename_thread.is_alive()
-    program.stop()
+    assert program.is_running
+    await program.stop()
 
 
-def test_connection_error_waits_and_retries(make_program, log_sink):
+@pytest.mark.asyncio
+async def test_start_twice_returns_406(make_program):
+    program = make_program()
+    assert (await program.start()).status is True
+    second = await program.start()
+    assert second.status is False
+    assert second.status_code == 406
+    await program.stop()
+
+
+@pytest.mark.asyncio
+async def test_connection_error_waits_and_retries(make_program, log_sink):
     calls = {"n": 0}
 
     async def conn_down(_):
@@ -99,8 +113,8 @@ def test_connection_error_waits_and_retries(make_program, log_sink):
         raise connection_error()
 
     program = make_program(rss_work=conn_down)
-    assert program.start().status is True
-    assert wait_until(lambda: calls["n"] >= 3)
+    assert (await program.start()).status is True
+    assert await wait_until(lambda: calls["n"] >= 3)
     errors = [
         message
         for message in log_sink
@@ -113,10 +127,13 @@ def test_connection_error_waits_and_retries(make_program, log_sink):
     ]
     assert len(errors) == 1
     assert len(debugs) >= 1
-    program.stop()
+    await program.stop()
 
 
-def test_credentials_error_uses_cycle_not_recovery_interval(make_program, log_sink):
+@pytest.mark.asyncio
+async def test_credentials_error_uses_cycle_not_recovery_interval(
+    make_program, log_sink
+):
     calls = {"n": 0}
 
     async def bad_credentials(_):
@@ -124,15 +141,16 @@ def test_credentials_error_uses_cycle_not_recovery_interval(make_program, log_si
         raise LoginFailed()
 
     program = make_program(rss_work=bad_credentials)
-    assert program.start().status is True
-    time.sleep(0.4)  # longer than the 0.1s recovery interval
+    assert (await program.start()).status is True
+    await asyncio.sleep(0.4)  # longer than the 0.1s recovery interval
     assert calls["n"] == 1  # no fast recovery retry
-    assert wait_until(lambda: calls["n"] >= 2, timeout=4)  # retried on next cycle
+    assert await wait_until(lambda: calls["n"] >= 2, timeout=4)  # retried on next cycle
     assert any("rejected credentials" in message for message in log_sink)
-    program.stop()
+    await program.stop()
 
 
-def test_forbidden_error_waits_until_ip_released(make_program, log_sink):
+@pytest.mark.asyncio
+async def test_forbidden_error_waits_until_ip_released(make_program, log_sink):
     calls = {"n": 0}
 
     async def banned(_):
@@ -140,18 +158,19 @@ def test_forbidden_error_waits_until_ip_released(make_program, log_sink):
         raise Forbidden403Error()
 
     program = make_program(rss_work=banned)
-    assert program.start().status is True
-    assert wait_until(lambda: calls["n"] >= 3)
+    assert (await program.start()).status is True
+    assert await wait_until(lambda: calls["n"] >= 3)
     errors = [
         message
         for message in log_sink
         if "IP may be banned" in message and message.startswith("ERROR|")
     ]
     assert len(errors) == 1
-    program.stop()
+    await program.stop()
 
 
-def test_non_connection_api_error_is_not_recovery(make_program, log_sink):
+@pytest.mark.asyncio
+async def test_non_connection_api_error_is_not_recovery(make_program, log_sink):
     calls = {"n": 0}
 
     async def bad_host(_):
@@ -159,14 +178,15 @@ def test_non_connection_api_error_is_not_recovery(make_program, log_sink):
         raise APIConnectionError("bad host")
 
     program = make_program(rss_work=bad_host)
-    assert program.start().status is True
-    time.sleep(0.4)
+    assert (await program.start()).status is True
+    await asyncio.sleep(0.4)
     assert calls["n"] == 1  # not fast-retried as a connection failure
     assert not any("Cannot connect to downloader" in message for message in log_sink)
-    program.stop()
+    await program.stop()
 
 
-def test_stop_during_connection_wait_exits_promptly(make_program):
+@pytest.mark.asyncio
+async def test_stop_during_connection_wait_exits_promptly(make_program):
     calls = {"n": 0}
 
     async def conn_down(_):
@@ -174,16 +194,16 @@ def test_stop_during_connection_wait_exits_promptly(make_program):
         raise connection_error()
 
     program = make_program(rss_work=conn_down)
-    assert program.start().status is True
-    assert wait_until(lambda: calls["n"] >= 2)
+    assert (await program.start()).status is True
+    assert await wait_until(lambda: calls["n"] >= 2)
     start_time = time.monotonic()
-    program.stop()
+    await program.stop()
     assert time.monotonic() - start_time < 3
-    assert not program._rss_thread.is_alive()
-    assert not program._rename_thread.is_alive()
+    assert not program.is_running
 
 
-def test_rename_loop_shares_recovery_logic(make_program, log_sink):
+@pytest.mark.asyncio
+async def test_rename_loop_shares_recovery_logic(make_program, log_sink):
     calls = {"n": 0}
 
     async def bad_credentials(_):
@@ -191,11 +211,11 @@ def test_rename_loop_shares_recovery_logic(make_program, log_sink):
         raise LoginFailed()
 
     program = make_program(rename_work=bad_credentials)
-    assert program.start().status is True
-    time.sleep(0.4)
+    assert (await program.start()).status is True
+    await asyncio.sleep(0.4)
     assert calls["n"] == 1
     assert any(
         "rejected credentials" in message and "[Renamer]" in message
         for message in log_sink
     )
-    program.stop()
+    await program.stop()

@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 
 from loguru import logger
@@ -47,7 +48,7 @@ class Renamer(DownloadClient):
             logger.error(f"[Renamer] Unknown rename method: {method}")
             return file_info.media_path
 
-    def rename_file(
+    async def rename_file(
         self,
         torrent_name: str,
         media_path: str,
@@ -67,9 +68,13 @@ class Renamer(DownloadClient):
             new_path = self.gen_path(ep, bangumi_name, method=method, offset=offset)
             if media_path != new_path:
                 if new_path not in self.check_pool.keys():
-                    if self.rename_torrent_file(
-                        _hash=_hash, old_path=media_path, new_path=new_path
-                    ):
+                    renamed = await asyncio.to_thread(
+                        self.rename_torrent_file,
+                        _hash=_hash,
+                        old_path=media_path,
+                        new_path=new_path,
+                    )
+                    if renamed:
                         return Notification(
                             official_title=bangumi_name,
                             season=ep.season,
@@ -78,10 +83,10 @@ class Renamer(DownloadClient):
         else:
             logger.warning(f"[Renamer] {media_path} parse failed")
             if settings.bangumi_manage.remove_bad_torrent:
-                self.delete_torrent(hashes=_hash)
+                await asyncio.to_thread(self.delete_torrent, _hash)
         return None
 
-    def rename_collection(
+    async def rename_collection(
         self,
         media_list: list[str],
         bangumi_name: str,
@@ -102,17 +107,20 @@ class Renamer(DownloadClient):
                         ep, bangumi_name, method=method, offset=offset
                     )
                     if media_path != new_path:
-                        renamed = self.rename_torrent_file(
-                            _hash=_hash, old_path=media_path, new_path=new_path
+                        renamed = await asyncio.to_thread(
+                            self.rename_torrent_file,
+                            _hash=_hash,
+                            old_path=media_path,
+                            new_path=new_path,
                         )
                         if not renamed:
                             logger.warning(f"[Renamer] {media_path} rename failed")
                             # Delete bad torrent.
                             if settings.bangumi_manage.remove_bad_torrent:
-                                self.delete_torrent(_hash)
+                                await asyncio.to_thread(self.delete_torrent, _hash)
                                 break
 
-    def rename_subtitles(
+    async def rename_subtitles(
         self,
         subtitle_list: list[str],
         torrent_name: str,
@@ -136,16 +144,19 @@ class Renamer(DownloadClient):
                     sub, bangumi_name, method=method, offset=offset
                 )
                 if subtitle_path != new_path:
-                    renamed = self.rename_torrent_file(
-                        _hash=_hash, old_path=subtitle_path, new_path=new_path
+                    renamed = await asyncio.to_thread(
+                        self.rename_torrent_file,
+                        _hash=_hash,
+                        old_path=subtitle_path,
+                        new_path=new_path,
                     )
                     if not renamed:
                         logger.warning(f"[Renamer] {subtitle_path} rename failed")
 
-    def check_multi_version(self, tag=None):
+    async def check_multi_version(self, tag=None):
         if not settings.bangumi_manage.retain_latest_media_version:
             return
-        torrents_info = self.get_torrent_info(tag=tag)
+        torrents_info = await asyncio.to_thread(self.get_torrent_info, tag=tag)
         grouped_torrents = defaultdict(list)
 
         for torrent_info in torrents_info:
@@ -189,17 +200,17 @@ class Renamer(DownloadClient):
                         "\n\t\t".join(f"- {name}" for name in torrent_hashes.values()),
                     )
                 )
-                self.delete_torrent(torrent_hashes.keys())
+                await asyncio.to_thread(self.delete_torrent, torrent_hashes.keys())
 
     async def rename(self, tag="") -> list[Notification]:
         # Get torrent info
         logger.debug("[Renamer] Start rename process.")
         if tag:
-            self.check_multi_version(tag=tag)
+            await self.check_multi_version(tag=tag)
         else:
-            self.check_multi_version()
+            await self.check_multi_version()
         rename_method = settings.bangumi_manage.rename_method
-        torrents_info = self.get_torrent_info(tag=tag)
+        torrents_info = await asyncio.to_thread(self.get_torrent_info, tag=tag)
         renamed_info: list[Notification] = []
         for info in torrents_info:
             media_list, subtitle_list = self.check_files(info)
@@ -212,36 +223,36 @@ class Renamer(DownloadClient):
                 "_hash": info.hash,
                 "offset": 0,
             }
-            self.set_tag(info.hash, bangumi_name)
+            await asyncio.to_thread(self.set_tag, info.hash, bangumi_name)
             async with Database() as db:
                 bangumi_id = await db.torrent.get_bangumi_id(info.hash)
                 if bangumi_id:
                     kwargs["offset"] = await db.bangumi.get_offset(bangumi_id)
             # Rename single media file
             if len(media_list) == 1:
-                notify_info = self.rename_file(media_path=media_list[0], **kwargs)
+                notify_info = await self.rename_file(media_path=media_list[0], **kwargs)
                 if notify_info:
                     renamed_info.append(notify_info)
                 # Rename subtitle file
                 if len(subtitle_list) > 0:
-                    self.rename_subtitles(subtitle_list=subtitle_list, **kwargs)
+                    await self.rename_subtitles(subtitle_list=subtitle_list, **kwargs)
             # Rename collection
             elif len(media_list) > 1:
                 logger.info("[Renamer] Start rename collection")
-                self.rename_collection(media_list=media_list, **kwargs)
+                await self.rename_collection(media_list=media_list, **kwargs)
                 if len(subtitle_list) > 0:
-                    self.rename_subtitles(subtitle_list=subtitle_list, **kwargs)
-                self.set_category(info.hash, "BangumiCollection")
+                    await self.rename_subtitles(subtitle_list=subtitle_list, **kwargs)
+                await asyncio.to_thread(
+                    self.set_category, info.hash, "BangumiCollection"
+                )
             else:
                 logger.warning(f"[Renamer] {info.name} has no media file")
-                self.remove_tag(info.hash, bangumi_name)
+                await asyncio.to_thread(self.remove_tag, info.hash, bangumi_name)
         logger.debug("[Renamer] Rename process finished.")
         return renamed_info
 
 
 if __name__ == "__main__":
-    import asyncio
-
     from module.conf import setup_logger
 
     settings.log.debug_enable = True

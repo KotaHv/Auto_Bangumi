@@ -1,6 +1,4 @@
 import asyncio
-import threading
-import time
 
 from loguru import logger
 from qbittorrentapi.exceptions import (
@@ -13,6 +11,8 @@ from requests.exceptions import ConnectionError
 
 from module.checker import Checker
 
+from .worker import WorkerGroup
+
 DOWNLOADER_RETRY_INTERVAL = 30
 IP_BAN_RETRY_INTERVAL = 300
 
@@ -20,17 +20,17 @@ IP_BAN_RETRY_INTERVAL = 300
 class ProgramStatus(Checker):
     def __init__(self):
         super().__init__()
-        self.stop_event = threading.Event()
-        self.lock = threading.Lock()
         self._downloader_status = False
         self._torrents_status = False
+        self._running = False
+        self._workers = WorkerGroup()
+        self._lock = asyncio.Lock()
 
     @property
     def is_running(self):
-        if self.stop_event.is_set() or self.check_first_run():
-            return False
-        else:
+        if self._running and not self.check_first_run():
             return True
+        return False
 
     async def _wait_recovery(
         self,
@@ -44,17 +44,12 @@ class ProgramStatus(Checker):
             logger.error(first_message)
         else:
             logger.debug(debug_message)
-        deadline = time.monotonic() + interval
-        while not self.stop_event.is_set():
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return
-            await asyncio.sleep(min(remaining, 1))
+        await asyncio.sleep(interval)
 
     async def _run_loop(self, work, cycle_seconds: int, component: str):
         """Run a worker in a loop, waiting for the downloader when needed."""
         waiting_recovery = False
-        while not self.stop_event.is_set():
+        while True:
             try:
                 await work()
             except LoginFailed, Unauthorized401Error:
@@ -95,16 +90,7 @@ class ProgramStatus(Checker):
             except Exception as e:
                 logger.exception(f"[{component}] error: {e}")
             waiting_recovery = False
-            await self._wait_cycle(cycle_seconds)
-
-    async def _wait_cycle(self, timeout: int):
-        """Sleep until the next cycle, or return early when stopped."""
-        deadline = time.monotonic() + timeout
-        while not self.stop_event.is_set():
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return
-            await asyncio.sleep(min(remaining, 1))
+            await asyncio.sleep(cycle_seconds)
 
     @property
     def downloader_status(self):

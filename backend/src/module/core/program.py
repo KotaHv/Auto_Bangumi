@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 
 from module.conf import VERSION, settings
@@ -43,19 +45,30 @@ class Program(RenameThread, RSSThread):
                 "[Core] The hash field of the torrent table does not exist or its value is empty, get torrent hash."
             )
             await torrent_migration()
-        self.start()
+        await self.start()
 
-    def start(self):
-        with self.lock:
-            self.stop_event.clear()
+    async def start(self):
+        async with self._lock:
+            if self._running:
+                logger.warning("Program is already running.")
+                return ResponseModel(
+                    status=False,
+                    status_code=406,
+                    msg_en="Program is already running.",
+                    msg_zh="程序已在运行。",
+                )
             settings.load()
             # Reset cached status so every start attempt performs a fresh check.
             self._downloader_status = False
-            online = self.downloader_status
+            self._running = True
+            online = await asyncio.to_thread(self.check_downloader)
+            workers = []
             if self.enable_renamer:
-                self.rename_start()
+                workers.append(self._rename_async_loop)
             if self.enable_rss:
-                self.rss_start()
+                workers.append(self._rss_async_loop)
+            if workers:
+                self._workers.start(workers)
             if online:
                 logger.info("Program running.")
                 return ResponseModel(
@@ -78,29 +91,29 @@ class Program(RenameThread, RSSThread):
                     msg_zh="程序启动失败，下载器恢复后自动启动。",
                 )
 
-    def stop(self):
-        running = self.is_running
-        self.stop_event.set()
-        self.rename_stop()
-        self.rss_stop()
-        if running:
-            return ResponseModel(
-                status=True,
-                status_code=200,
-                msg_en="Program stopped.",
-                msg_zh="程序停止成功。",
-            )
-        else:
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="Program is not running.",
-                msg_zh="程序未运行。",
-            )
+    async def stop(self):
+        async with self._lock:
+            running = self.is_running
+            self._running = False
+            await self._workers.stop()
+            if running:
+                return ResponseModel(
+                    status=True,
+                    status_code=200,
+                    msg_en="Program stopped.",
+                    msg_zh="程序停止成功。",
+                )
+            else:
+                return ResponseModel(
+                    status=False,
+                    status_code=406,
+                    msg_en="Program is not running.",
+                    msg_zh="程序未运行。",
+                )
 
-    def restart(self):
-        self.stop()
-        self.start()
+    async def restart(self):
+        await self.stop()
+        await self.start()
         return ResponseModel(
             status=True,
             status_code=200,

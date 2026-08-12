@@ -20,7 +20,7 @@ program = Program()
 async def lifespan(_router: APIRouter):
     await program.startup()
     yield
-    program.stop()
+    await program.stop()
 
 
 router = APIRouter(tags=["program"], lifespan=lifespan)
@@ -29,9 +29,9 @@ router = APIRouter(tags=["program"], lifespan=lifespan)
 @router.get(
     "/restart", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def restart():
+async def restart():
     try:
-        resp = program.restart()
+        resp = await program.restart()
         return u_response(resp)
     except Exception as e:
         logger.debug(e)
@@ -48,9 +48,9 @@ def restart():
 @router.get(
     "/start", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def start():
+async def start():
     try:
-        resp = program.start()
+        resp = await program.start()
         return u_response(resp)
     except Exception as e:
         logger.debug(e)
@@ -67,8 +67,8 @@ def start():
 @router.get(
     "/stop", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def stop():
-    return u_response(program.stop())
+async def stop():
+    return u_response(await program.stop())
 
 
 @router.get("/status", response_model=dict, dependencies=[Depends(get_current_user)])
@@ -90,8 +90,8 @@ async def program_status():
 @router.get(
     "/shutdown", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def shutdown_program():
-    program.stop()
+async def shutdown_program():
+    await program.stop()
     logger.info("Shutting down program...")
     os.kill(os.getpid(), signal.SIGINT)
     return JSONResponse(
