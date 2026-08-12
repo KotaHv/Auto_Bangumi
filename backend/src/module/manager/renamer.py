@@ -1,4 +1,3 @@
-import re
 from collections import defaultdict
 
 from loguru import logger
@@ -15,14 +14,6 @@ class Renamer(DownloadClient):
         super().__init__()
         self._parser = TitleParser()
         self.check_pool = {}
-
-    @staticmethod
-    def print_result(torrent_count, rename_count):
-        if rename_count != 0:
-            logger.info(
-                f"Finished checking {torrent_count} files' name, renamed {rename_count} files."
-            )
-        logger.debug(f"Checked {torrent_count} files")
 
     @staticmethod
     def gen_path(
@@ -246,12 +237,6 @@ class Renamer(DownloadClient):
                 self.remove_tag(info.hash, bangumi_name)
         logger.debug("[Renamer] Rename process finished.")
         return renamed_info
-
-    def compare_ep_version(self, torrent_name: str, torrent_hash: str):
-        if re.search(r"v\d.", torrent_name):
-            pass
-        else:
-            self.delete_torrent(hashes=torrent_hash)
 
 
 if __name__ == "__main__":
