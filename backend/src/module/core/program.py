@@ -33,13 +33,13 @@ class Program(RenameThread, RSSThread):
     async def startup(self):
         self.__start_info()
         if not self.database:
-            first_run()
+            await first_run()
             logger.info("[Core] No db file exists, create database file.")
             return {"status": "First run detected."}
         if not self.img_cache:
             logger.info("[Core] No image cache exists, create image cache.")
             await cache_image()
-        if not self.torrent_hash:
+        if not await self.check_torrent_hash():
             logger.info(
                 "[Core] The hash field of the torrent table does not exist or its value is empty, get torrent hash."
             )
@@ -109,9 +109,9 @@ class Program(RenameThread, RSSThread):
             msg_zh="程序重启成功。",
         )
 
-    def update_database(self):
+    async def update_database(self):
         if not self.version_update:
             return {"status": "No update found."}
         else:
-            start_up()
+            await start_up()
             return {"status": "Database updated."}

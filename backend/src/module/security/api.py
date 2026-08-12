@@ -34,10 +34,10 @@ async def get_token_data(token: str = Depends(oauth2_scheme)):
     return payload
 
 
-def update_user_info(user_data: UserUpdate, current_user):
+async def update_user_info(user_data: UserUpdate, current_user):
     try:
-        with Database() as db:
-            db.user.update_user(current_user, user_data)
+        async with Database() as db:
+            await db.user.update_user(current_user, user_data)
         return True
     except Exception as e:
         raise HTTPException(
@@ -45,9 +45,9 @@ def update_user_info(user_data: UserUpdate, current_user):
         ) from e
 
 
-def auth_user(user: User):
-    with Database() as db:
-        resp = db.user.auth_user(user)
+async def auth_user(user: User):
+    async with Database() as db:
+        resp = await db.user.auth_user(user)
         if resp.status:
             active_user.append(user.username)
         return resp

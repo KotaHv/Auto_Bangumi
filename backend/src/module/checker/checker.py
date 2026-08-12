@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from sqlalchemy import inspect
+from sqlalchemy import text
+from sqlmodel import select
 
 from module.conf import settings
 from module.database import Database
 from module.downloader import DownloadClient
-from module.models import Config
+from module.models import Config, Torrent
 from module.update import version_check
 
 
@@ -64,14 +65,19 @@ class Checker:
             return False
 
     @staticmethod
-    def check_torrent_hash() -> bool:
-        with Database() as db:
-            inspector = inspect(db.engine)
-            columns = inspector.get_columns("torrent")
-            if any(column["name"] == "hash" for column in columns):
-                for torrent in db.torrent.search_all():
-                    if torrent.hash is None and torrent.bangumi_id:
-                        return False
-                return True
-            else:
+    async def check_torrent_hash() -> bool:
+        async with Database() as db:
+            columns = (
+                (
+                    # sqlmodel exec() overloads don't accept TextClause, but it works at runtime
+                    await db.exec(text("PRAGMA table_info(torrent)"))  # type: ignore[reportCallIssue, reportArgumentType]
+                )
+                .mappings()
+                .all()
+            )
+            if not any(column["name"] == "hash" for column in columns):
                 return False
+            torrents = (await db.exec(select(Torrent))).all()
+            return not any(
+                torrent.hash is None and torrent.bangumi_id for torrent in torrents
+            )

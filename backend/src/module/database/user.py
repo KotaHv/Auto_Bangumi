@@ -1,6 +1,9 @@
+import asyncio
+
 from fastapi import HTTPException
 from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import SQLModel, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import ResponseModel
 from module.models.user import User, UserUpdate
@@ -8,19 +11,19 @@ from module.security.jwt import get_password_hash, verify_password
 
 
 class UserDatabase:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def get_user(self, username):
+    async def get_user(self, username):
         statement = select(User).where(User.username == username)
-        result = self.session.exec(statement).first()
+        result = (await self.session.exec(statement)).first()
         if not result:
             raise HTTPException(status_code=404, detail="User not found")
         return result
 
-    def auth_user(self, user: User):
+    async def auth_user(self, user: User):
         statement = select(User).where(User.username == user.username)
-        result = self.session.exec(statement).first()
+        result = (await self.session.exec(statement)).first()
         if not user.password:
             return ResponseModel(
                 status_code=401,
@@ -35,7 +38,7 @@ class UserDatabase:
                 msg_en="User not found",
                 msg_zh="用户不存在",
             )
-        if not verify_password(user.password, result.password):
+        if not await asyncio.to_thread(verify_password, user.password, result.password):
             return ResponseModel(
                 status_code=401,
                 status=False,
@@ -46,26 +49,35 @@ class UserDatabase:
             status_code=200, status=True, msg_en="Login successfully", msg_zh="登录成功"
         )
 
-    def update_user(self, username, update_user: UserUpdate):
+    async def update_user(self, username, update_user: UserUpdate):
         # Update username and password
         statement = select(User).where(User.username == username)
-        result = self.session.exec(statement).first()
+        result = (await self.session.exec(statement)).first()
         if not result:
             raise HTTPException(status_code=404, detail="User not found")
         if update_user.username:
             result.username = update_user.username
         if update_user.password:
-            result.password = get_password_hash(update_user.password)
+            result.password = await asyncio.to_thread(
+                get_password_hash, update_user.password
+            )
         self.session.add(result)
-        self.session.commit()
+        await self.session.commit()
         return result
 
-    def merge_old_user(self):
+    async def merge_old_user(self):
         # get old data
         statement = """
         SELECT * FROM user
         """
-        result = self.session.execute(text(statement)).mappings().first()
+        # sqlmodel exec() overloads don't accept TextClause, but it works at runtime
+        result = (
+            (
+                await self.session.exec(text(statement))  # type: ignore[reportCallIssue, reportArgumentType]
+            )
+            .mappings()
+            .first()
+        )
         if not result:
             return
         # add new data
@@ -74,30 +86,30 @@ class UserDatabase:
         statement = """
         DROP TABLE user
         """
-        self.session.execute(text(statement))
-        # Create new table
-        statement = """
-        CREATE TABLE user (
-            id INTEGER NOT NULL PRIMARY KEY,
-            username VARCHAR NOT NULL,
-            password VARCHAR NOT NULL
+        # sqlmodel exec() overloads don't accept TextClause, but it works at runtime
+        await self.session.exec(text(statement))  # type: ignore[reportCallIssue, reportArgumentType]
+        # Recreate the user table from the SQLModel metadata instead of
+        # hardcoding DDL that can drift from the model definition.
+        await self.session.run_sync(
+            lambda sync_session: SQLModel.metadata.create_all(sync_session.get_bind())
         )
-        """
-        self.session.execute(text(statement))
         self.session.add(user)
-        self.session.commit()
+        await self.session.commit()
 
-    def add_default_user(self):
+    async def add_default_user(self):
         # Check if user exists
         statement = select(User)
         try:
-            result = self.session.exec(statement).all()
+            result = (await self.session.exec(statement)).all()
         except Exception:
-            self.merge_old_user()
-            result = self.session.exec(statement).all()
+            await self.merge_old_user()
+            result = (await self.session.exec(statement)).all()
         if len(result) != 0:
             return
         # Add default user
-        user = User(username="admin", password=get_password_hash("adminadmin"))
+        user = User(
+            username="admin",
+            password=await asyncio.to_thread(get_password_hash, "adminadmin"),
+        )
         self.session.add(user)
-        self.session.commit()
+        await self.session.commit()

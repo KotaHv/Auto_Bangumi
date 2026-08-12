@@ -23,10 +23,10 @@ class RSSEngine(Database):
                 torrent.rss_id = rss.id
         return torrents
 
-    def get_rss_torrents(self, rss_id: int) -> list[Torrent]:
-        rss = self.rss.search_id(rss_id)
+    async def get_rss_torrents(self, rss_id: int) -> list[Torrent]:
+        rss = await self.rss.search_id(rss_id)
         if rss:
-            return self.torrent.search_rss(rss_id)
+            return await self.torrent.search_rss(rss_id)
         else:
             return []
 
@@ -48,7 +48,7 @@ class RSSEngine(Database):
                         msg_zh="无法获取 RSS 标题。",
                     )
         rss_data = RSSItem(name=name, url=rss_link, aggregate=aggregate, parser=parser)
-        if self.rss.add(rss_data):
+        if await self.rss.add(rss_data):
             return ResponseModel(
                 status=True,
                 status_code=200,
@@ -63,9 +63,9 @@ class RSSEngine(Database):
                 msg_zh="RSS 添加失败。",
             )
 
-    def disable_list(self, rss_id_list: list[int]):
+    async def disable_list(self, rss_id_list: list[int]):
         for rss_id in rss_id_list:
-            self.rss.disable(rss_id)
+            await self.rss.disable(rss_id)
         return ResponseModel(
             status=True,
             status_code=200,
@@ -73,9 +73,9 @@ class RSSEngine(Database):
             msg_zh="禁用 RSS 成功。",
         )
 
-    def enable_list(self, rss_id_list: list[int]):
+    async def enable_list(self, rss_id_list: list[int]):
         for rss_id in rss_id_list:
-            self.rss.enable(rss_id)
+            await self.rss.enable(rss_id)
         return ResponseModel(
             status=True,
             status_code=200,
@@ -83,9 +83,9 @@ class RSSEngine(Database):
             msg_zh="启用 RSS 成功。",
         )
 
-    def delete_list(self, rss_id_list: list[int]):
+    async def delete_list(self, rss_id_list: list[int]):
         for rss_id in rss_id_list:
-            self.rss.delete(rss_id)
+            await self.rss.delete(rss_id)
         return ResponseModel(
             status=True,
             status_code=200,
@@ -95,11 +95,11 @@ class RSSEngine(Database):
 
     async def pull_rss(self, rss_item: RSSItem) -> list[Torrent]:
         torrents = await self._get_torrents(rss_item)
-        new_torrents = self.torrent.check_new(torrents)
+        new_torrents = await self.torrent.check_new(torrents)
         return new_torrents
 
-    def match_torrent(self, torrent: Torrent) -> Bangumi | None:
-        matched: Bangumi | None = self.bangumi.match_torrent(torrent.name)
+    async def match_torrent(self, torrent: Torrent) -> Bangumi | None:
+        matched: Bangumi | None = await self.bangumi.match_torrent(torrent.name)
         if matched:
             if matched.filter == "":
                 return matched
@@ -112,7 +112,7 @@ class RSSEngine(Database):
     async def fetch_aggregate_rss(self, rss_item: RSSItem) -> list[Torrent]:
         async with RequestContent() as req:
             torrents = await req.get_torrents(rss_item.url)
-        torrents_to_add = self.bangumi.match_list(torrents.copy(), rss_item.url)
+        torrents_to_add = await self.bangumi.match_list(torrents.copy(), rss_item.url)
         if not torrents_to_add:
             logger.debug("[RSS] No new title has been found.")
             return torrents
@@ -121,11 +121,11 @@ class RSSEngine(Database):
         analyser = RSSAnalyser()
         new_data = await analyser.torrents_to_data(torrents_to_add, rss_item)
         if new_data:
-            self.bangumi.add_all(new_data)
+            await self.bangumi.add_all(new_data)
         return torrents
 
     async def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
-        bangumi = self.bangumi.search_rss(rss_item.url)[0]
+        bangumi = (await self.bangumi.search_rss(rss_item.url))[0]
         async with RequestContent() as req:
             torrents = await req.get_torrents(
                 rss_item.url, bangumi.filter.replace(",", "|")
@@ -135,9 +135,9 @@ class RSSEngine(Database):
     async def refresh_rss(self, client: DownloadClient, rss_id: int | None = None):
         # Get All RSS Items
         if not rss_id:
-            rss_items: list[RSSItem] = self.rss.search_active()
+            rss_items: list[RSSItem] = await self.rss.search_active()
         else:
-            rss_item = self.rss.search_id(rss_id)
+            rss_item = await self.rss.search_id(rss_id)
             rss_items = [rss_item] if rss_item else []
         # From RSS Items, get all torrents
         logger.debug(f"[Engine] Get {len(rss_items)} RSS items")
@@ -147,16 +147,16 @@ class RSSEngine(Database):
             else:
                 torrents = await self.fetch_regular_rss(rss_item)
             filter_multi_version_torrents(torrents)
-            new_torrents = self.torrent.check_new(torrents)
+            new_torrents = await self.torrent.check_new(torrents)
             # Get all enabled bangumi data
             for torrent in new_torrents:
                 torrent.rss_id = rss_item.id
-                matched_data = self.match_torrent(torrent)
+                matched_data = await self.match_torrent(torrent)
                 if matched_data:
                     if await client.add_torrent(torrent, matched_data):
                         logger.debug(f"[Engine] Add torrent {torrent.name} to client")
             # Add all torrents to database
-            self.torrent.add_all(new_torrents)
+            await self.torrent.add_all(new_torrents)
 
     async def download_bangumi(self, bangumi: Bangumi):
         async with RequestContent() as req:
@@ -166,7 +166,7 @@ class RSSEngine(Database):
             if torrents:
                 async with DownloadClient() as client:
                     await client.add_torrent(torrents, bangumi)
-                    self.torrent.add_all(torrents)
+                    await self.torrent.add_all(torrents)
                     return ResponseModel(
                         status=True,
                         status_code=200,

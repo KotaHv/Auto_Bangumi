@@ -25,10 +25,9 @@ class RSSThread(ProgramStatus):
         await self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
 
     async def _rss_loop(self):
-        async with DownloadClient() as client:
-            with RSSEngine() as engine:
-                # Run RSS Engine
-                await engine.refresh_rss(client)
+        async with DownloadClient() as client, RSSEngine() as engine:
+            # Run RSS Engine
+            await engine.refresh_rss(client)
         if settings.bangumi_manage.eps_complete:
             await eps_complete()
 
@@ -64,7 +63,7 @@ class RenameThread(ProgramStatus):
 
     async def _rename_loop(self):
         async with Renamer() as renamer:
-            renamed_info = await asyncio.to_thread(renamer.rename)
+            renamed_info = await renamer.rename()
         if settings.notification.enable:
             async with PostNotification() as notifier:
                 for info in renamed_info:

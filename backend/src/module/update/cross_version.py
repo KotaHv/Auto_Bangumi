@@ -4,9 +4,9 @@ from module.utils import save_image
 
 
 async def cache_image():
-    with RSSEngine() as db:
+    async with RSSEngine() as db:
         async with RequestContent() as req:
-            bangumis = db.bangumi.search_all()
+            bangumis = await db.bangumi.search_all()
             for bangumi in bangumis:
                 if bangumi.poster_link:
                     # Hash local path
@@ -14,4 +14,4 @@ async def cache_image():
                     suffix = bangumi.poster_link.split(".")[-1]
                     img_path = save_image(img, suffix)
                     bangumi.poster_link = img_path
-            db.bangumi.update_all(bangumis)
+            await db.bangumi.update_all(bangumis)

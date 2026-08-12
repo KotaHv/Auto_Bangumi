@@ -200,7 +200,7 @@ class Renamer(DownloadClient):
                 )
                 self.delete_torrent(torrent_hashes.keys())
 
-    def rename(self, tag="") -> list[Notification]:
+    async def rename(self, tag="") -> list[Notification]:
         # Get torrent info
         logger.debug("[Renamer] Start rename process.")
         if tag:
@@ -222,10 +222,10 @@ class Renamer(DownloadClient):
                 "offset": 0,
             }
             self.set_tag(info.hash, bangumi_name)
-            with Database() as db:
-                bangumi_id = db.torrent.get_bangumi_id(info.hash)
+            async with Database() as db:
+                bangumi_id = await db.torrent.get_bangumi_id(info.hash)
                 if bangumi_id:
-                    kwargs["offset"] = db.bangumi.get_offset(bangumi_id)
+                    kwargs["offset"] = await db.bangumi.get_offset(bangumi_id)
             # Rename single media file
             if len(media_list) == 1:
                 notify_info = self.rename_file(media_path=media_list[0], **kwargs)
@@ -255,9 +255,15 @@ class Renamer(DownloadClient):
 
 
 if __name__ == "__main__":
+    import asyncio
+
     from module.conf import setup_logger
 
     settings.log.debug_enable = True
     setup_logger()
-    with Renamer() as renamer:
-        renamer.rename()
+
+    async def _main():
+        async with Renamer() as renamer:
+            await renamer.rename()
+
+    asyncio.run(_main())

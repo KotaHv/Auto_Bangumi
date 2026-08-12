@@ -1,35 +1,36 @@
 from loguru import logger
-from sqlmodel import Session, and_, delete, select, true
+from sqlmodel import and_, delete, select, true
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import RSSItem, RSSUpdate
 
 
 class RSSDatabase:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def add(self, data: RSSItem):
+    async def add(self, data: RSSItem):
         # Check if exists
         statement = select(RSSItem).where(RSSItem.url == data.url)
-        db_data = self.session.exec(statement).first()
+        db_data = (await self.session.exec(statement)).first()
         if db_data:
             logger.debug(f"RSS Item {data.url} already exists.")
             return False
         else:
             logger.debug(f"RSS Item {data.url} not exists, adding...")
             self.session.add(data)
-            self.session.commit()
-            self.session.refresh(data)
+            await self.session.commit()
+            await self.session.refresh(data)
             return True
 
-    def add_all(self, data: list[RSSItem]):
+    async def add_all(self, data: list[RSSItem]):
         for item in data:
-            self.add(item)
+            await self.add(item)
 
-    def update(self, _id: int, data: RSSUpdate):
+    async def update(self, _id: int, data: RSSUpdate):
         # Check if exists
         statement = select(RSSItem).where(RSSItem.id == _id)
-        db_data = self.session.exec(statement).first()
+        db_data = (await self.session.exec(statement)).first()
         if not db_data:
             return False
         # Update
@@ -37,66 +38,74 @@ class RSSDatabase:
         for key, value in dict_data.items():
             setattr(db_data, key, value)
         self.session.add(db_data)
-        self.session.commit()
-        self.session.refresh(db_data)
+        await self.session.commit()
+        await self.session.refresh(db_data)
         return True
 
-    def enable(self, _id: int):
+    async def enable(self, _id: int):
         statement = select(RSSItem).where(RSSItem.id == _id)
-        db_data = self.session.exec(statement).first()
+        db_data = (await self.session.exec(statement)).first()
         if not db_data:
             return False
         db_data.enabled = True
         self.session.add(db_data)
-        self.session.commit()
-        self.session.refresh(db_data)
+        await self.session.commit()
+        await self.session.refresh(db_data)
         return True
 
-    def disable(self, _id: int):
+    async def disable(self, _id: int):
         statement = select(RSSItem).where(RSSItem.id == _id)
-        db_data = self.session.exec(statement).first()
+        db_data = (await self.session.exec(statement)).first()
         if not db_data:
             return False
         db_data.enabled = False
         self.session.add(db_data)
-        self.session.commit()
-        self.session.refresh(db_data)
+        await self.session.commit()
+        await self.session.refresh(db_data)
         return True
 
-    def search_id(self, _id: int) -> RSSItem | None:
-        return self.session.get(RSSItem, _id)
+    async def search_id(self, _id: int) -> RSSItem | None:
+        return await self.session.get(RSSItem, _id)
 
-    def search_all(self) -> list[RSSItem]:
-        return list(self.session.exec(select(RSSItem)).all())
+    async def search_all(self) -> list[RSSItem]:
+        return list((await self.session.exec(select(RSSItem))).all())
 
-    def search_active(self) -> list[RSSItem]:
+    async def search_active(self) -> list[RSSItem]:
         return list(
-            self.session.exec(select(RSSItem).where(RSSItem.enabled == true())).all()
-        )
-
-    def search_aggregate(self) -> list[RSSItem]:
-        return list(
-            self.session.exec(
-                select(RSSItem).where(
-                    and_(RSSItem.aggregate == true(), RSSItem.enabled == true())
+            (
+                await self.session.exec(
+                    select(RSSItem).where(RSSItem.enabled == true())
                 )
             ).all()
         )
 
-    def search_url(self, url: str) -> RSSItem | None:
-        return self.session.exec(select(RSSItem).where(RSSItem.url == url)).first()
+    async def search_aggregate(self) -> list[RSSItem]:
+        return list(
+            (
+                await self.session.exec(
+                    select(RSSItem).where(
+                        and_(RSSItem.aggregate == true(), RSSItem.enabled == true())
+                    )
+                )
+            ).all()
+        )
 
-    def delete(self, _id: int) -> bool:
+    async def search_url(self, url: str) -> RSSItem | None:
+        return (
+            await self.session.exec(select(RSSItem).where(RSSItem.url == url))
+        ).first()
+
+    async def delete(self, _id: int) -> bool:
         condition = delete(RSSItem).where(RSSItem.id == _id)  # type: ignore[arg-type]
         try:
-            self.session.exec(condition)
-            self.session.commit()
+            await self.session.exec(condition)
+            await self.session.commit()
             return True
         except Exception as e:
             logger.error(f"Delete RSS Item failed. Because: {e}")
             return False
 
-    def delete_all(self):
+    async def delete_all(self):
         condition = delete(RSSItem)
-        self.session.exec(condition)
-        self.session.commit()
+        await self.session.exec(condition)
+        await self.session.commit()

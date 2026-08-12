@@ -8,10 +8,16 @@ from module.utils import torrent_hash
 
 
 async def torrent_migration():
-    with RSSEngine() as db:
+    async with RSSEngine() as db:
         async with RequestContent() as req:
-            engine = db.engine
-            torrents = db.execute(text("SELECT * FROM torrent")).mappings().all()
+            torrents = (
+                (
+                    # sqlmodel exec() overloads don't accept TextClause, but it works at runtime
+                    await db.exec(text("SELECT * FROM torrent"))  # type: ignore[reportCallIssue, reportArgumentType]
+                )
+                .mappings()
+                .all()
+            )
             torrents = [dict(torrent) for torrent in torrents]
             for torrent in torrents:
                 if torrent.get("hash") or torrent.get("bangumi_id") is None:
@@ -28,8 +34,8 @@ async def torrent_migration():
                 torrent["hash"] = info_hash
             readd_torrents = [Torrent(**torrent) for torrent in torrents]
             table = Torrent.__table__  # type: ignore[attr-defined]
-            table.drop(engine)
-            table.create(engine)
-            db.commit()
-            db.torrent.add_all(readd_torrents)
-            db.commit()
+            await db.run_sync(lambda session: table.drop(session.get_bind()))
+            await db.run_sync(lambda session: table.create(session.get_bind()))
+            await db.commit()
+            await db.torrent.add_all(readd_torrents)
+            await db.commit()
