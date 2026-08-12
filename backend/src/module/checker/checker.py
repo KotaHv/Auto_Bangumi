@@ -43,9 +43,9 @@ class Checker:
             return True
 
     @staticmethod
-    def check_downloader() -> bool:
+    async def check_downloader() -> bool:
         try:
-            with DownloadClient() as client:
+            async with DownloadClient() as client:
                 return client.authed
         except Exception:
             return False

@@ -20,7 +20,6 @@ IP_BAN_RETRY_INTERVAL = 300
 class ProgramStatus(Checker):
     def __init__(self):
         super().__init__()
-        self._downloader_status = False
         self._torrents_status = False
         self._running = False
         self._workers = WorkerGroup()
@@ -91,12 +90,6 @@ class ProgramStatus(Checker):
                 logger.exception(f"[{component}] error: {e}")
             waiting_recovery = False
             await asyncio.sleep(cycle_seconds)
-
-    @property
-    def downloader_status(self):
-        if not self._downloader_status:
-            self._downloader_status = self.check_downloader()
-        return self._downloader_status
 
     @property
     def enable_rss(self):

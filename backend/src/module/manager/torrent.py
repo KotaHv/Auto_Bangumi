@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger
 
 from module.database import Database
@@ -12,9 +10,7 @@ class TorrentManager(Database):
     @staticmethod
     async def __match_torrents_list(data: Bangumi | BangumiUpdate) -> list:
         async with DownloadClient() as client:
-            torrents = await asyncio.to_thread(
-                client.get_torrent_info, status_filter=None
-            )
+            torrents = await client.get_torrent_info(status_filter=None)
         return [
             torrent.hash for torrent in torrents if torrent.save_path == data.save_path
         ]
@@ -22,7 +18,7 @@ class TorrentManager(Database):
     async def delete_torrents(self, data: Bangumi, client: DownloadClient):
         hash_list = await self.__match_torrents_list(data)
         if hash_list:
-            await asyncio.to_thread(client.delete_torrent, hash_list)
+            await client.delete_torrent(hash_list)
             logger.info(f"Delete rule and torrents for {data.official_title}")
             return ResponseModel(
                 status_code=200,
@@ -51,7 +47,7 @@ class TorrentManager(Database):
                 if data.offset != 0:
                     torrents = await self.torrent.search_bangumi(int(_id))
                     hashes = {torrent.hash for torrent in torrents if torrent.hash}
-                    await asyncio.to_thread(client.set_category, hashes, "BangumiFixed")
+                    await client.set_category(hashes, "BangumiFixed")
                 await self.bangumi.delete_one(int(_id))
                 await self.torrent.delete_by_bangumi_id(int(_id))
                 if file:
@@ -123,7 +119,7 @@ class TorrentManager(Database):
             async with DownloadClient() as client:
                 path = client._gen_save_path(data)
                 if match_list:
-                    await asyncio.to_thread(client.move_torrent, match_list, path)
+                    await client.move_torrent(match_list, path)
             data.save_path = path
             await self.bangumi.update(data, bangumi_id)
             return ResponseModel(

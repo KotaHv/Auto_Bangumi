@@ -57,8 +57,11 @@ async def make_program(monkeypatch):
     monkeypatch.setattr(settings.program, "rename_time", 1)
 
     def _make(downloader_online=True, rss_work=None, rename_work=None):
+        async def _downloader_online():
+            return downloader_online
+
         monkeypatch.setattr(
-            Checker, "check_downloader", staticmethod(lambda: downloader_online)
+            Checker, "check_downloader", staticmethod(_downloader_online)
         )
         monkeypatch.setattr(RSSThread, "_rss_loop", rss_work or _noop)
         monkeypatch.setattr(RenameThread, "_rename_loop", rename_work or _noop)

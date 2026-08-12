@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger
 
 from module.conf import VERSION, settings
@@ -59,9 +57,8 @@ class Program(RenameThread, RSSThread):
                 )
             settings.load()
             # Reset cached status so every start attempt performs a fresh check.
-            self._downloader_status = False
             self._running = True
-            online = await asyncio.to_thread(self.check_downloader)
+            online = await self.check_downloader()
             workers = []
             if self.enable_renamer:
                 workers.append(self._rename_async_loop)

@@ -110,5 +110,5 @@ async def shutdown_program():
     response_model=bool,
     dependencies=[Depends(get_current_user)],
 )
-def check_downloader_status():
-    return program.check_downloader()
+async def check_downloader_status():
+    return await program.check_downloader()

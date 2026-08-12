@@ -26,59 +26,64 @@ class DownloadClient(TorrentPath):
         )
         self.authed = False
 
-    def __enter__(self):
+    async def __aenter__(self):
         if not self.authed:
-            self.auth()
+            await self.auth()
         else:
             logger.error("[Downloader] Already authed.")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.authed:
-            self._client.auth_log_out()
+            await asyncio.to_thread(self._client.auth_log_out)
             self.authed = False
 
-    async def __aenter__(self):
-        await asyncio.to_thread(self.__enter__)
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await asyncio.to_thread(self.__exit__, exc_type, exc_val, exc_tb)
-
-    def auth(self):
-        self._client.auth_log_in()
+    async def auth(self):
+        await asyncio.to_thread(self._client.auth_log_in)
         self.authed = True
         logger.debug("[Downloader] Authed.")
 
-    def get_torrent_info(
+    async def get_torrent_info(
         self,
         category: str | None = "Bangumi",
         status_filter: TorrentStatusesT | None = "completed",
         tag: str | None = None,
         hash: list[str] | str | None = None,
     ):
-        return self._client.torrents_info(
-            status_filter=status_filter, category=category, tag=tag, torrent_hashes=hash
+        return await asyncio.to_thread(
+            self._client.torrents_info,
+            status_filter=status_filter,
+            category=category,
+            tag=tag,
+            torrent_hashes=hash,
         )
 
-    def rename_torrent_file(self, _hash, old_path, new_path) -> bool:
+    async def rename_torrent_file(self, _hash, old_path, new_path) -> bool:
         logger.info(f"{old_path} >> {new_path}")
         try:
-            self._client.torrents_rename_file(
-                torrent_hash=_hash, old_path=old_path, new_path=new_path
+            await asyncio.to_thread(
+                self._client.torrents_rename_file,
+                torrent_hash=_hash,
+                old_path=old_path,
+                new_path=new_path,
             )
             return True
         except Conflict409Error:
             logger.debug(f"Conflict409Error: {old_path} >> {new_path}")
             return False
 
-    def delete_torrent(self, hashes):
-        self._client.torrents_delete(delete_files=True, torrent_hashes=hashes)
+    async def delete_torrent(self, hashes):
+        await asyncio.to_thread(
+            self._client.torrents_delete, delete_files=True, torrent_hashes=hashes
+        )
         logger.info("[Downloader] Remove torrents.")
 
-    def _add_torrents(self, torrent_urls, torrent_files, save_path, category) -> bool:
+    async def _add_torrents(
+        self, torrent_urls, torrent_files, save_path, category
+    ) -> bool:
         try:
-            resp = self._client.torrents_add(
+            resp = await asyncio.to_thread(
+                self._client.torrents_add,
                 is_paused=False,
                 urls=torrent_urls,
                 torrent_files=torrent_files,
@@ -109,7 +114,7 @@ class DownloadClient(TorrentPath):
                     return False
                 torrent_hashes.append(info_hash)
 
-            exists = self.get_torrent_info(
+            exists = await self.get_torrent_info(
                 category=None, status_filter=None, hash=torrent_hashes
             )
             if len(exists) == len(torrent_urls):
@@ -150,8 +155,7 @@ class DownloadClient(TorrentPath):
                         )
                         t.downloaded = False
 
-        if await asyncio.to_thread(
-            self._add_torrents,
+        if await self._add_torrents(
             torrent_urls=torrent_urls,
             torrent_files=torrent_files,
             save_path=bangumi.save_path,
@@ -161,32 +165,39 @@ class DownloadClient(TorrentPath):
             return True
         else:
             for t in torrent:
-                if not await asyncio.to_thread(
-                    self.get_torrent_info,
-                    category=None,
-                    status_filter=None,
-                    hash=t.hash,
+                if not await self.get_torrent_info(
+                    category=None, status_filter=None, hash=t.hash
                 ):
                     t.downloaded = False
             logger.debug(f"[Downloader] Torrent added before: {bangumi.official_title}")
             return False
 
-    def move_torrent(self, hashes, location):
-        self._client.torrents_set_location(location, hashes)
+    async def move_torrent(self, hashes, location):
+        await asyncio.to_thread(self._client.torrents_set_location, location, hashes)
 
-    def get_torrent_path(self, hashes):
-        return self._client.torrents_info(hashes=hashes)[0].save_path
+    async def get_torrent_path(self, hashes):
+        return (await asyncio.to_thread(self._client.torrents_info, hashes=hashes))[
+            0
+        ].save_path
 
-    def set_category(self, hashes, category):
+    async def set_category(self, hashes, category):
         try:
-            self._client.torrents_set_category(category, hashes=hashes)
+            await asyncio.to_thread(
+                self._client.torrents_set_category, category, hashes=hashes
+            )
         except Conflict409Error:
             logger.warning(f"[Downloader] Category {category} does not exist")
-            self._client.torrents_createCategory(name=category)
-            self._client.torrents_set_category(category, hashes=hashes)
+            await asyncio.to_thread(self._client.torrents_createCategory, name=category)
+            await asyncio.to_thread(
+                self._client.torrents_set_category, category, hashes=hashes
+            )
 
-    def set_tag(self, hashes, tag):
-        self._client.torrents_add_tags(tags=tag, torrent_hashes=hashes)
+    async def set_tag(self, hashes, tag):
+        await asyncio.to_thread(
+            self._client.torrents_add_tags, tags=tag, torrent_hashes=hashes
+        )
 
-    def remove_tag(self, hashes, tag):
-        self._client.torrents_remove_tags(tags=tag, torrent_hashes=hashes)
+    async def remove_tag(self, hashes, tag):
+        await asyncio.to_thread(
+            self._client.torrents_remove_tags, tags=tag, torrent_hashes=hashes
+        )

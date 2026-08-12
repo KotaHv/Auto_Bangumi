@@ -19,50 +19,55 @@ def connection_error():
         raise APIConnectionError("cannot connect") from None
 
 
-def test_auth_success_returns_true():
+@pytest.mark.asyncio
+async def test_auth_success_returns_true():
     client = object.__new__(DownloadClient)
     client._client = MagicMock()
-    client.auth()
+    await client.auth()
     assert client.authed is True
     client._client.auth_log_in.assert_called_once()
 
 
 @pytest.mark.parametrize("error", [LoginFailed, Forbidden403Error])
-def test_auth_raises_typed_errors(error):
+@pytest.mark.asyncio
+async def test_auth_raises_typed_errors(error):
     client = object.__new__(DownloadClient)
     client._client = MagicMock()
     client._client.auth_log_in.side_effect = error()
     with pytest.raises(error):
-        client.auth()
+        await client.auth()
 
 
-def test_auth_raises_connection_error():
+@pytest.mark.asyncio
+async def test_auth_raises_connection_error():
     client = object.__new__(DownloadClient)
     client._client = MagicMock()
     client._client.auth_log_in.side_effect = connection_error
     with pytest.raises(APIConnectionError) as exc_info:
-        client.auth()
+        await client.auth()
     assert isinstance(exc_info.value.__context__, ConnectionError)
 
 
-def test_download_client_enter_propagates_auth_failure():
+@pytest.mark.asyncio
+async def test_download_client_enter_propagates_auth_failure():
     client = DownloadClient()
     client._client = MagicMock()
     client._client.auth_log_in.side_effect = LoginFailed()
     with pytest.raises(LoginFailed):
-        with client:
+        async with client:
             pass
 
 
-def test_check_downloader_uses_download_client(monkeypatch):
+@pytest.mark.asyncio
+async def test_check_downloader_uses_download_client(monkeypatch):
     mock_client = MagicMock()
     monkeypatch.setattr(checker_module, "DownloadClient", lambda: mock_client)
-    mock_client.__enter__.return_value.authed = True
-    assert Checker.check_downloader() is True
-    mock_client.__enter__.return_value.authed = False
-    assert Checker.check_downloader() is False
-    mock_client.__enter__.side_effect = LoginFailed()
-    assert Checker.check_downloader() is False
+    mock_client.__aenter__.return_value.authed = True
+    assert await Checker.check_downloader() is True
+    mock_client.__aenter__.return_value.authed = False
+    assert await Checker.check_downloader() is False
+    mock_client.__aenter__.side_effect = LoginFailed()
+    assert await Checker.check_downloader() is False
 
 
 def test_rss_loop_fails_before_rss_engine(monkeypatch):
