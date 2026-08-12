@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -17,10 +19,10 @@ async def get_config():
 @router.patch(
     "/update", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def update_config(config: Config):
+async def update_config(config: Config):
     try:
-        settings.save(config.model_dump_json(by_alias=True))
-        settings.load()
+        await asyncio.to_thread(settings.save, config.model_dump_json(by_alias=True))
+        await asyncio.to_thread(settings.load)
         # update_rss()
         setup_logger()
         logger.info("Config updated")

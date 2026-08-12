@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 
 from module.conf import VERSION, settings
@@ -55,7 +57,7 @@ class Program(RenameThread, RSSThread):
                     msg_en="Program is already running.",
                     msg_zh="程序已在运行。",
                 )
-            settings.load()
+            await asyncio.to_thread(settings.load)
             # Reset cached status so every start attempt performs a fresh check.
             self._running = True
             online = await self.check_downloader()

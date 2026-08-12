@@ -27,7 +27,7 @@ class TelegramNotification(RequestContent):
             "text": text,
             "disable_notification": True,
         }
-        photo = load_image(notify.poster_path)
+        photo = await load_image(notify.poster_path)
         if photo:
             resp = await self.post_files(self.photo_url, data, files={"photo": photo})
         else:

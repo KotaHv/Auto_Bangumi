@@ -107,7 +107,7 @@ async def tmdb_parser(title, language, test: bool = False) -> TMDBInfo | None:
                     )
                     if img is None:
                         return None
-                    poster_link = save_image(img, "jpg")
+                    poster_link = await save_image(img, "jpg")
                 else:
                     poster_link = "https://image.tmdb.org/t/p/w780" + poster_path
             else:

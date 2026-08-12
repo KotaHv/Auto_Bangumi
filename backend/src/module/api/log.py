@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import JSONResponse
 
@@ -9,10 +11,10 @@ router = APIRouter(prefix="/log", tags=["log"])
 
 
 @router.get("", response_model=str, dependencies=[Depends(get_current_user)])
-def get_log():
+async def get_log():
     if LOG_PATH.exists():
-        with open(LOG_PATH, "rb") as f:
-            return Response(f.read(), media_type="text/plain")
+        content = await asyncio.to_thread(LOG_PATH.read_bytes)
+        return Response(content, media_type="text/plain")
     else:
         return Response("Log file not found", status_code=404)
 
@@ -20,9 +22,9 @@ def get_log():
 @router.get(
     "/clear", response_model=APIResponse, dependencies=[Depends(get_current_user)]
 )
-def clear_log():
+async def clear_log():
     if LOG_PATH.exists():
-        LOG_PATH.write_text("")
+        await asyncio.to_thread(LOG_PATH.write_text, "")
         return JSONResponse(
             status_code=200,
             content={"msg_en": "Log cleared successfully.", "msg_zh": "日志清除成功。"},

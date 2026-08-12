@@ -28,7 +28,7 @@ async def mikan_parser(homepage: str):
             if img is None:
                 return "", ""
             suffix = poster_path.split(".")[-1]
-            poster_link = save_image(img, suffix)
+            poster_link = await save_image(img, suffix)
             return poster_link, official_title
         return "", ""
 
