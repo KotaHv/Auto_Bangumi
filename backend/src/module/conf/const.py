@@ -11,6 +11,7 @@ DEFAULT_SETTINGS = {
         "host": "127.0.0.1:8080",
         "username": "admin",
         "password": "adminadmin",
+        "api_key": None,
         "path": "/downloads/Bangumi",
         "ssl": False,
     },
@@ -55,6 +56,7 @@ ENV_TO_ATTR = {
         "AB_DOWNLOADER_HOST": "host",
         "AB_DOWNLOADER_USERNAME": "username",
         "AB_DOWNLOADER_PASSWORD": "password",
+        "AB_DOWNLOADER_API_KEY": "api_key",
         "AB_DOWNLOAD_PATH": "path",
     },
     "rss_parser": {

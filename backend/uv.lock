@@ -95,7 +95,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "python-jose", specifier = ">=3.3.0" },
     { name = "python-multipart", specifier = ">=0.0.9" },
-    { name = "qbittorrent-api", specifier = ">=2024.7.64" },
+    { name = "qbittorrent-api", specifier = ">=2026.5.3" },
     { name = "semver", specifier = ">=3.0.2" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.51" },
     { name = "sqlmodel", specifier = ">=0.0.21" },

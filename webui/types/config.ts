@@ -10,6 +10,7 @@ export interface Config {
     host: string;
     username: string;
     password: string;
+    api_key: string | null;
     path: string;
     ssl: boolean;
   };
@@ -65,6 +66,7 @@ export const initConfig: Config = {
     host: '',
     username: '',
     password: '',
+    api_key: null,
     path: '',
     ssl: false,
   },

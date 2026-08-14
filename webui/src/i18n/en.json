@@ -3,11 +3,13 @@
     "apply": "Apply",
     "cancel": "Cancel",
     "downloader_set": {
+      "api_key": "API Key",
       "host": "Host",
       "password": "Password",
       "path": "Download Path",
       "ssl": "SSL",
       "title": "qBittorrent Setting",
+      "use_api_key": "Login with API Key",
       "username": "Username"
     },
     "experimental_openai_set": {
@@ -105,6 +107,7 @@
     "username": "Username"
   },
   "notify": {
+    "api_key_format_error": "Invalid qBittorrent API Key. Expected 32 characters: 'qbt_' followed by 28 alphanumeric characters.",
     "copy_failed": "Your browser does not support Clipboard API!",
     "copy_success": "Copy Success!",
     "login_failed": "Login Failed!",

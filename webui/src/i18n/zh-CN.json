@@ -3,11 +3,13 @@
     "apply": "应用",
     "cancel": "取消",
     "downloader_set": {
+      "api_key": "API Key",
       "host": "下载器地址",
       "password": "密码",
       "path": "下载地址",
       "ssl": "SSL",
       "title": "qBittorrent 设置",
+      "use_api_key": "使用 API Key 登录",
       "username": "用户名"
     },
     "experimental_openai_set": {
@@ -105,6 +107,7 @@
     "username": "用户名"
   },
   "notify": {
+    "api_key_format_error": "qBittorrent API Key 格式不正确，应为 32 位字符：以 'qbt_' 开头，后跟 28 位字母数字字符。",
     "copy_failed": "您的浏览器不支持剪贴板操作!",
     "copy_success": "复制成功!",
     "login_failed": "登录失败!",

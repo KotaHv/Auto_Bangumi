@@ -20,6 +20,7 @@ class DownloadClient(TorrentPath):
             host=settings.downloader.host,
             username=settings.downloader.username,
             password=settings.downloader.password,
+            api_key=settings.downloader.api_key,
             VERIFY_WEBUI_CERTIFICATE=settings.downloader.ssl,
             DISABLE_LOGGING_DEBUG_OUTPUT=True,
             REQUESTS_ARGS={"timeout": (3.1, 10)},

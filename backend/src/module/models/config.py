@@ -1,9 +1,14 @@
+import re
 from os.path import expandvars
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field, field_validator
 
 ExpandedString = Annotated[str, AfterValidator(lambda x: expandvars(x))]
+
+# qBittorrent WebUI API keys (v5.2.0+): 32 characters long, "qbt_" followed by
+# 28 random alphanumeric characters (160 bits of entropy).
+API_KEY_PATTERN = re.compile(r"^qbt_[A-Za-z0-9]{28}$")
 
 
 class Program(BaseModel):
@@ -22,8 +27,22 @@ class Downloader(BaseModel):
     password: Annotated[ExpandedString, Field(description="Downloader password")] = (
         "adminadmin"
     )
+    api_key: Annotated[str | None, Field(description="Downloader API key")] = None
     path: Annotated[str, Field(description="Downloader path")] = "/downloads/Bangumi"
     ssl: Annotated[bool, Field(description="Downloader ssl")] = False
+
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key(cls, value: str | None) -> str | None:
+        if not value:
+            return None
+        value = value.strip()
+        if not API_KEY_PATTERN.fullmatch(value):
+            raise ValueError(
+                "Invalid qBittorrent API key: expected 32 characters, "
+                "'qbt_' followed by 28 alphanumeric characters."
+            )
+        return value
 
 
 class RSSParser(BaseModel):

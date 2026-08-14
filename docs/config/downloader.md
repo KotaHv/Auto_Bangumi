@@ -8,6 +8,9 @@
 
 - **Downloader Type** 为下载器类型，目前支持 qBittorrent 下载器，目前暂不支持修改。
 - **Host** 为下载器地址。[1](#下载器地址)
+- **Login with API Key** 开启后使用 API Key 登录（需要 qBittorrent 5.2.0 及以上版本），开启时只需填写 API Key，无需用户名和密码；关闭时使用用户名/密码登录。
+- **Username / Password** 为下载器用户名与密码，关闭 API Key 登录时使用。
+- **API Key** 为 qBittorrent WebUI 中生成的 API Key。
 - **Download path** 为映射的下载器下载路径。[2](#下载器路径问题)
 - **SSL** 为下载器是否使用 SSL。
 
@@ -52,6 +55,7 @@ AB 中配置的路径只是为了生成对应番剧文件路径，AB 本身不�
 | host     | 下载器地址       | 字符串  | 下载器地址       | 172.17.0.1:8080    |
 | username | 下载器用户名      | 字符串  | 下载器用户名      | admin              |
 | password | 下载器密码       | 字符串  | 下载器密码       | adminadmin         |
+| api_key  | 下载器 API Key（开启 API Key 登录时使用） | 字符串  | API Key  | 空（不使用）           |
 | path     | 下载器下载路径     | 字符串  | 下载器下载路径     | /downloads/Bangumi |
 | ssl      | 下载器是否使用 SSL | 布尔值  | 下载器是否使用 SSL | false              |
 
