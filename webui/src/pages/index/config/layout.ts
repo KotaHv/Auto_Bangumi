@@ -1,9 +1,4 @@
-import type {
-  ComponentType,
-  MutableRefObject,
-  ReactNode,
-  RefObject,
-} from 'react';
+import type { ComponentType, ReactNode, RefObject } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { ConfigFieldError } from '@/lib/config-validation';
 
@@ -19,7 +14,7 @@ export interface ConfigLayoutProps {
   activeTab: string;
   onSelectTab: (key: string) => void;
   tabListRef: RefObject<HTMLDivElement | null>;
-  tabRefs: MutableRefObject<Record<string, HTMLElement | null>>;
+  tabRefs: RefObject<Record<string, HTMLElement | null>>;
   contentRef: RefObject<HTMLDivElement | null>;
   renderSections: () => ReactNode;
   renderFooterStatus: () => ReactNode;

@@ -1,7 +1,7 @@
 import { AbConfirm } from '@/components/ab-confirm';
 import { ConfigNav } from '@/components/setting/config-nav';
 import { useTranslation } from 'react-i18next';
-import type { ConfigLayoutProps } from './config-layout';
+import type { ConfigLayoutProps } from './layout';
 
 export function ConfigPc({
   sections,

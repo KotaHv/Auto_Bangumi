@@ -6,7 +6,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import type { ConfigLayoutProps } from './config-layout';
+import type { ConfigLayoutProps } from './layout';
 
 export function ConfigMobile({
   sections,

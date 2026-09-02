@@ -24,9 +24,9 @@ import { ConfigProxy } from '@/components/setting/config-proxy';
 import { useConfigStore } from '@/store/config';
 import { getConfigErrors } from '@/lib/config-validation';
 import { useIsPc } from '@/hooks/use-is-pc';
-import { ConfigMobile } from './config-mobile';
-import { ConfigPc } from './config-pc';
-import type { ConfigSection } from './config-layout';
+import { ConfigMobile } from './mobile';
+import { ConfigPc } from './pc';
+import type { ConfigSection } from './layout';
 import type { Config } from '#/config';
 
 function hasConfigChanges(
