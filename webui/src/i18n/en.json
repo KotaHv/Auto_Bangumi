@@ -138,12 +138,23 @@
     "url_placeholder": "Media player URL"
   },
   "rss": {
+    "aggregate": "Aggregate",
     "delete": "Delete",
+    "delete_hit": "Delete the selected RSS feeds?",
     "disable": "Disable",
     "enable": "Enable",
+    "enabled_count": "Enabled",
+    "disabled_count": "Disabled",
+    "empty": "No RSS feeds yet",
     "name": "Name",
+    "select_all": "Select all",
+    "selected_count": "{count} selected",
+    "selected": "Selected",
     "selectbox": "Select",
+    "refresh": "Refresh",
     "status": "Status",
+    "tags": "Tags",
+    "total": "Total",
     "title": "RSS Item",
     "url": "Url"
   },

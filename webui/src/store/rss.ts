@@ -17,6 +17,7 @@ interface RSSState {
   disableSelected: () => Promise<void>;
   deleteSelected: () => Promise<void>;
   enableSelected: () => Promise<void>;
+  refreshSelected: () => Promise<void>;
 }
 
 function sortByIdDesc(arr: RSS[]) {
@@ -105,5 +106,30 @@ export const useRSSStore = create<RSSState>((set, get) => ({
   },
   enableSelected() {
     return get().enableRSS(get().selectedRSS);
+  },
+  async refreshSelected() {
+    const selected = get().selectedRSS;
+    const allSelected =
+      get().rss.length > 0 &&
+      get().rss.every((item) => selected.includes(item.id));
+
+    if (allSelected) {
+      await executeApi(apiRSS.refreshAll, {
+        showMessage: true,
+        onSuccess() {
+          get().getAll();
+          get().setSelectedRSS([]);
+        },
+      });
+      return;
+    }
+
+    await Promise.all(
+      selected.map((id) =>
+        executeApi(apiRSS.refresh, { showMessage: true }, id),
+      ),
+    );
+    await get().getAll();
+    get().setSelectedRSS([]);
   },
 }));

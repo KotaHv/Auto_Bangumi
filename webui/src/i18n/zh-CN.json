@@ -138,12 +138,23 @@
     "url_placeholder": "媒体播放器地址"
   },
   "rss": {
+    "aggregate": "聚合",
     "delete": "删除",
+    "delete_hit": "确定删除选中的 RSS 条目吗？",
     "disable": "禁用",
     "enable": "启用",
+    "enabled_count": "已启用",
+    "disabled_count": "已禁用",
+    "empty": "暂无 RSS 条目",
     "name": "名称",
+    "select_all": "全选",
+    "selected_count": "已选择 {count} 项",
+    "selected": "已选择",
     "selectbox": "选择",
+    "refresh": "刷新",
     "status": "状态",
+    "tags": "标签",
+    "total": "全部",
     "title": "RSS 条目",
     "url": "链接"
   },
