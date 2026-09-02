@@ -70,7 +70,7 @@ export function ConfigMobile({
 
       {/* Floating action bar aligned with the section cards. */}
       {showFooter && (
-        <div className="bg-popover text-popover-foreground border-border absolute right-5 bottom-[calc(8px+env(safe-area-inset-bottom))] left-5 z-10 flex min-h-[var(--config-action-bar-space)] items-center justify-between gap-3 rounded-2xl border px-4 py-2 shadow-lg">
+        <div className="bg-popover text-popover-foreground border-border absolute right-5 bottom-[calc(8px+env(safe-area-inset-bottom))] left-5 z-10 flex min-h-(--config-action-bar-space) items-center justify-between gap-3 rounded-2xl border px-4 py-2 shadow-lg">
           <div className="min-w-0">{renderFooterStatus()}</div>
           <div className="flex shrink-0 items-center gap-2">
             {renderFooterActions()}

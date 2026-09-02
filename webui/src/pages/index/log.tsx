@@ -110,7 +110,7 @@ export default function LogPage() {
             ref={logContainerRef}
             className="bg-muted/20 max-h-[60vh] min-h-[20vh] overflow-auto rounded-lg border p-3"
           >
-            <div className="min-w-[450px]">
+            <div className="min-w-112.5">
               {formatLog.map((i) => (
                 <div
                   key={i.index}

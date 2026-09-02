@@ -62,7 +62,7 @@ export default function RSSPage() {
     <div className="h-full overflow-auto p-6">
       <div className="flex flex-col gap-4">
         <AbContainer title={t('rss.title')}>
-          <div className="max-h-[500px] overflow-auto">
+          <div className="max-h-125 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -95,7 +95,7 @@ export default function RSSPage() {
                       {item.name}
                     </TableCell>
                     <TableCell
-                      className="max-w-[400px] truncate text-center"
+                      className="max-w-100 truncate text-center"
                       title={item.url}
                     >
                       {item.url}
