@@ -37,31 +37,25 @@ jobs:
         with:
           node-version: 20
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - uses: oven-sh/setup-bun@v2
+        name: Install bun
         with:
-          version: 9
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          bun-version: 1.4.0
 
       - uses: actions/cache@v4
-        name: Setup pnpm cache
+        name: Setup bun cache
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('webui/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: cd webui && pnpm install
+        run: cd webui && bun install --frozen-lockfile
 
       - name: Build test
         run: |
-          cd webui && pnpm test:build
+          cd webui && bun run build
 
   version-info:
     runs-on: ubuntu-latest
@@ -96,31 +90,25 @@ jobs:
         with:
           node-version: 20
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - uses: oven-sh/setup-bun@v2
+        name: Install bun
         with:
-          version: 9
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          bun-version: 1.4.0
 
       - uses: actions/cache@v4
-        name: Setup pnpm cache
+        name: Setup bun cache
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('webui/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: cd webui && pnpm install
+        run: cd webui && bun install --frozen-lockfile
 
       - name: Build
         run: |
-          cd webui && pnpm build
+          cd webui && bun run build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

@@ -1,3 +1,4 @@
+import { axios } from '@/utils/axios';
 import type { RSS } from '#/rss';
 import type { Torrent } from '#/torrent';
 import type { ApiSuccess } from '#/api';
@@ -15,7 +16,7 @@ export const apiRSS = {
 
   async delete(rss_id: number) {
     const { data } = await axios.delete<ApiSuccess>(
-      `api/v1/rss/delete/${rss_id}`
+      `api/v1/rss/delete/${rss_id}`,
     );
     return data!;
   },
@@ -23,14 +24,14 @@ export const apiRSS = {
   async deleteMany(rss_list: number[]) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/rss/delete/many`,
-      rss_list
+      rss_list,
     );
     return data!;
   },
 
   async disable(rss_id: number) {
     const { data } = await axios.patch<ApiSuccess>(
-      `api/v1/rss/disable/${rss_id}`
+      `api/v1/rss/disable/${rss_id}`,
     );
     return data!;
   },
@@ -38,7 +39,7 @@ export const apiRSS = {
   async disableMany(rss_list: number[]) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/rss/disable/many`,
-      rss_list
+      rss_list,
     );
     return data!;
   },
@@ -46,7 +47,7 @@ export const apiRSS = {
   async update(rss_id: number, rss: RSS) {
     const { data } = await axios.patch<ApiSuccess>(
       `api/v1/rss/update/${rss_id}`,
-      rss
+      rss,
     );
     return data!;
   },
@@ -54,7 +55,7 @@ export const apiRSS = {
   async enableMany(rss_list: number[]) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/rss/enable/many`,
-      rss_list
+      rss_list,
     );
     return data!;
   },
@@ -66,7 +67,7 @@ export const apiRSS = {
 
   async refresh(rss_id: number) {
     const { data } = await axios.get<ApiSuccess>(
-      `api/v1/rss/refresh/${rss_id}`
+      `api/v1/rss/refresh/${rss_id}`,
     );
     return data!;
   },

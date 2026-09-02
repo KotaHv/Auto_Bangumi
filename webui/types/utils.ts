@@ -12,9 +12,8 @@ export type UnionToInterFunction<U> = (
  * 获取联合类型中的最后一个类型
  * @template U 联合类型
  */
-export type GetUnionLast<U> = UnionToInterFunction<U> extends { (): infer A }
-  ? A
-  : never;
+export type GetUnionLast<U> =
+  UnionToInterFunction<U> extends { (): infer A } ? A : never;
 
 /**
  * 在元组类型中前置插入一个新的类型（元素）；
@@ -32,7 +31,7 @@ export type Prepend<Tuple extends any[], E> = [E, ...Tuple];
 export type UnionToTuple<
   Union,
   T extends any[] = [],
-  Last = GetUnionLast<Union>
+  Last = GetUnionLast<Union>,
 > = {
   0: T;
   1: UnionToTuple<Exclude<Union, Last>, Prepend<T, Last>>;

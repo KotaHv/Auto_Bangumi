@@ -12,6 +12,6 @@ export const rssTemplate: RSS = {
   name: '',
   url: '',
   aggregate: false,
-  parser: '',
+  parser: 'tmdb',
   enabled: false,
 };

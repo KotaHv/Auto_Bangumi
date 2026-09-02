@@ -1,6 +1,10 @@
 /build
 /dist
 /dev-dist
+/node_modules
+/.bun-cache
+/.bun-tmp
+/bun.lock
 /pnpm-lock.yaml
 auto-imports.d.ts
 components.d.ts

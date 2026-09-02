@@ -1,72 +1,99 @@
-import { type Config, initConfig } from '#/config';
+import { create } from 'zustand';
+import { apiConfig } from '@/api/config';
+import { message } from '@/components/message';
+import { executeApi } from '@/hooks/use-api';
+import { i18n } from '@/i18n';
+import { useProgramStore } from '@/store/program';
+import { initConfig } from '#/config';
+import type { Config } from '#/config';
 
-/**
- * qBittorrent WebUI API Key (v5.2.0+): 32 characters long, 'qbt_' followed by
- * 28 random alphanumeric characters (160 bits of entropy).
- */
 const API_KEY_PATTERN = /^qbt_[A-Za-z0-9]{28}$/;
 
-export const useConfigStore = defineStore('config', () => {
-  const config = ref<Config>(initConfig);
+interface ConfigState {
+  config: Config;
+  savedConfig: Config;
+  useApiKey: boolean;
+  savedUseApiKey: boolean;
+  /** True once the config has been fetched from the backend at least once. */
+  loaded: boolean;
 
-  /** UI 态：是否使用 API Key 登录。不入库，由 api_key 是否非空推导。 */
-  const useApiKey = ref(false);
+  getConfig: () => Promise<void>;
+  setConfig: () => Promise<boolean>;
+  updateGroup: <TKey extends keyof Config>(
+    key: TKey,
+    patch: Partial<Config[TKey]>,
+  ) => void;
+}
 
-  const { t } = useMyI18n();
-  const message = useMessage();
+export const useConfigStore = create<ConfigState>((set, get) => ({
+  config: initConfig,
+  savedConfig: initConfig,
+  useApiKey: false,
+  savedUseApiKey: false,
+  loaded: false,
 
-  async function getConfig() {
+  async getConfig() {
     const res = await apiConfig.getConfig();
-    config.value = res;
-    useApiKey.value = !!res.downloader.api_key;
-  }
+    set({
+      config: res,
+      savedConfig: res,
+      useApiKey: !!res.downloader.api_key,
+      savedUseApiKey: !!res.downloader.api_key,
+      loaded: true,
+    });
+  },
 
-  const { execute: set } = useApi(apiConfig.updateConfig, {
-    showMessage: true,
-    onSuccess() {
-      // 保存 config 后重启，以应用最新配置
-      const { restart } = useProgramStore();
-      restart();
-    },
-  });
+  async setConfig() {
+    const { config, useApiKey } = get();
+    let next: Config = {
+      ...config,
+      downloader: { ...config.downloader, api_key: null },
+    };
 
-  const setConfig = () => {
-    if (!useApiKey.value) {
-      // 未开启 API Key 登录时提交 null，使用用户名/密码登录
-      config.value.downloader.api_key = null;
-    } else {
-      const key = config.value.downloader.api_key?.trim() ?? '';
+    if (useApiKey) {
+      const key = config.downloader.api_key?.trim() ?? '';
       if (!key) {
         message.warning(
-          t('notify.please_enter', [t('config.downloader_set.api_key')])
+          i18n.t('notify.please_enter', {
+            field: i18n.t('config.downloader_set.api_key'),
+          }),
         );
-        return;
+        return false;
       }
       if (!API_KEY_PATTERN.test(key)) {
-        message.error(t('notify.api_key_format_error'));
-        return;
+        message.error(i18n.t('notify.api_key_format_error'));
+        return false;
       }
-      config.value.downloader.api_key = key;
+      next = {
+        ...config,
+        downloader: { ...config.downloader, api_key: key },
+      };
     }
-    set(config.value);
-  };
-
-  function getSettingGroup<Tkey extends keyof Config>(key: Tkey) {
-    return computed<Config[Tkey]>({
-      get() {
-        return config.value[key];
+    const result = await executeApi(
+      apiConfig.updateConfig,
+      {
+        showMessage: false,
+        onSuccess() {
+          set({
+            config: next,
+            savedConfig: next,
+            savedUseApiKey: useApiKey,
+          });
+          useProgramStore.getState().restart();
+        },
       },
-      set(newVal) {
-        config.value[key] = newVal;
-      },
-    });
-  }
+      next,
+    );
 
-  return {
-    config,
-    useApiKey,
-    getConfig,
-    setConfig,
-    getSettingGroup,
-  };
-});
+    return result !== undefined;
+  },
+
+  updateGroup(key, patch) {
+    set((state) => ({
+      config: {
+        ...state.config,
+        [key]: { ...state.config[key], ...patch },
+      },
+    }));
+  },
+}));

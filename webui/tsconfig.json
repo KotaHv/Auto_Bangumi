@@ -3,32 +3,29 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "strict": true,
-    "jsx": "preserve",
-    "jsxImportSource": "vue",
+    "jsx": "react-jsx",
     "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "lib": ["ESNext", "DOM"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "noImplicitAny": false,
-    "baseUrl": "./",
-    "types": ["vite-plugin-pwa/client"],
     "paths": {
       "~/*": ["./*"],
-      "@/*": ["src/*"],
-      "#/*": ["types/*"]
+      "@/*": ["./src/*"],
+      "#/*": ["./types/*"]
     }
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue",
-    "types/*.ts",
-    "types/dts/*.d.ts"
-  ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+    "src/**/*.d.ts",
+    "src/**/*.json",
+    "types/*.ts"
+  ]
 }

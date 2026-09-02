@@ -1,46 +1,60 @@
-export const useLogStore = defineStore('log', () => {
-  const message = useMessage();
-  const { isLoggedIn } = useAuth();
-  const { t } = useMyI18n();
+import { create } from 'zustand';
+import { apiLog } from '@/api/log';
+import { message } from '@/components/message';
+import { executeApi } from '@/hooks/use-api';
+import { i18n } from '@/i18n';
+import { useAuthStore } from '@/store/auth';
+import { copyText } from '@/lib/clipboard';
 
-  const log = ref('');
+interface LogState {
+  log: string;
 
-  function getLog() {
-    if (isLoggedIn.value) {
-      apiLog.getLog().then((res) => {
-        log.value = res;
-      });
+  getLog: () => Promise<void>;
+  reset: () => Promise<void>;
+  copy: () => Promise<void>;
+}
+
+export const useLogStore = create<LogState>((set) => ({
+  log: '',
+
+  async getLog() {
+    if (!useAuthStore.getState().isLoggedIn) return;
+    try {
+      const res = await apiLog.getLog();
+      set({ log: res });
+    } catch {
+      /* 拦截器已提示 */
     }
-  }
+  },
 
-  const { execute: reset } = useApi(apiLog.clearLog, {
-    showMessage: true,
-    onSuccess() {
-      log.value = '';
-    },
-  });
+  async reset() {
+    await executeApi(apiLog.clearLog, {
+      showMessage: true,
+      onSuccess() {
+        set({ log: '' });
+      },
+    });
+  },
 
-  const { pause: offUpdate, resume: onUpdate } = useIntervalFn(getLog, 10000, {
-    immediate: false,
-    immediateCallback: true,
-  });
-
-  function copy() {
-    const { copy: copyLog, isSupported } = useClipboard({ source: log });
-    if (isSupported) {
-      copyLog();
-      message.success(t('notify.copy_success'));
+  async copy() {
+    const log = useLogStore.getState().log;
+    if (await copyText(log)) {
+      message.success(i18n.t('notify.copy_success'));
     } else {
-      message.error(t('notify.copy_failed'));
+      message.error(i18n.t('notify.copy_failed'));
     }
-  }
+  },
+}));
 
-  return {
-    log,
-    getLog,
-    reset,
-    onUpdate,
-    offUpdate,
-    copy,
-  };
-});
+let timer: number | undefined;
+
+export function startLogPolling() {
+  if (timer !== undefined) return;
+  useLogStore.getState().getLog();
+  timer = window.setInterval(() => useLogStore.getState().getLog(), 10000);
+}
+
+export function stopLogPolling() {
+  window.clearInterval(timer);
+  timer = undefined;
+}

@@ -1,6 +1,9 @@
 import Axios from 'axios';
 import type { AxiosError, AxiosResponse } from 'axios';
-import type { ApiSuccess, StatusCode } from '#/api';
+import type { ApiError, ApiSuccess } from '#/api';
+import { message } from '@/components/message';
+import { returnUserLangText } from '@/i18n';
+import { useAuthStore } from '@/store/auth';
 
 export const axios = Axios.create({
   withCredentials: true,
@@ -9,27 +12,20 @@ export const axios = Axios.create({
 axios.interceptors.response.use(
   (res: AxiosResponse) => res,
   (err: AxiosError<ApiSuccess>) => {
-    const status = err.response?.status as StatusCode;
+    const status = err.response?.status as ApiError['status'];
     const msg_en = err.response?.data.msg_en ?? '';
     const msg_zh = err.response?.data.msg_zh ?? '';
-
-    const message = useMessage();
-    const { returnUserLangText } = useMyI18n();
 
     const errorMsg = returnUserLangText({
       en: msg_en,
       'zh-CN': msg_zh,
     });
 
-    const { isLoggedIn } = useAuth();
-
     switch (status) {
-      /** token 过期 */
       case 401:
-        isLoggedIn.value = false;
+        useAuthStore.getState().setLoggedIn(false);
         if (errorMsg) message.error(errorMsg);
         break;
-      /** 执行失败 */
       case 406:
         if (errorMsg) message.error(errorMsg);
         break;
@@ -39,17 +35,17 @@ axios.interceptors.response.use(
             returnUserLangText({
               en: 'Server error!',
               'zh-CN': '服务器错误！',
-            })
+            }),
         );
         break;
     }
 
-    const error = {
+    const error: ApiError = {
       status,
       msg_en,
       msg_zh,
     };
 
     return Promise.reject(error);
-  }
+  },
 );

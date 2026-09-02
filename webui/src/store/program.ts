@@ -1,15 +1,12 @@
-export const useProgramStore = defineStore('program', () => {
-  const { execute: start } = useApi(apiProgram.start);
-  const { execute: pause } = useApi(apiProgram.stop);
-  const { execute: shutdown } = useApi(apiProgram.shutdown);
-  const { execute: restart } = useApi(apiProgram.restart);
-  const { execute: resetRule } = useApi(apiBangumi.resetAll);
+import { create } from 'zustand';
+import { apiProgram } from '@/api/program';
+import { apiBangumi } from '@/api/bangumi';
+import { executeApi } from '@/hooks/use-api';
 
-  return {
-    start,
-    pause,
-    shutdown,
-    restart,
-    resetRule,
-  };
-});
+export const useProgramStore = create(() => ({
+  start: () => executeApi(apiProgram.start),
+  pause: () => executeApi(apiProgram.stop),
+  shutdown: () => executeApi(apiProgram.shutdown),
+  restart: () => executeApi(apiProgram.restart),
+  resetRule: () => executeApi(apiBangumi.resetAll),
+}));

@@ -1,5 +1,3 @@
-import type { UnionToTuple } from '#/utils';
-
 export interface Config {
   program: {
     rss_time: number;
@@ -16,12 +14,8 @@ export interface Config {
   };
   rss_parser: {
     enable: boolean;
-    type: 'mikan';
-    token: string;
-    custom_url: string;
     filter: Array<string>;
     language: 'zh' | 'en' | 'jp';
-    parser_type: 'tmdb' | 'mikan' | 'parser';
   };
   bangumi_manage: {
     enable: boolean;
@@ -72,12 +66,8 @@ export const initConfig: Config = {
   },
   rss_parser: {
     enable: true,
-    type: 'mikan',
-    token: '',
-    custom_url: '',
     filter: [],
     language: 'zh',
-    parser_type: 'parser',
   },
   bangumi_manage: {
     enable: true,
@@ -122,16 +112,3 @@ export type Log = getItem<'log'>;
 export type Proxy = getItem<'proxy'>;
 export type Notification = getItem<'notification'>;
 export type ExperimentalOpenAI = getItem<'experimental_openai'>;
-
-/** rss parser 源 */
-export type RssParserType = UnionToTuple<RssParser['type']>;
-/** rss parser 方法 */
-export type RssParserMethodType = UnionToTuple<RssParser['parser_type']>;
-/** rss parser 语言 */
-export type RssParserLang = UnionToTuple<RssParser['language']>;
-/** 重命名方式 */
-export type RenameMethod = UnionToTuple<BangumiManage['rename_method']>;
-/** 代理类型 */
-export type ProxyType = UnionToTuple<Proxy['type']>;
-/** 通知类型 */
-export type NotificationType = UnionToTuple<Notification['type']>;

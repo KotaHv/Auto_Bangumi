@@ -1,3 +1,4 @@
+import { axios } from '@/utils/axios';
 import type { LoginSuccess, Update } from '#/auth';
 import type { ApiSuccess } from '#/api';
 
@@ -15,7 +16,7 @@ export const apiAuth = {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-      }
+      },
     );
 
     return data;

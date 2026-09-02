@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
@@ -9,9 +9,21 @@
     <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
     <meta name="description" content="Automated Bangumi Download Tool" />
     <title>AutoBangumi</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var dark =
+            stored === 'dark' ||
+            (!stored &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

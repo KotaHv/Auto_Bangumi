@@ -1,3 +1,4 @@
+import { axios } from '@/utils/axios';
 import type { ApiSuccess } from '#/api';
 
 export const apiLog = {

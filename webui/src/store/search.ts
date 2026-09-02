@@ -1,74 +1,73 @@
-import { ref } from 'vue';
-import { EMPTY, Subject, debounceTime, switchMap, tap } from 'rxjs';
+import { create } from 'zustand';
+import { Subject, debounceTime, switchMap, EMPTY } from 'rxjs';
+import { apiSearch } from '@/api/search';
 import type { BangumiRule, SearchResult } from '#/bangumi';
 
-export const useSearchStore = defineStore('search', () => {
-  const bangumiList = ref<SearchResult[]>([]);
-  const inputValue = ref<string>('');
+interface SearchState {
+  bangumiList: SearchResult[];
+  inputValue: string;
+  providers: string[];
+  provider: string;
+  loading: boolean;
 
-  const providers = ref<string[]>(['mikan', 'dmhy', 'nyaa']);
-  const provider = ref<string>(providers.value[0]);
+  setInputValue: (value: string) => void;
+  setProvider: (provider: string) => void;
+  getProviders: () => void;
+  onSearch: () => void;
+  clearSearch: () => void;
+}
 
-  const loading = ref<boolean>(false);
+const input$ = new Subject<string>();
 
-  const input$ = new Subject<string>();
-
-  watch(inputValue, (input) => {
-    input$.next(input);
-    loading.value = !!input;
+let providerSnapshot = 'mikan';
+input$
+  .pipe(
+    debounceTime(600),
+    switchMap((input) => {
+      useSearchStore.setState({ bangumiList: [] });
+      return input ? apiSearch.get(input, providerSnapshot) : EMPTY;
+    }),
+  )
+  .subscribe((bangumi) => {
+    useSearchStore.setState((s) => ({
+      bangumiList: [
+        ...s.bangumiList,
+        { order: s.bangumiList.length + 1, value: bangumi },
+      ],
+      loading: false,
+    }));
   });
 
-  function getProviders() {
+export const useSearchStore = create<SearchState>((set, get) => ({
+  bangumiList: [],
+  inputValue: '',
+  providers: ['mikan', 'dmhy', 'nyaa'],
+  provider: 'mikan',
+  loading: false,
+
+  setInputValue(value) {
+    set({ inputValue: value });
+    input$.next(value);
+    set({ loading: !!value });
+  },
+
+  setProvider(provider) {
+    providerSnapshot = provider;
+    set({ provider });
+    input$.next(get().inputValue);
+  },
+
+  getProviders() {
     apiSearch.getProvider().then((res) => {
-      providers.value = res;
+      set({ providers: res });
     });
-  }
+  },
 
-  /**
-   * - 输入中 debounce 600ms 后触发搜索
-   * - 按回车或点击搜索 icon 按钮后触发搜索
-   * - 切换 provider 源站时触发搜索
-   */
+  onSearch() {
+    input$.next(get().inputValue);
+  },
 
-  const bangumiInfo$ = input$
-    .pipe(
-      debounceTime(600),
-      // switchMap 把输入 keyword 查询为 bangumiInfo$ 流，多次输入自动取消并停止前一次查询
-      switchMap((input: string) => {
-        // 有输入更新后清理之前的搜索结果
-        bangumiList.value = [];
-        return input ? apiSearch.get(input, provider.value) : EMPTY;
-      }),
-      tap((bangumi: BangumiRule) => {
-        const result: SearchResult = {
-          order: bangumiList.value.length + 1,
-          value: bangumi,
-        };
-        bangumiList.value.push(result);
-      })
-    )
-    .subscribe();
-
-  function onSearch() {
-    input$.next(inputValue.value);
-  }
-
-  function clearSearch() {
-    inputValue.value = '';
-    bangumiList.value = [];
-  }
-
-  return {
-    input$,
-    bangumiInfo$,
-    inputValue,
-    loading,
-    provider,
-    providers,
-    bangumiList,
-
-    onSearch,
-    clearSearch,
-    getProviders,
-  };
-});
+  clearSearch() {
+    set({ inputValue: '', bangumiList: [], loading: false });
+  },
+}));

@@ -2,6 +2,10 @@
   "config": {
     "apply": "Apply",
     "cancel": "Cancel",
+    "cancel_confirm": {
+      "message": "Are you sure you want to discard the unsaved changes?",
+      "title": "Discard Changes"
+    },
     "downloader_set": {
       "api_key": "API Key",
       "host": "Host",
@@ -29,11 +33,6 @@
       "title": "Manage Setting",
       "retain_latest_media_version": "Retain Latest Version"
     },
-    "media_player_set": {
-      "title": "Media Player Setting",
-      "type": "type",
-      "url": "url"
-    },
     "normal_set": {
       "debug": "Debug",
       "rename_interval": "Interval Time of Rename",
@@ -52,11 +51,7 @@
       "enable": "Enable",
       "exclude": "Exclude",
       "language": "Language",
-      "source": "Source",
-      "title": "Parser Setting",
-      "token": "Token",
-      "type": "Parser Type",
-      "url": "Custom Url"
+      "title": "Parser Setting"
     },
     "proxy_set": {
       "enable": "Enable",
@@ -66,7 +61,12 @@
       "title": "Proxy Setting",
       "type": "Proxy Type",
       "username": "Username"
-    }
+    },
+    "unsaved": "Unsaved changes",
+    "invalid": "Some fields are invalid. Fix them before applying.",
+    "navigation_title": "Configuration",
+    "save_success": "Configuration saved",
+    "save_failed": "Failed to save configuration. Your changes are still unsaved."
   },
   "downloader": {
     "hit": "Please set up the downloader"
@@ -75,23 +75,27 @@
     "rule": {
       "apply": "Apply",
       "delete": "Delete",
-      "delete_hit": "Delete Local File?",
+      "delete_hit": "Delete this rule?",
       "disable": "Disable",
+      "disable_hit": "Disable this rule?",
+      "delete_file": "Also delete local files",
       "edit_rule": "Edit Rule",
       "enable": "Enable",
       "enable_hit": "Do you want to enable this rule?",
       "enable_rule": "Enable Rule",
       "exclude": "Exclude",
-      "no_btn": "No",
+      "confirm_btn": "Confirm",
+      "cancel_btn": "Cancel",
       "official_title": "Official Title",
+      "group": "Sub Group",
       "offset": "Offset",
       "season": "Season",
       "year": "Year",
-      "yes_btn": "Yes",
       "force_collect": "Force Collect",
       "force_collect_hit": "Are you sure you want to force collect?",
       "force_collect_title": "Collect",
-      "rename": "Rename again"
+      "rename": "Rename again",
+      "rss_link": "RSS"
     }
   },
   "log": {
@@ -101,10 +105,13 @@
     "update_now": "Update Now"
   },
   "login": {
+    "hide_password": "Hide password",
     "login_btn": "Login",
     "password": "Password",
-    "title": "Login",
-    "username": "Username"
+    "password_placeholder": "Enter password",
+    "show_password": "Show password",
+    "username": "Username",
+    "username_placeholder": "Enter username"
   },
   "notify": {
     "api_key_format_error": "Invalid qBittorrent API Key. Expected 32 characters: 'qbt_' followed by 28 alphanumeric characters.",
@@ -113,14 +120,22 @@
     "login_failed": "Login Failed!",
     "login_success": "Login Success!",
     "password_length_error": "Password must be at least 8 characters long!",
-    "please_enter": "Please Enter {0}!",
+    "please_enter": "Please enter {field}!",
     "please_update": "Please Update AutoBangumi!",
-    "rss_link": "RSS Link",
+    "rss_link": "RSS",
     "update_failed": "Update Failed!",
-    "update_success": "Update Success!"
+    "update_success": "Update Success!",
+    "invalid_port": "Port must be an integer between 1 and 65535.",
+    "positive_integer": "Must be a positive integer."
   },
   "player": {
-    "hit": "Please set up the media player"
+    "apply_btn": "Save",
+    "desc": "Choose a playback mode and enter its address.",
+    "edit_hint": "You can edit it anytime from the ⋮ menu → Player settings.",
+    "jump_hint": "Playback opens in an external player.",
+    "settings_title": "Player settings",
+    "title": "No media player yet",
+    "url_placeholder": "Media player URL"
   },
   "rss": {
     "delete": "Delete",
@@ -152,7 +167,7 @@
       "parser": "Parser",
       "placeholder_link": "Please enter the RSS link",
       "placeholder_name": "Optional",
-      "rss_link": "RSS Link",
+      "rss_link": "RSS",
       "subscribe": "Subscribe",
       "title": "Add RSS"
     },
@@ -171,6 +186,8 @@
       "placeholder": "Type to search"
     },
     "shutdown": "Shutdown",
-    "start": "Start"
+    "start": "Start",
+    "status_running": "Running",
+    "status_stopped": "Stopped"
   }
 }
