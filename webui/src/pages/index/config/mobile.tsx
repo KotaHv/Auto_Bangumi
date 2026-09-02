@@ -63,7 +63,7 @@ export function ConfigMobile({
       {/* Scrolling content */}
       <div
         ref={contentRef}
-        className={`no-scrollbar min-h-0 flex-1 scroll-pt-4 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-4 ${showFooter ? 'pb-[calc(var(--config-action-bar-space)+env(safe-area-inset-bottom))]' : 'pb-4'}`}
+        className={`no-scrollbar min-h-0 flex-1 scroll-pt-4 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pt-4 ${showFooter ? 'pb-[calc(var(--config-action-bar-space)+16px+env(safe-area-inset-bottom))]' : 'pb-4'}`}
       >
         {renderSections()}
       </div>
