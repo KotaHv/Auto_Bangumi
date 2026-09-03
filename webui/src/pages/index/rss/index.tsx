@@ -3,6 +3,7 @@ import { useRSSStore } from '@/store/rss';
 import { useIsPc } from '@/hooks/use-is-pc';
 import { RSSMobile } from './mobile';
 import { RSSPc } from './pc';
+import type { RSSLayoutProps } from './types';
 
 export default function RSSPage() {
   const rss = useRSSStore((s) => s.rss);
@@ -20,7 +21,7 @@ export default function RSSPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const props = {
+  const props: RSSLayoutProps = {
     rss,
     selectedRSS,
     setSelectedRSS,

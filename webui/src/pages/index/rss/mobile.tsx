@@ -23,16 +23,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import type { RSS } from '#/rss';
-
-interface RSSMobileProps {
-  rss: RSS[];
-  selectedRSS: number[];
-  setSelectedRSS: (ids: number[]) => void;
-  enableSelected: () => Promise<void>;
-  disableSelected: () => Promise<void>;
-  deleteSelected: () => Promise<void>;
-  refreshSelected: () => Promise<void>;
-}
+import type { RSSLayoutProps } from './types';
 
 export function RSSMobile({
   rss,
@@ -42,7 +33,7 @@ export function RSSMobile({
   disableSelected,
   deleteSelected,
   refreshSelected,
-}: RSSMobileProps) {
+}: RSSLayoutProps) {
   const { t } = useTranslation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 

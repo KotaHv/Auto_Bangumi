@@ -29,16 +29,8 @@ import {
 } from '@/components/ui/table';
 import { copyText } from '@/lib/clipboard';
 import type { RSS } from '#/rss';
-
-interface RSSPcProps {
-  rss: RSS[];
-  selectedRSS: number[];
-  setSelectedRSS: (ids: number[]) => void;
-  enableSelected: () => Promise<void>;
-  disableSelected: () => Promise<void>;
-  deleteSelected: () => Promise<void>;
-  refreshSelected: () => Promise<void>;
-}
+import type { RSSLayoutProps } from './types';
+import { cn } from '@/lib/utils';
 
 export function RSSPc({
   rss,
@@ -48,7 +40,7 @@ export function RSSPc({
   disableSelected,
   deleteSelected,
   refreshSelected,
-}: RSSPcProps) {
+}: RSSLayoutProps) {
   const { t } = useTranslation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasSelection = selectedRSS.length > 0;
@@ -72,7 +64,7 @@ export function RSSPc({
 
   function renderTags(rssItem: RSS) {
     return (
-      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+      <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-1.5">
         {rssItem.parser && <AbTag type="primary" title={rssItem.parser} />}
         {rssItem.aggregate && (
           <AbTag type="primary" title={t('rss.aggregate')} />
@@ -211,7 +203,7 @@ export function RSSPc({
         </div>
 
         <Card className="w-full overflow-hidden rounded-2xl [--card-spacing:0px]">
-          <CardContent className="px-4 py-2 **:data-[slot=table-container]:overflow-y-hidden">
+          <CardContent className="px-4 py-2 **:data-[slot=table-container]:overflow-visible">
             {rss.length === 0 ? (
               <Empty className="min-h-64 border-0 p-6">
                 <EmptyHeader>
@@ -222,67 +214,78 @@ export function RSSPc({
                 </EmptyHeader>
               </Empty>
             ) : (
-              <Table className="table-fixed">
-                <TableHeader className="table w-full table-fixed">
-                  <TableRow>
-                    <TableHead className="w-[30%]">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          className="data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!"
-                          checked={allChecked}
-                          indeterminate={selectedRSS.length > 0 && !allChecked}
-                          onCheckedChange={toggleAll}
-                          aria-label={t('rss.select_all')}
-                        />
-                        <span>{t('rss.name')}</span>
-                      </div>
-                    </TableHead>
-                    <TableHead className="w-[50%] text-center">
-                      {t('rss.url')}
-                    </TableHead>
-                    <TableHead className="w-[20%] text-right">
-                      {t('rss.tags')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody
-                  className={`block w-full overflow-y-auto ${hasSelection ? 'max-h-[calc(100dvh-19rem)]' : 'max-h-[calc(100dvh-15rem)]'}`}
-                >
-                  {rss.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className={`table w-full table-fixed ${selectedRSS.includes(item.id) ? 'bg-brand/4' : ''}`}
-                    >
-                      <TableCell>
-                        <div className="flex min-w-0 items-center gap-2">
-                          {renderSelectionCheckbox(item)}
-                          <span
-                            className="truncate font-medium"
-                            title={item.name}
-                          >
-                            {item.name || '-'}
-                          </span>
+              <div
+                className={cn(
+                  'overflow-auto',
+                  hasSelection
+                    ? 'max-h-[calc(100dvh-16rem)]'
+                    : 'max-h-[calc(100dvh-12rem)]',
+                )}
+              >
+                <Table className="w-full table-fixed">
+                  <TableHeader className="bg-card sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead className="w-[30%]">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            className="data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!"
+                            checked={allChecked}
+                            indeterminate={
+                              selectedRSS.length > 0 && !allChecked
+                            }
+                            onCheckedChange={toggleAll}
+                            aria-label={t('rss.select_all')}
+                          />
+                          <span>{t('rss.name')}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="bg-muted/50 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
-                          <span
-                            className="min-w-0 flex-1 truncate font-mono text-xs"
-                            title={item.url}
-                          >
-                            {item.url}
-                          </span>
-                          {renderCopyButton(item.url)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="pr-4 text-right">
-                        {renderTags(item)}
-                      </TableCell>
+                      </TableHead>
+                      <TableHead className="w-[50%] text-center">
+                        {t('rss.url')}
+                      </TableHead>
+                      <TableHead className="w-[20%] text-right">
+                        {t('rss.tags')}
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+
+                  <TableBody>
+                    {rss.map((item) => (
+                      <TableRow
+                        key={item.id}
+                        className={
+                          selectedRSS.includes(item.id) ? 'bg-brand/4' : ''
+                        }
+                      >
+                        <TableCell>
+                          <div className="flex min-w-0 items-center gap-2">
+                            {renderSelectionCheckbox(item)}
+                            <span
+                              className="truncate font-medium"
+                              title={item.name}
+                            >
+                              {item.name || '-'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="bg-muted/50 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
+                            <span
+                              className="min-w-0 flex-1 truncate font-mono text-xs"
+                              title={item.url}
+                            >
+                              {item.url}
+                            </span>
+                            {renderCopyButton(item.url)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {renderTags(item)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
           {renderBulkActions()}
