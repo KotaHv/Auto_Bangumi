@@ -2,17 +2,33 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { AbSelect } from './basic/ab-select';
-import { AbSwitch } from './basic/ab-switch';
-import { DynamicTags } from './basic/dynamic-tags';
+import { AbSelect } from '@/components/basic/ab-select';
+import { AbSwitch } from '@/components/basic/ab-switch';
+import { DynamicTags } from '@/components/basic/dynamic-tags';
 import { cn } from '@/lib/utils';
-import type { AbSettingProps } from '#/components';
+import type { SettingControlType, SettingFieldConfig } from '#/components';
 
-interface AbSettingPropsEx extends AbSettingProps {
-  value: any;
-  onChange?: (value: any) => void;
-}
+type SettingValueFor<TType extends SettingControlType> = TType extends 'input'
+  ? string | number | null
+  : TType extends 'switch'
+    ? boolean
+    : TType extends 'select'
+      ? string
+      : string[];
+
+type SettingFieldProps<TType extends SettingControlType> = Extract<
+  SettingFieldConfig,
+  { type: TType }
+> & {
+  value: SettingValueFor<TType>;
+  onChange?: (value: SettingValueFor<TType>) => void;
+};
+
+type RuntimeSettingFieldProps =
+  | SettingFieldProps<'input'>
+  | SettingFieldProps<'switch'>
+  | SettingFieldProps<'select'>
+  | SettingFieldProps<'dynamic-tags'>;
 
 /** Password input with a reveal toggle, keeping the masked style by default. */
 function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
@@ -39,21 +55,21 @@ function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
   );
 }
 
-export function AbSetting({
-  label,
-  type,
-  css = '',
-  prop,
-  bottomLine = false,
-  orientation = 'vertical',
-  compact = false,
-  disabled = false,
-  description,
-  error,
-  value,
-  onChange,
-  fieldKey,
-}: AbSettingPropsEx) {
+export function SettingField<TType extends SettingControlType>(
+  props: SettingFieldProps<TType>,
+) {
+  const {
+    label,
+    type,
+    prop,
+    orientation = 'vertical',
+    disabled = false,
+    description,
+    error,
+    value,
+    onChange,
+    fieldKey,
+  } = props as RuntimeSettingFieldProps;
   const labelText = typeof label === 'function' ? label() : label;
   const isDynamicTags = type === 'dynamic-tags';
   const isSwitch = type === 'switch';
@@ -75,9 +91,9 @@ export function AbSetting({
     case 'select':
       control = (
         <AbSelect
-          value={value}
+          value={value as string}
           items={prop?.items ?? []}
-          className={cn('w-full sm:w-64', css)}
+          className="w-full sm:w-64"
           disabled={disabled}
           onChange={(item) =>
             onChange?.(typeof item === 'string' ? item : item.value)
@@ -103,7 +119,7 @@ export function AbSetting({
             value={
               (value === 0 || value === '0') && prop?.placeholder
                 ? ''
-                : (value ?? '')
+                : ((value ?? '') as string | number | readonly string[])
             }
             onChange={(e) => {
               const v =
@@ -112,7 +128,7 @@ export function AbSetting({
                   : e.target.value;
               onChange?.(Number.isNaN(v) ? e.target.value : v);
             }}
-            className={cn('w-full sm:w-64', css)}
+            className="w-full sm:w-64"
           />
         );
       break;
@@ -122,7 +138,7 @@ export function AbSetting({
         <DynamicTags
           value={(value as string[]) ?? []}
           disabled={disabled}
-          onChange={onChange}
+          onChange={(nextValue) => onChange?.(nextValue)}
         />
       );
       break;
@@ -163,7 +179,7 @@ export function AbSetting({
               : isSwitch
                 ? 'min-h-9 w-full flex-row items-center justify-between gap-3'
                 : 'min-h-9 items-center',
-            compact ? 'sm:w-fit sm:justify-start sm:gap-2' : 'sm:gap-6',
+            'sm:gap-6',
           )}
           data-invalid={!!error || undefined}
         >
@@ -174,9 +190,7 @@ export function AbSetting({
                 ? 'w-fit! flex-none! leading-6'
                 : isSwitch
                   ? 'min-w-0 flex-1'
-                  : compact
-                    ? 'sm:w-auto'
-                    : 'sm:w-44',
+                  : 'sm:w-44',
             )}
           >
             {labelText}
@@ -202,8 +216,6 @@ export function AbSetting({
           {feedback}
         </Field>
       )}
-
-      {bottomLine && <Separator className="my-3" />}
     </div>
   );
 }

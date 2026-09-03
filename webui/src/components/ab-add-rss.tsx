@@ -9,9 +9,12 @@ import { rssTemplate } from '#/rss';
 import type { BangumiRule } from '#/bangumi';
 import type { RSS } from '#/rss';
 import { AbButton } from './basic/ab-button';
+import { AbSelect } from './basic/ab-select';
+import { AbSwitch } from './basic/ab-switch';
 import { AbPopup } from './ab-popup';
 import { AbRule } from './ab-rule';
-import { AbSetting } from './ab-setting';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 
 const PARSER_TYPE = ['mikan', 'tmdb', 'parser'];
@@ -137,48 +140,64 @@ export function AbAddRss({
       {!windowState.next ? (
         <div>
           <div className="space-y-4">
-            <AbSetting
-              label={t('topbar.add.rss_link')}
-              type="input"
-              value={rss.url}
-              onChange={(url) => setRss((s) => ({ ...s, url }))}
-              prop={{ placeholder: t('topbar.add.placeholder_link') }}
-              css="h-10 sm:w-full"
-            />
+            <Field>
+              <FieldLabel>{t('topbar.add.rss_link')}</FieldLabel>
+              <Input
+                value={rss.url}
+                onChange={(e) => setRss((s) => ({ ...s, url: e.target.value }))}
+                placeholder={t('topbar.add.placeholder_link')}
+                className="h-10"
+              />
+            </Field>
 
-            <AbSetting
-              label={t('topbar.add.name')}
-              type="input"
-              value={rss.name}
-              onChange={(name) => setRss((s) => ({ ...s, name }))}
-              prop={{ placeholder: t('topbar.add.placeholder_name') }}
-              css="h-10 sm:w-full"
-            />
+            <Field>
+              <FieldLabel>{t('topbar.add.name')}</FieldLabel>
+              <Input
+                value={rss.name}
+                onChange={(e) =>
+                  setRss((s) => ({ ...s, name: e.target.value }))
+                }
+                placeholder={t('topbar.add.placeholder_name')}
+                className="h-10"
+              />
+            </Field>
 
             <div className="grid gap-4 sm:grid-cols-2 sm:items-center">
               <div className="sm:justify-self-start">
-                <AbSetting
-                  label={t('topbar.add.aggregate')}
-                  type="switch"
+                <Field
                   orientation="horizontal"
-                  compact
-                  value={rss.aggregate}
-                  onChange={(aggregate) => setRss((s) => ({ ...s, aggregate }))}
-                  prop={{ size: 'lg' }}
-                />
+                  className="min-h-9 w-full items-center justify-between gap-3 sm:w-fit sm:justify-start sm:gap-2"
+                >
+                  <FieldLabel>{t('topbar.add.aggregate')}</FieldLabel>
+                  <AbSwitch
+                    checked={rss.aggregate}
+                    onCheckedChange={(aggregate) =>
+                      setRss((s) => ({ ...s, aggregate }))
+                    }
+                    size="lg"
+                  />
+                </Field>
               </div>
 
               <div className="sm:justify-self-end">
-                <AbSetting
-                  label={t('topbar.add.parser')}
-                  type="select"
+                <Field
                   orientation="horizontal"
-                  compact
-                  value={rss.parser}
-                  onChange={(parser) => setRss((s) => ({ ...s, parser }))}
-                  prop={{ items: PARSER_TYPE }}
-                  css="w-24 sm:w-24"
-                />
+                  className="min-h-9 items-center justify-between gap-2 sm:w-fit sm:justify-start"
+                >
+                  <FieldLabel>{t('topbar.add.parser')}</FieldLabel>
+                  <AbSelect
+                    value={rss.parser}
+                    items={PARSER_TYPE}
+                    className="w-24 sm:w-24"
+                    onChange={(parser) =>
+                      setRss((s) => ({
+                        ...s,
+                        parser:
+                          typeof parser === 'string' ? parser : parser.value,
+                      }))
+                    }
+                  />
+                </Field>
               </div>
             </div>
           </div>

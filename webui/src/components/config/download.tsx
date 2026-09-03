@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbSetting } from '@/components/ab-setting';
+import { SettingField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -76,7 +76,7 @@ export function ConfigDownload({
 
   return (
     <div>
-      <AbSetting
+      <SettingField
         label={t('config.downloader_set.use_api_key')}
         type="switch"
         fieldKey="downloader.use_api_key"
@@ -90,7 +90,7 @@ export function ConfigDownload({
         .map((item) => (
           <Fragment key={item.configKey}>
             <Separator className="my-2" />
-            <AbSetting
+            <SettingField
               {...item}
               fieldKey={`downloader.${item.configKey}`}
               orientation="horizontal"

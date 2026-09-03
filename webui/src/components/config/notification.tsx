@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbSetting } from '@/components/ab-setting';
+import { SettingField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -61,7 +61,7 @@ export function ConfigNotification({
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <AbSetting
+          <SettingField
             {...item}
             fieldKey={`notification.${item.configKey}`}
             orientation="horizontal"

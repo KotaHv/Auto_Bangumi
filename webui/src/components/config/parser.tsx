@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbSetting } from '@/components/ab-setting';
+import { SettingField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import type { SettingItem } from '#/components';
@@ -38,7 +38,7 @@ export function ConfigParser() {
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <AbSetting
+          <SettingField
             {...item}
             fieldKey={`rss_parser.${item.configKey}`}
             orientation="horizontal"

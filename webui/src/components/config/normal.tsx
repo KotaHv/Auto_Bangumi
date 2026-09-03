@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbSetting } from '@/components/ab-setting';
+import { SettingField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -47,7 +47,7 @@ export function ConfigNormal({ errors = [] }: { errors?: ConfigFieldError[] }) {
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <AbSetting
+          <SettingField
             label={item.label}
             type="input"
             fieldKey={`program.${item.configKey}`}
@@ -66,7 +66,7 @@ export function ConfigNormal({ errors = [] }: { errors?: ConfigFieldError[] }) {
       ))}
 
       <Separator className="my-2" />
-      <AbSetting
+      <SettingField
         label={t('config.normal_set.debug')}
         type="switch"
         fieldKey="log.debug_enable"

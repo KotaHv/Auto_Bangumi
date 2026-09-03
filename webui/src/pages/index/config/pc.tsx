@@ -1,5 +1,5 @@
 import { AbConfirm } from '@/components/ab-confirm';
-import { ConfigNav } from '@/components/setting/config-nav';
+import { ConfigNav } from '@/components/config/nav';
 import { useTranslation } from 'react-i18next';
 import type { ConfigLayoutProps } from './types';
 

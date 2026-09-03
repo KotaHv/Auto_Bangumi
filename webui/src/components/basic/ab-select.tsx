@@ -11,7 +11,7 @@ import type { SelectItem as SelectItemType } from '#/components';
 
 interface AbSelectProps {
   value?: SelectItemType | string;
-  items: Array<SelectItemType | string>;
+  items: ReadonlyArray<SelectItemType | string>;
   className?: string;
   size?: 'sm' | 'default';
   disabled?: boolean;

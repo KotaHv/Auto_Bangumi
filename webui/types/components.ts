@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+
 export interface SelectItem {
   id: number;
   label?: string;
@@ -5,15 +7,14 @@ export interface SelectItem {
   disabled?: boolean;
 }
 
-export interface AbSettingProps {
+type SettingInputProps = Omit<
+  ComponentProps<'input'>,
+  'value' | 'onChange' | 'disabled' | 'className'
+>;
+
+interface SettingFieldBase {
   label: string | (() => string);
-  type: 'input' | 'switch' | 'select' | 'dynamic-tags';
-  css?: string;
-  prop?: any;
-  bottomLine?: boolean;
   orientation?: 'vertical' | 'horizontal';
-  /** Use a compact label width for dense horizontal layouts. */
-  compact?: boolean;
   /** Disable the control without hiding it (e.g. when its section is off). */
   disabled?: boolean;
   /** Helper text rendered below the control. */
@@ -24,6 +25,32 @@ export interface AbSettingProps {
   fieldKey?: string;
 }
 
-export type SettingItem<T> = AbSettingProps & {
+export type SettingControlType = 'input' | 'switch' | 'select' | 'dynamic-tags';
+
+export type SettingFieldConfig = SettingFieldBase &
+  (
+    | {
+        type: 'input';
+        prop?: SettingInputProps;
+      }
+    | {
+        type: 'switch';
+        prop?: {
+          size?: 'sm' | 'default' | 'lg';
+        };
+      }
+    | {
+        type: 'select';
+        prop: {
+          items: ReadonlyArray<SelectItem | string>;
+        };
+      }
+    | {
+        type: 'dynamic-tags';
+        prop?: never;
+      }
+  );
+
+export type SettingItem<T> = SettingFieldConfig & {
   configKey: keyof T;
 };
