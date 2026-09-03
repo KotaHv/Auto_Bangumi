@@ -26,12 +26,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center justify-center gap-8 overflow-hidden p-4">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="bg-brand/20 absolute top-16 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full blur-[110px]" />
-        <div className="bg-brand/10 absolute right-22.5 bottom-22.5 h-56 w-56 rounded-full blur-3xl" />
-      </div>
-
+    <div
+      className="bg-background relative flex min-h-dvh w-full flex-col items-center justify-center gap-8 overflow-hidden p-4"
+      style={{
+        backgroundImage: `
+          radial-gradient(
+            circle 320px at 50% 14rem,
+            color-mix(in oklab, var(--color-brand) 15%, transparent) 0%,
+            color-mix(in oklab, var(--color-brand) 11%, transparent) 20%,
+            color-mix(in oklab, var(--color-brand) 5%, transparent) 45%,
+            transparent 72%
+          ),
+          radial-gradient(
+            circle 224px at calc(100% - 12.75rem) calc(100% - 12.75rem),
+            color-mix(in oklab, var(--color-brand) 10%, transparent) 0%,
+            color-mix(in oklab, var(--color-brand) 6%, transparent) 40%,
+            transparent 72%
+          )
+        `,
+      }}
+    >
       <div className="flex items-center gap-3">
         <img
           src="/images/logo.svg"
