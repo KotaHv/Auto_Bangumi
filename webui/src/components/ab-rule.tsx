@@ -157,7 +157,7 @@ export function AbRule({ rule, onChange }: AbRuleProps) {
           </div>
 
           <Field orientation="horizontal" className="items-start gap-3">
-            <FieldLabel className="shrink-0">
+            <FieldLabel className="w-fit! flex-none!">
               {t('homepage.rule.exclude')}
             </FieldLabel>
             <div className="min-w-0 flex-1">
