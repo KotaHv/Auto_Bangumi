@@ -12,7 +12,7 @@ import { AbButton } from './basic/ab-button';
 import { AbSelect } from './basic/ab-select';
 import { AbSwitch } from './basic/ab-switch';
 import { AbPopup } from './ab-popup';
-import { AbRule } from './ab-rule';
+import { AbRule } from './rule/ab-rule';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';

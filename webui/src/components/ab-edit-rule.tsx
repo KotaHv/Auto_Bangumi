@@ -7,7 +7,7 @@ import { useBangumiStore } from '@/store/bangumi';
 import { AbButton } from './basic/ab-button';
 import { AbConfirm } from './ab-confirm';
 import { AbPopup } from './ab-popup';
-import { AbRule } from './ab-rule';
+import { AbRule } from './rule/ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 
