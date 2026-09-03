@@ -6,7 +6,7 @@ export default function RootLayout() {
   return (
     <AppProviders>
       <TooltipProvider delay={300}>
-        <div className="flex min-h-screen">
+        <div className="flex min-h-dvh">
           <Outlet />
         </div>
       </TooltipProvider>
