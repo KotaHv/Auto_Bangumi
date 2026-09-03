@@ -4,7 +4,7 @@ import type { BangumiRule } from '#/bangumi';
 import { message } from '@/components/message';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { DynamicTags } from './basic/dynamic-tags';
+import { AbDynamicTags } from './basic/ab-dynamic-tags';
 import { Separator } from '@/components/ui/separator';
 import { copyText } from '@/lib/clipboard';
 
@@ -97,7 +97,7 @@ export function AbRule({ rule, onChange }: AbRuleProps) {
                 {t('homepage.rule.exclude')}
               </FieldLabel>
               <div className="min-w-0 flex-1">
-                <DynamicTags
+                <AbDynamicTags
                   value={rule.filter}
                   onChange={(value) => patch('filter', value)}
                 />
@@ -161,7 +161,7 @@ export function AbRule({ rule, onChange }: AbRuleProps) {
               {t('homepage.rule.exclude')}
             </FieldLabel>
             <div className="min-w-0 flex-1">
-              <DynamicTags
+              <AbDynamicTags
                 value={rule.filter}
                 onChange={(value) => patch('filter', value)}
               />

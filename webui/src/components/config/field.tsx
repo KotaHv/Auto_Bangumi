@@ -4,7 +4,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { AbSelect } from '@/components/basic/ab-select';
 import { AbSwitch } from '@/components/basic/ab-switch';
-import { DynamicTags } from '@/components/basic/dynamic-tags';
+import { AbDynamicTags } from '@/components/basic/ab-dynamic-tags';
 import { cn } from '@/lib/utils';
 import type { SettingControlType, SettingFieldConfig } from '#/components';
 
@@ -135,7 +135,7 @@ export function SettingField<TType extends SettingControlType>(
 
     case 'dynamic-tags':
       control = (
-        <DynamicTags
+        <AbDynamicTags
           value={(value as string[]) ?? []}
           disabled={disabled}
           onChange={(nextValue) => onChange?.(nextValue)}

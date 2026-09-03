@@ -3,17 +3,17 @@ import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface DynamicTagsProps {
+interface AbDynamicTagsProps {
   value: string[];
   disabled?: boolean;
   onChange?: (value: string[]) => void;
 }
 
-export function DynamicTags({
+export function AbDynamicTags({
   value,
   disabled = false,
   onChange,
-}: DynamicTagsProps) {
+}: AbDynamicTagsProps) {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
