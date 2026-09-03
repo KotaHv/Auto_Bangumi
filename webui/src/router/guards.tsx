@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router';
-import { useEffect } from 'react';
-import PlayerPage from '@/pages/index/player';
+import { lazy, Suspense, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { usePlayerStore } from '@/store/player';
 import type { ReactNode } from 'react';
+
+const PlayerPage = lazy(() => import('@/pages/index/player'));
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -36,5 +37,9 @@ export function RedirectPlayerIfJump() {
   if (type === 'jump' && url !== '') {
     return <Navigate to="/bangumi" replace />;
   }
-  return <PlayerPage />;
+  return (
+    <Suspense fallback={null}>
+      <PlayerPage />
+    </Suspense>
+  );
 }
