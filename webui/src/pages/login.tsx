@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { AbPillInput } from '@/components/basic/ab-pill-input';
 import { AbButton } from '@/components/basic/ab-button';
+import { LoginGlow } from '@/components/login-glow';
 import { useAuthStore } from '@/store/auth';
 
 export default function LoginPage() {
@@ -26,26 +27,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="bg-background relative flex min-h-dvh w-full flex-col items-center justify-center gap-8 overflow-hidden p-4"
-      style={{
-        backgroundImage: `
-          radial-gradient(
-            circle 320px at 50% 14rem,
-            color-mix(in oklab, var(--color-brand) 15%, transparent) 0%,
-            color-mix(in oklab, var(--color-brand) 11%, transparent) 20%,
-            color-mix(in oklab, var(--color-brand) 5%, transparent) 45%,
-            transparent 72%
-          ),
-          radial-gradient(
-            circle 224px at calc(100% - 12.75rem) calc(100% - 12.75rem),
-            color-mix(in oklab, var(--color-brand) 10%, transparent) 0%,
-            color-mix(in oklab, var(--color-brand) 6%, transparent) 40%,
-            transparent 72%
-          )
-        `,
-      }}
-    >
+    <div className="relative flex min-h-dvh w-full flex-col items-center justify-center gap-8 overflow-hidden p-4">
+      <LoginGlow />
+
       <div className="flex items-center gap-3">
         <img
           src="/images/logo.svg"
