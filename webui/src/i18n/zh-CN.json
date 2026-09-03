@@ -146,6 +146,7 @@
     "please_enter": "请输入{field}!",
     "please_update": "请更新AutoBangumi!",
     "rss_link": "RSS",
+    "session_expired": "登录凭据已失效，请重新登录。",
     "update_failed": "更新失败!",
     "update_success": "更新成功!",
     "invalid_port": "端口必须为 1–65535 之间的整数。",

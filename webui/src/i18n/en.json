@@ -146,6 +146,7 @@
     "please_enter": "Please enter {field}!",
     "please_update": "Please Update AutoBangumi!",
     "rss_link": "RSS",
+    "session_expired": "Your login session has expired. Please log in again.",
     "update_failed": "Update Failed!",
     "update_success": "Update Success!",
     "invalid_port": "Port must be an integer between 1 and 65535.",

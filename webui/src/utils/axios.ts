@@ -2,7 +2,7 @@ import Axios from 'axios';
 import type { AxiosError, AxiosResponse } from 'axios';
 import type { ApiError, ApiSuccess } from '#/api';
 import { message } from '@/components/message';
-import { returnUserLangText } from '@/i18n';
+import { i18n, returnUserLangText } from '@/i18n';
 import { useAuthStore } from '@/store/auth';
 
 export const axios = Axios.create({
@@ -23,8 +23,13 @@ axios.interceptors.response.use(
 
     switch (status) {
       case 401:
+        const wasLoggedIn = useAuthStore.getState().isLoggedIn;
         useAuthStore.getState().setLoggedIn(false);
-        if (errorMsg) message.error(errorMsg);
+        if (err.config?.url?.endsWith('api/v1/auth/login') && errorMsg) {
+          message.error(errorMsg);
+        } else if (wasLoggedIn) {
+          message.error(i18n.t('notify.session_expired'));
+        }
         break;
       case 406:
         if (errorMsg) message.error(errorMsg);
