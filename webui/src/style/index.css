@@ -45,6 +45,8 @@
 
 :root {
   --config-action-bar-space: 4rem;
+  --log-scrollbar-thumb: #a1a1aa;
+  --log-scrollbar-track: #f4f4f5;
   --background: #fafafa;
   --foreground: #18181b;
   --card: #ffffff;
@@ -102,6 +104,8 @@
   --sidebar-accent-foreground: #cfc7ff;
   --sidebar-border: rgb(255 255 255 / 8%);
   --sidebar-ring: #8b7cf6;
+  --log-scrollbar-thumb: #71717a;
+  --log-scrollbar-track: #1d1d21;
 }
 
 @layer base {
@@ -116,8 +120,31 @@
   }
 }
 
-/* 品牌 logo 状态变体（运行/停止） */
-/* 运行：先做一次"点火"闪光（0.7s），随后常驻呼吸辉光——即使从不停止，动态本身也在提示"活着" */
+.ab-log-scrollbar {
+  scrollbar-color: var(--log-scrollbar-thumb) var(--log-scrollbar-track);
+  scrollbar-width: auto;
+}
+
+.ab-log-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ab-log-scrollbar::-webkit-scrollbar-track {
+  background: var(--log-scrollbar-track);
+  border-radius: 999px;
+}
+
+.ab-log-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--log-scrollbar-thumb);
+  border: 2px solid var(--log-scrollbar-track);
+  border-radius: 999px;
+}
+
+.ab-log-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
 .ab-brand-running {
   animation:
     ab-brand-ignite 0.7s ease-out,

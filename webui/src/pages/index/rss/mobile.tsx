@@ -40,6 +40,9 @@ export function RSSMobile({
   const allChecked =
     rss.length > 0 && rss.every((item) => selectedRSS.includes(item.id));
 
+  const checkboxClassName =
+    'data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!';
+
   function toggleAll(checked: boolean) {
     setSelectedRSS(checked ? rss.map((item) => item.id) : []);
   }
@@ -94,78 +97,80 @@ export function RSSMobile({
 
   function renderBulkActions() {
     return (
-      <div className="bg-popover text-popover-foreground border-border flex min-h-(--config-action-bar-space) w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 shadow-lg">
-        <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
-          <Checkbox
-            className="data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!"
-            checked={allChecked}
-            indeterminate={selectedRSS.length > 0 && !allChecked}
-            onCheckedChange={toggleAll}
-            aria-label={t('rss.select_all')}
-          />
-          <span className="truncate text-sm">
-            {selectedRSS.length > 0
-              ? t('rss.selected_count', { count: selectedRSS.length })
-              : t('rss.select_all')}
-          </span>
-        </div>
+      <Card className="border-border bg-popover text-popover-foreground mb-[calc(12px+env(safe-area-inset-bottom))] shrink-0 rounded-2xl border shadow-lg ring-0 [--card-spacing:0px]">
+        <CardContent className="flex min-h-(--config-action-bar-space) w-full items-center justify-between gap-3 px-4 py-2">
+          <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+            <Checkbox
+              className={checkboxClassName}
+              checked={allChecked}
+              indeterminate={selectedRSS.length > 0 && !allChecked}
+              onCheckedChange={toggleAll}
+              aria-label={t('rss.select_all')}
+            />
+            <span className="truncate text-sm">
+              {selectedRSS.length > 0
+                ? t('rss.selected_count', { count: selectedRSS.length })
+                : t('rss.select_all')}
+            </span>
+          </div>
 
-        <div className="flex shrink-0 items-center gap-0.5">
-          <AbButton
-            type="brand"
-            size="normal"
-            className="px-3"
-            disabled={selectedRSS.length === 0}
-            onClick={enableSelected}
-          >
-            {t('rss.enable')}
-          </AbButton>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={selectedRSS.length === 0}
-                  aria-label={t('rss.more')}
-                  title={t('rss.more')}
-                />
-              }
+          <div className="flex shrink-0 items-center gap-0.5">
+            <AbButton
+              type="brand"
+              size="normal"
+              className="px-3"
+              disabled={selectedRSS.length === 0}
+              onClick={enableSelected}
             >
-              <EllipsisVertical className="size-auto" size={24} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={18}
-              className="w-auto min-w-28"
-            >
-              <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
-                <RefreshCw />
-                {t('rss.refresh')}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
-                <Ban />
-                {t('rss.disable')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="gap-1.5"
-                variant="destructive"
-                onClick={() => setShowDeleteConfirm(true)}
+              {t('rss.enable')}
+            </AbButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={selectedRSS.length === 0}
+                    aria-label={t('rss.more')}
+                    title={t('rss.more')}
+                  />
+                }
               >
-                <Trash />
-                {t('rss.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+                <EllipsisVertical className="size-auto" size={24} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={18}
+                className="w-auto min-w-28"
+              >
+                <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
+                  <RefreshCw />
+                  {t('rss.refresh')}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
+                  <Ban />
+                  {t('rss.disable')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-1.5"
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash />
+                  {t('rss.delete')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-4">
+    <div className="flex h-full min-h-0 flex-col px-4">
+      <div className="no-scrollbar my-3 min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain">
         {rss.length === 0 ? (
           <Empty className="min-h-64 border-0 p-6">
             <EmptyHeader>
@@ -176,45 +181,40 @@ export function RSSMobile({
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="space-y-3">
-            {rss.map((item) => (
-              <Card
-                key={item.id}
-                className={`rounded-2xl [--card-spacing:0px] ${selectedRSS.includes(item.id) ? 'border-brand/40 bg-brand/4' : ''}`}
-              >
-                <CardContent className="relative p-4">
-                  <div className="absolute top-4 right-4">
-                    <Checkbox
-                      className="data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!"
-                      checked={selectedRSS.includes(item.id)}
-                      onCheckedChange={(checked) => toggleRow(item.id, checked)}
-                      aria-label={`${t('rss.selectbox')} ${item.name}`}
-                    />
-                  </div>
-
-                  <h2 className="pr-8 text-sm font-semibold wrap-break-word">
+          rss.map((item) => (
+            <Card
+              key={item.id}
+              className={`border-border rounded-2xl border ring-0 [--card-spacing:0px] ${selectedRSS.includes(item.id) ? 'border-brand/40 bg-brand/4' : ''}`}
+            >
+              <CardContent className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="min-w-0 flex-1 text-sm font-semibold wrap-break-word">
                     {item.name || '-'}
                   </h2>
-                  <div className="text-muted-foreground bg-muted/50 mt-3 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
-                    <span
-                      className="min-w-0 flex-1 font-mono text-[11px] leading-relaxed break-all"
-                      title={item.url}
-                    >
-                      {item.url}
-                    </span>
-                    {renderCopyButton(item.url)}
-                  </div>
-                  <div className="mt-3">{renderTags(item)}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <Checkbox
+                    className={`${checkboxClassName} mt-0.5 shrink-0`}
+                    checked={selectedRSS.includes(item.id)}
+                    onCheckedChange={(checked) => toggleRow(item.id, checked)}
+                    aria-label={`${t('rss.selectbox')} ${item.name}`}
+                  />
+                </div>
+                <div className="text-muted-foreground bg-muted/50 mt-3 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
+                  <span
+                    className="min-w-0 flex-1 font-mono text-[11px] leading-relaxed break-all"
+                    title={item.url}
+                  >
+                    {item.url}
+                  </span>
+                  {renderCopyButton(item.url)}
+                </div>
+                <div className="mt-3">{renderTags(item)}</div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
-      <div className="shrink-0 px-4 pb-[calc(8px+env(safe-area-inset-bottom))]">
-        {renderBulkActions()}
-      </div>
+      {renderBulkActions()}
 
       <AbConfirm
         show={showDeleteConfirm}

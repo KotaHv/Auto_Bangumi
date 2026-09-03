@@ -99,10 +99,33 @@
     }
   },
   "log": {
+    "auto_refresh": "自动刷新",
     "copy": "复制",
+    "debug": "调试模式",
+    "disabled": "已关闭",
+    "empty": "暂无日志",
+    "enabled": "已开启",
+    "errors": "错误数量",
+    "level": "级别",
+    "levels": {
+      "all": "全部"
+    },
+    "lines": {
+      "all": "全部",
+      "label": "行数"
+    },
+    "loading": "正在加载日志",
+    "message": "消息",
+    "module": "模块",
+    "no_matching": "没有匹配的日志",
     "reset": "重置",
-    "title": "日志",
-    "update_now": "立即更新"
+    "refresh_stopped": "已停止刷新",
+    "start_refresh": "开始刷新",
+    "stop_refresh": "停止刷新",
+    "time": "时间",
+    "total": "已加载日志",
+    "update_now": "立即更新",
+    "warnings": "警告数量"
   },
   "login": {
     "hide_password": "隐藏密码",

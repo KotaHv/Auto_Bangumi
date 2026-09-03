@@ -1,0 +1,137 @@
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { startLogPolling, stopLogPolling, useLogStore } from '@/store/log';
+import { useConfigStore } from '@/store/config';
+import { useIsPc } from '@/hooks/use-is-pc';
+import { LogMobile } from './mobile';
+import { LogPc } from './pc';
+import type { LogLevelFilter, LogLine, LogLineLimit } from './types';
+
+export default function LogPage() {
+  const log = useLogStore((s) => s.log);
+  const loaded = useLogStore((s) => s.loaded);
+  const lineLimit = useLogStore((s) => s.lineLimit);
+  const setLineLimit = useLogStore((s) => s.setLineLimit);
+  const getLog = useLogStore((s) => s.getLog);
+  const reset = useLogStore((s) => s.reset);
+  const copy = useLogStore((s) => s.copy);
+
+  const debugEnable = useConfigStore((s) => s.config.log.debug_enable);
+  const getConfig = useConfigStore((s) => s.getConfig);
+  const isPc = useIsPc();
+
+  const logContainerRef = useRef<HTMLElement | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [filterLevel, setFilterLevel] = useState<LogLevelFilter>('ALL');
+  const [pollingActive, setPollingActive] = useState(true);
+  const deferredLog = useDeferredValue(log);
+
+  function backToBottom() {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }
+
+  const formatLog = useMemo<LogLine[]>(() => {
+    const lines = deferredLog
+      .trim()
+      .split('\n')
+      .filter((i) => i !== '');
+    const startIndex = lines.findIndex((i) => /Version/.test(i));
+    const logs = lines.slice(startIndex === -1 ? 0 : startIndex);
+
+    const list: LogLine[] = [];
+
+    for (const line of logs) {
+      const parts = line.split('|');
+      if (parts.length >= 3) {
+        const [moduleName, ...contents] = parts.slice(2).join('|').split('-');
+        list.push({
+          index: list.length,
+          date: parts[0].trim(),
+          type: parts[1].trim(),
+          module: moduleName.trim(),
+          content: contents.join('-').trim(),
+        });
+      } else if (list.length > 0) {
+        list[list.length - 1].content += `\n${line}`;
+      } else {
+        list.push({
+          index: list.length,
+          date: '',
+          type: '',
+          module: '',
+          content: line,
+        });
+      }
+    }
+
+    return list;
+  }, [deferredLog]);
+
+  const logsReady = loaded && log === deferredLog;
+
+  const visibleLog = useMemo(
+    () =>
+      filterLevel === 'ALL'
+        ? formatLog
+        : formatLog.filter((item) => item.type === filterLevel),
+    [filterLevel, formatLog],
+  );
+
+  useEffect(() => {
+    getConfig();
+    startLogPolling();
+    setPollingActive(true);
+
+    if (log) {
+      backToBottom();
+    } else {
+      setScrolled(false);
+    }
+
+    return () => stopLogPolling();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!scrolled && deferredLog) {
+      setScrolled(true);
+      requestAnimationFrame(backToBottom);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deferredLog]);
+
+  function togglePolling() {
+    if (pollingActive) {
+      stopLogPolling();
+      setPollingActive(false);
+    } else {
+      startLogPolling();
+      setPollingActive(true);
+    }
+  }
+
+  function changeLineLimit(limit: LogLineLimit) {
+    setLineLimit(limit);
+    void getLog(limit);
+  }
+
+  const props = {
+    log: formatLog,
+    visibleLog,
+    loaded: logsReady,
+    debugEnable,
+    filterLevel,
+    setFilterLevel,
+    lineLimit,
+    setLineLimit: changeLineLimit,
+    pollingActive,
+    togglePolling,
+    logContainerRef,
+    getLog,
+    reset,
+    copy,
+  };
+
+  return isPc ? <LogPc {...props} /> : <LogMobile {...props} />;
+}

@@ -8,22 +8,48 @@ import { copyText } from '@/lib/clipboard';
 
 interface LogState {
   log: string;
+  loaded: boolean;
+  lineLimit: number | null;
 
-  getLog: () => Promise<void>;
+  setLineLimit: (lineLimit: number | null) => void;
+  getLog: (lineLimit?: number | null) => Promise<void>;
   reset: () => Promise<void>;
   copy: () => Promise<void>;
 }
 
 export const useLogStore = create<LogState>((set) => ({
   log: '',
+  loaded: false,
+  lineLimit: 100,
 
-  async getLog() {
+  setLineLimit(lineLimit) {
+    set({ lineLimit, loaded: false });
+  },
+
+  async getLog(lineLimit = useLogStore.getState().lineLimit) {
     if (!useAuthStore.getState().isLoggedIn) return;
+    if (requestInFlight) {
+      queuedLineLimit = lineLimit;
+      return;
+    }
+    requestInFlight = true;
     try {
-      const res = await apiLog.getLog();
-      set({ log: res });
+      const res = await apiLog.getLog(lineLimit);
+      if (useLogStore.getState().lineLimit === lineLimit) {
+        set({ log: res, loaded: true });
+      }
     } catch {
       /* 拦截器已提示 */
+      if (useLogStore.getState().lineLimit === lineLimit) {
+        set({ loaded: true });
+      }
+    } finally {
+      requestInFlight = false;
+      if (queuedLineLimit !== undefined) {
+        const nextLineLimit = queuedLineLimit;
+        queuedLineLimit = undefined;
+        void useLogStore.getState().getLog(nextLineLimit);
+      }
     }
   },
 
@@ -31,7 +57,7 @@ export const useLogStore = create<LogState>((set) => ({
     await executeApi(apiLog.clearLog, {
       showMessage: true,
       onSuccess() {
-        set({ log: '' });
+        set({ log: '', loaded: true });
       },
     });
   },
@@ -47,6 +73,8 @@ export const useLogStore = create<LogState>((set) => ({
 }));
 
 let timer: number | undefined;
+let requestInFlight = false;
+let queuedLineLimit: number | null | undefined;
 
 export function startLogPolling() {
   if (timer !== undefined) return;

@@ -99,10 +99,33 @@
     }
   },
   "log": {
+    "auto_refresh": "Auto refresh",
     "copy": "Copy",
+    "debug": "Debug mode",
+    "disabled": "Disabled",
+    "empty": "No logs yet",
+    "enabled": "Enabled",
+    "errors": "Errors",
+    "level": "Level",
+    "levels": {
+      "all": "All"
+    },
+    "lines": {
+      "all": "All",
+      "label": "Lines"
+    },
+    "loading": "Loading logs",
+    "message": "Message",
+    "module": "Module",
+    "no_matching": "No matching logs",
     "reset": "Reset",
-    "title": "Log",
-    "update_now": "Update Now"
+    "refresh_stopped": "Refresh stopped",
+    "start_refresh": "Start refresh",
+    "stop_refresh": "Stop refresh",
+    "time": "Time",
+    "total": "Loaded logs",
+    "update_now": "Update Now",
+    "warnings": "Warnings"
   },
   "login": {
     "hide_password": "Hide password",

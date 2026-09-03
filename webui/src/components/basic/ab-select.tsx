@@ -13,6 +13,7 @@ interface AbSelectProps {
   value?: SelectItemType | string;
   items: Array<SelectItemType | string>;
   className?: string;
+  size?: 'sm' | 'default';
   disabled?: boolean;
   onChange?: (item: SelectItemType | string) => void;
 }
@@ -37,6 +38,7 @@ export function AbSelect({
   value,
   items,
   className = '',
+  size = 'default',
   disabled = false,
   onChange,
 }: AbSelectProps) {
@@ -66,7 +68,7 @@ export function AbSelect({
         if (index !== -1) onChange?.(items[index]);
       }}
     >
-      <SelectTrigger className={className}>
+      <SelectTrigger size={size} className={className}>
         <SelectValue>{getLabel(selected)}</SelectValue>
       </SelectTrigger>
 
