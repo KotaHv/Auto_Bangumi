@@ -94,7 +94,7 @@
       "force_collect": "Force Collect",
       "force_collect_hit": "Are you sure you want to force collect?",
       "force_collect_title": "Collect",
-      "rename": "Rename again",
+      "rename": "Rename",
       "rss_link": "RSS"
     }
   },
@@ -147,6 +147,7 @@
     "disabled_count": "Disabled",
     "empty": "No RSS feeds yet",
     "name": "Name",
+    "more": "More",
     "select_all": "Select all",
     "selected_count": "{count} selected",
     "selected": "Selected",

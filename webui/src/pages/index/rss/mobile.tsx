@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy } from 'lucide-react';
+import { Copy, EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
 import { AbButton } from '@/components/basic/ab-button';
 import { AbConfirm } from '@/components/ab-confirm';
 import { AbTag } from '@/components/basic/ab-tag';
 import { message } from '@/components/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyHeader,
@@ -14,6 +15,13 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { copyText } from '@/lib/clipboard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import type { RSS } from '#/rss';
 
 interface RSSMobileProps {
@@ -104,7 +112,7 @@ export function RSSMobile({
             onCheckedChange={toggleAll}
             aria-label={t('rss.select_all')}
           />
-          <span className="truncate">
+          <span className="truncate text-sm">
             {selectedRSS.length > 0
               ? t('rss.selected_count', { count: selectedRSS.length })
               : t('rss.select_all')}
@@ -115,36 +123,50 @@ export function RSSMobile({
           <AbButton
             type="brand"
             size="normal"
+            className="px-3"
             disabled={selectedRSS.length === 0}
             onClick={enableSelected}
           >
             {t('rss.enable')}
           </AbButton>
-          <AbButton
-            type="ghost"
-            size="normal"
-            disabled={selectedRSS.length === 0}
-            onClick={refreshSelected}
-          >
-            {t('rss.refresh')}
-          </AbButton>
-          <AbButton
-            type="ghost"
-            size="normal"
-            disabled={selectedRSS.length === 0}
-            onClick={disableSelected}
-          >
-            {t('rss.disable')}
-          </AbButton>
-          <AbButton
-            type="ghost"
-            size="normal"
-            className="text-destructive"
-            disabled={selectedRSS.length === 0}
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            {t('rss.delete')}
-          </AbButton>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={selectedRSS.length === 0}
+                  aria-label={t('rss.more')}
+                  title={t('rss.more')}
+                />
+              }
+            >
+              <EllipsisVertical className="size-auto" size={24} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={18}
+              className="w-auto min-w-28"
+            >
+              <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
+                <RefreshCw />
+                {t('rss.refresh')}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
+                <Ban />
+                {t('rss.disable')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-1.5"
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash />
+                {t('rss.delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     );

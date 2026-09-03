@@ -147,6 +147,7 @@
     "disabled_count": "已禁用",
     "empty": "暂无 RSS 条目",
     "name": "名称",
+    "more": "更多",
     "select_all": "全选",
     "selected_count": "已选择 {count} 项",
     "selected": "已选择",
