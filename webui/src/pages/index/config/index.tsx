@@ -26,7 +26,7 @@ import { getConfigErrors } from '@/lib/config-validation';
 import { useIsPc } from '@/hooks/use-is-pc';
 import { ConfigMobile } from './mobile';
 import { ConfigPc } from './pc';
-import type { ConfigSection } from './layout';
+import type { ConfigSection } from './types';
 import type { Config } from '#/config';
 
 function hasConfigChanges(
