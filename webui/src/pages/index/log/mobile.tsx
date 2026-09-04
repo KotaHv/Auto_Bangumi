@@ -12,6 +12,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
 import { AbSelect } from '@/components/basic/ab-select';
 import {
   Empty,
@@ -113,43 +114,44 @@ export function LogMobile({
 
   return (
     <div className="mx-4 flex h-full min-h-0 flex-col">
-      <Card className="border-border mt-3 shrink-0 rounded-2xl border px-4 py-3 ring-0 [--card-spacing:0px]">
-        <CardContent className="text-muted-foreground flex items-center justify-between gap-3">
-          <div
-            className="text-brand flex items-center gap-1.5"
-            title={t('log.total')}
-          >
-            <FileText className="size-3.5" />
-            <span className="font-display text-sm font-semibold tabular-nums">
-              {loaded ? log.length : '-'}
-            </span>
-          </div>
-          <div
-            className="text-destructive flex items-center gap-1.5"
-            title={t('log.errors')}
-          >
-            <TriangleAlert className="size-3.5" />
-            <span className="font-display text-sm font-semibold tabular-nums">
-              {loaded ? errorCount : '-'}
-            </span>
-          </div>
-          <div
-            className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400"
-            title={t('log.warnings')}
-          >
-            <CircleAlert className="size-3.5" />
-            <span className="font-display text-sm font-semibold tabular-nums">
-              {loaded ? warningCount : '-'}
-            </span>
-          </div>
-          <span
-            className={`size-1.5 shrink-0 rounded-full ${pollingActive ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/50'}`}
-            title={
-              pollingActive ? t('log.auto_refresh') : t('log.refresh_stopped')
-            }
-          />
-        </CardContent>
-      </Card>
+      <AbFloatingBar
+        position="top"
+        className="text-muted-foreground justify-between gap-3"
+      >
+        <div
+          className="text-brand flex items-center gap-1.5"
+          title={t('log.total')}
+        >
+          <FileText className="size-3.5" />
+          <span className="font-display text-sm font-semibold tabular-nums">
+            {loaded ? log.length : '-'}
+          </span>
+        </div>
+        <div
+          className="text-destructive flex items-center gap-1.5"
+          title={t('log.errors')}
+        >
+          <TriangleAlert className="size-3.5" />
+          <span className="font-display text-sm font-semibold tabular-nums">
+            {loaded ? errorCount : '-'}
+          </span>
+        </div>
+        <div
+          className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400"
+          title={t('log.warnings')}
+        >
+          <CircleAlert className="size-3.5" />
+          <span className="font-display text-sm font-semibold tabular-nums">
+            {loaded ? warningCount : '-'}
+          </span>
+        </div>
+        <span
+          className={`size-1.5 shrink-0 rounded-full ${pollingActive ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/50'}`}
+          title={
+            pollingActive ? t('log.auto_refresh') : t('log.refresh_stopped')
+          }
+        />
+      </AbFloatingBar>
 
       <div className="relative my-3 min-h-0 flex-1">
         <div
@@ -188,81 +190,82 @@ export function LogMobile({
         )}
       </div>
 
-      <Card className="border-border bg-popover text-popover-foreground mb-[calc(12px+env(safe-area-inset-bottom))] shrink-0 rounded-2xl border px-4 py-3 shadow-lg ring-0 [--card-spacing:0px]">
-        <CardContent className="flex w-full flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <AbSelect
-              value={filterLevel}
-              items={levelItems}
-              size="sm"
-              className="w-20"
-              onChange={(item) => {
-                const value = typeof item === 'string' ? item : item.value;
-                setFilterLevel(value as typeof filterLevel);
-              }}
-            />
-            <AbSelect
-              value={lineLimit === null ? 'all' : String(lineLimit)}
-              items={lineLimitItems}
-              size="sm"
-              className="w-20"
-              onChange={(item) => {
-                const value = typeof item === 'string' ? item : item.value;
-                setLineLimit(
-                  value === 'all' ? null : (Number(value) as LogLineLimit),
-                );
-              }}
-            />
-          </div>
+      <AbFloatingBar
+        position="bottom"
+        className="w-full flex-wrap justify-between gap-2"
+      >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <AbSelect
+            value={filterLevel}
+            items={levelItems}
+            size="sm"
+            className="w-20"
+            onChange={(item) => {
+              const value = typeof item === 'string' ? item : item.value;
+              setFilterLevel(value as typeof filterLevel);
+            }}
+          />
+          <AbSelect
+            value={lineLimit === null ? 'all' : String(lineLimit)}
+            items={lineLimitItems}
+            size="sm"
+            className="w-20"
+            onChange={(item) => {
+              const value = typeof item === 'string' ? item : item.value;
+              setLineLimit(
+                value === 'all' ? null : (Number(value) as LogLineLimit),
+              );
+            }}
+          />
+        </div>
 
-          <div className="flex shrink-0 items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t('log.update_now')}
-              title={t('log.update_now')}
-              onClick={() => getLog()}
-            >
-              <RefreshCw className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={
-                pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
-              }
-              title={
-                pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
-              }
-              onClick={togglePolling}
-            >
-              {pollingActive ? (
-                <Pause className="size-3.5" />
-              ) : (
-                <Play className="size-3.5" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t('log.reset')}
-              title={t('log.reset')}
-              onClick={onReset}
-            >
-              <RotateCcw className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t('log.copy')}
-              title={t('log.copy')}
-              onClick={copy}
-            >
-              <Clipboard className="size-3.5" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('log.update_now')}
+            title={t('log.update_now')}
+            onClick={() => getLog()}
+          >
+            <RefreshCw className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={
+              pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
+            }
+            title={
+              pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
+            }
+            onClick={togglePolling}
+          >
+            {pollingActive ? (
+              <Pause className="size-3.5" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('log.reset')}
+            title={t('log.reset')}
+            onClick={onReset}
+          >
+            <RotateCcw className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('log.copy')}
+            title={t('log.copy')}
+            onClick={copy}
+          >
+            <Clipboard className="size-3.5" />
+          </Button>
+        </div>
+      </AbFloatingBar>
     </div>
   );
 }

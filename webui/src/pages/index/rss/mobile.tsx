@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
 import { AbButton } from '@/components/basic/ab-button';
+import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
 import { AbConfirm } from '@/components/ab-confirm';
 import { AbTag } from '@/components/basic/ab-tag';
 import { message } from '@/components/message';
@@ -97,74 +98,72 @@ export function RSSMobile({
 
   function renderBulkActions() {
     return (
-      <Card className="border-border bg-popover text-popover-foreground mb-[calc(12px+env(safe-area-inset-bottom))] shrink-0 rounded-2xl border shadow-lg ring-0 [--card-spacing:0px]">
-        <CardContent className="flex min-h-(--config-action-bar-space) w-full items-center justify-between gap-3 px-4 py-2">
-          <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
-            <Checkbox
-              className={checkboxClassName}
-              checked={allChecked}
-              indeterminate={selectedRSS.length > 0 && !allChecked}
-              onCheckedChange={toggleAll}
-              aria-label={t('rss.select_all')}
-            />
-            <span className="truncate text-sm">
-              {selectedRSS.length > 0
-                ? t('rss.selected_count', { count: selectedRSS.length })
-                : t('rss.select_all')}
-            </span>
-          </div>
+      <AbFloatingBar position="bottom" className="justify-between gap-3">
+        <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+          <Checkbox
+            className={checkboxClassName}
+            checked={allChecked}
+            indeterminate={selectedRSS.length > 0 && !allChecked}
+            onCheckedChange={toggleAll}
+            aria-label={t('rss.select_all')}
+          />
+          <span className="truncate text-sm">
+            {selectedRSS.length > 0
+              ? t('rss.selected_count', { count: selectedRSS.length })
+              : t('rss.select_all')}
+          </span>
+        </div>
 
-          <div className="flex shrink-0 items-center gap-0.5">
-            <AbButton
-              type="brand"
-              size="normal"
-              className="px-3"
-              disabled={selectedRSS.length === 0}
-              onClick={enableSelected}
+        <div className="flex shrink-0 items-center gap-0.5">
+          <AbButton
+            type="brand"
+            size="normal"
+            className="px-3"
+            disabled={selectedRSS.length === 0}
+            onClick={enableSelected}
+          >
+            {t('rss.enable')}
+          </AbButton>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={selectedRSS.length === 0}
+                  aria-label={t('rss.more')}
+                  title={t('rss.more')}
+                />
+              }
             >
-              {t('rss.enable')}
-            </AbButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={selectedRSS.length === 0}
-                    aria-label={t('rss.more')}
-                    title={t('rss.more')}
-                  />
-                }
+              <EllipsisVertical className="size-auto" size={24} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={18}
+              className="w-auto min-w-28"
+            >
+              <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
+                <RefreshCw />
+                {t('rss.refresh')}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
+                <Ban />
+                {t('rss.disable')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="gap-1.5"
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
               >
-                <EllipsisVertical className="size-auto" size={24} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                sideOffset={18}
-                className="w-auto min-w-28"
-              >
-                <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
-                  <RefreshCw />
-                  {t('rss.refresh')}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
-                  <Ban />
-                  {t('rss.disable')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-1.5"
-                  variant="destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash />
-                  {t('rss.delete')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardContent>
-      </Card>
+                <Trash />
+                {t('rss.delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </AbFloatingBar>
     );
   }
 
