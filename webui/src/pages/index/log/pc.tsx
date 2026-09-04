@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import type { LogLayoutProps, LogLevelFilter, LogLineLimit } from './types';
 
 function getTypeStyle(type: string) {
@@ -92,7 +93,12 @@ export function LogPc({
                 <p className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
                   <span>{t('log.total')}</span>
                   <span
-                    className={`size-1.5 rounded-full ${pollingActive ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/50'}`}
+                    className={cn(
+                      'size-1.5 rounded-full',
+                      pollingActive
+                        ? 'animate-pulse bg-emerald-500'
+                        : 'bg-muted-foreground/50',
+                    )}
                     title={
                       pollingActive
                         ? t('log.auto_refresh')
@@ -210,7 +216,10 @@ export function LogPc({
                         </TableCell>
                         <TableCell className="text-center">
                           <span
-                            className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide ${getTypeStyle(item.type)}`}
+                            className={cn(
+                              'inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide',
+                              getTypeStyle(item.type),
+                            )}
                           >
                             {item.type || 'LOG'}
                           </span>

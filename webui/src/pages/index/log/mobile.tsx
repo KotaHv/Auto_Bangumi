@@ -21,6 +21,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { LogLayoutProps, LogLine, LogLineLimit } from './types';
 
 function getTypeStyle(type: string) {
@@ -57,7 +58,10 @@ const MobileLogRow = memo(function MobileLogRow({
           </div>
 
           <span
-            className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-semibold tracking-wide ${getTypeStyle(item.type)}`}
+            className={cn(
+              'inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-semibold tracking-wide',
+              getTypeStyle(item.type),
+            )}
           >
             {item.type || 'LOG'}
           </span>
@@ -119,7 +123,12 @@ export function LogMobile({
           ref={(element) => {
             logContainerRef.current = element;
           }}
-          className={`no-scrollbar h-full space-y-3 overscroll-none ${!loaded || loading === 'visible' ? 'overflow-hidden' : 'overflow-y-auto'}`}
+          className={cn(
+            'no-scrollbar h-full space-y-3 overscroll-none',
+            !loaded || loading === 'visible'
+              ? 'overflow-hidden'
+              : 'overflow-y-auto',
+          )}
         >
           {!loaded ? (
             <div className="min-h-48" />

@@ -16,6 +16,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { copyText } from '@/lib/clipboard';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,7 +184,10 @@ export function RSSMobile({
           rss.map((item) => (
             <Card
               key={item.id}
-              className={`border-border rounded-2xl [--card-spacing:0px] ${selectedRSS.includes(item.id) ? 'border-brand/40 bg-brand/4' : ''}`}
+              className={cn(
+                'border-border rounded-2xl [--card-spacing:0px]',
+                selectedRSS.includes(item.id) && 'border-brand/40 bg-brand/4',
+              )}
             >
               <CardContent className="px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -191,7 +195,7 @@ export function RSSMobile({
                     {item.name || '-'}
                   </h2>
                   <Checkbox
-                    className={`${checkboxClassName} mt-0.5 shrink-0`}
+                    className={cn(checkboxClassName, 'mt-0.5 shrink-0')}
                     checked={selectedRSS.includes(item.id)}
                     onCheckedChange={(checked) => toggleRow(item.id, checked)}
                     aria-label={`${t('rss.selectbox')} ${item.name}`}
