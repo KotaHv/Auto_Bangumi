@@ -44,18 +44,18 @@ const MobileLogRow = memo(function MobileLogRow({
   debugEnable: boolean;
 }) {
   return (
-    <Card
-      className="border-border rounded-2xl border px-4 py-3 ring-0 [--card-spacing:0px]"
-      style={{
-        contentVisibility: 'auto',
-        containIntrinsicSize: '0 88px',
-      }}
-    >
+    <Card className="border-border rounded-2xl border px-4 py-3 ring-0 [--card-spacing:0px]">
       <CardContent>
         <div className="flex items-center justify-between gap-3">
-          <span className="min-w-0 flex-1 font-mono text-sm break-all whitespace-normal tabular-nums">
-            {item.date || '-'}
-          </span>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-muted-foreground/60 shrink-0 font-mono text-xs font-semibold tabular-nums">
+              #{item.index + 1}
+            </span>
+            <span className="min-w-0 flex-1 font-mono text-sm break-all whitespace-normal tabular-nums">
+              {item.date || '-'}
+            </span>
+          </div>
+
           <span
             className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-semibold tracking-wide ${getTypeStyle(item.type)}`}
           >
@@ -114,45 +114,6 @@ export function LogMobile({
 
   return (
     <div className="mx-4 flex h-full min-h-0 flex-col">
-      <AbFloatingBar
-        position="top"
-        className="text-muted-foreground justify-between gap-3"
-      >
-        <div
-          className="text-brand flex items-center gap-1.5"
-          title={t('log.total')}
-        >
-          <FileText className="size-3.5" />
-          <span className="font-display text-sm font-semibold tabular-nums">
-            {loaded ? log.length : '-'}
-          </span>
-        </div>
-        <div
-          className="text-destructive flex items-center gap-1.5"
-          title={t('log.errors')}
-        >
-          <TriangleAlert className="size-3.5" />
-          <span className="font-display text-sm font-semibold tabular-nums">
-            {loaded ? errorCount : '-'}
-          </span>
-        </div>
-        <div
-          className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400"
-          title={t('log.warnings')}
-        >
-          <CircleAlert className="size-3.5" />
-          <span className="font-display text-sm font-semibold tabular-nums">
-            {loaded ? warningCount : '-'}
-          </span>
-        </div>
-        <span
-          className={`size-1.5 shrink-0 rounded-full ${pollingActive ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/50'}`}
-          title={
-            pollingActive ? t('log.auto_refresh') : t('log.refresh_stopped')
-          }
-        />
-      </AbFloatingBar>
-
       <div className="relative my-3 min-h-0 flex-1">
         <div
           ref={(element) => {
@@ -199,7 +160,7 @@ export function LogMobile({
             value={filterLevel}
             items={levelItems}
             size="sm"
-            className="w-20"
+            className="min-w-18"
             onChange={(item) => {
               const value = typeof item === 'string' ? item : item.value;
               setFilterLevel(value as typeof filterLevel);
@@ -209,7 +170,7 @@ export function LogMobile({
             value={lineLimit === null ? 'all' : String(lineLimit)}
             items={lineLimitItems}
             size="sm"
-            className="w-20"
+            className="min-w-15"
             onChange={(item) => {
               const value = typeof item === 'string' ? item : item.value;
               setLineLimit(
