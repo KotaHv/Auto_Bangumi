@@ -44,7 +44,7 @@ const MobileLogRow = memo(function MobileLogRow({
   debugEnable: boolean;
 }) {
   return (
-    <Card className="border-border rounded-2xl border px-4 py-3 ring-0 [--card-spacing:0px]">
+    <Card className="border-border rounded-2xl px-4 py-3 [--card-spacing:0px]">
       <CardContent>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">

@@ -183,7 +183,7 @@ export function RSSMobile({
           rss.map((item) => (
             <Card
               key={item.id}
-              className={`border-border rounded-2xl border ring-0 [--card-spacing:0px] ${selectedRSS.includes(item.id) ? 'border-brand/40 bg-brand/4' : ''}`}
+              className={`border-border rounded-2xl [--card-spacing:0px] ${selectedRSS.includes(item.id) ? 'border-brand/40 bg-brand/4' : ''}`}
             >
               <CardContent className="px-4 py-3">
                 <div className="flex items-start justify-between gap-3">

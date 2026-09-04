@@ -475,7 +475,7 @@ export default function ConfigPage() {
           <h2 className="text-brand mb-2 pl-4 font-sans text-[15px] font-semibold select-text lg:font-medium">
             {t(section.titleKey)}
           </h2>
-          <Card className="border-border overflow-hidden rounded-2xl border ring-0 [--card-spacing:0px]">
+          <Card className="border-border overflow-hidden rounded-2xl [--card-spacing:0px]">
             <CardContent className="px-4 py-2">
               {loaded ? (
                 <section.Comp errors={errors} />

@@ -22,7 +22,7 @@ export function AbFloatingBar({
   return (
     <Card
       className={cn(
-        'bg-popover text-popover-foreground border-border flex shrink-0 flex-row items-center rounded-2xl border px-4 py-2 shadow-lg ring-0 [--card-spacing:0px]',
+        'bg-popover text-popover-foreground border-border flex shrink-0 flex-row items-center rounded-2xl px-4 py-2 shadow-lg [--card-spacing:0px]',
         POSITION_CLASS[position],
         className,
       )}

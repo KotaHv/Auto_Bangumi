@@ -29,6 +29,7 @@ export function AbBangumiCard({
   if (type === 'search') {
     return (
       <Card
+        variant="ring"
         style={FLUSH_CARD}
         className="w-120 max-w-[90vw] cursor-pointer p-2 shadow-sm"
         onClick={onClick}
@@ -77,8 +78,9 @@ export function AbBangumiCard({
 
   return (
     <Card
+      variant="ring"
       style={FLUSH_CARD}
-      className="group bg-card relative w-full cursor-pointer overflow-hidden rounded-xl border-0 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group bg-card relative w-full cursor-pointer overflow-hidden rounded-xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
       onClick={onClick}
     >
       <div className="bg-muted/40 relative aspect-5/7 w-full overflow-hidden">
