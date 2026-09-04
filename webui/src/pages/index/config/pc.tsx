@@ -25,9 +25,6 @@ export function ConfigPc({
 
   return (
     <div className="flex h-full min-h-0 w-full">
-      {/* Flat two-column layout: no outer card on PC either. Left nav column,
-          right scrolling content, bottom action bar separated by borders.
-          Width constrained, flushed left inside the page padding. */}
       <div className="flex min-h-0 w-full max-w-4xl flex-col">
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* Left vertical group navigation */}
@@ -44,9 +41,7 @@ export function ConfigPc({
             />
           </div>
 
-          {/* Right column */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {/* Scrolling content */}
             <div
               ref={contentRef}
               className="no-scrollbar min-h-0 flex-1 scroll-pt-5 overflow-x-hidden overflow-y-auto overscroll-contain px-6 py-5"
@@ -54,7 +49,6 @@ export function ConfigPc({
               {renderSections()}
             </div>
 
-            {/* Docked action bar aligned with the section content. */}
             {showFooter && (
               <div className="bg-muted/30 border-border/70 flex shrink-0 items-center justify-between gap-4 border-t px-6 py-3">
                 {renderFooterStatus()}

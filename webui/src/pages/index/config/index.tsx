@@ -291,7 +291,6 @@ export default function ConfigPage() {
     }
   }
 
-  // Warn before browser reload/close while there are unsaved changes.
   useEffect(() => {
     if (!configChanged) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -327,13 +326,11 @@ export default function ConfigPage() {
 
   function handleLeaveShowChange(show: boolean) {
     setShowLeaveConfirm(show);
-    // Dialog dismissed without confirming — abort the pending navigation.
     if (!show && blocker.state === 'blocked') {
       blocker.reset();
     }
   }
 
-  // Cmd/Ctrl+S saves when possible.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
@@ -354,9 +351,6 @@ export default function ConfigPage() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Follow the `?tab=` param whenever it changes — on mount, on intra-route
-  // navigation, and on back/forward — so the active strip and scroll position
-  // always match the URL, without remounting the page.
   useEffect(() => {
     const param = searchParams.get('tab');
     const key = CONFIG_SECTIONS.some((s) => s.key === param)
@@ -373,28 +367,40 @@ export default function ConfigPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // When the active tab changes, reveal it in the scrollable strip using the
-  // browser-native behavior, but only if it's currently out of view. This keeps
-  // tabs reachable when the strip overflows, without the custom scroll hack.
   useEffect(() => {
     const tab = tabRefs.current[activeTab];
     const strip = tabListRef.current;
     if (!tab || !strip) return;
 
-    const tabRect = tab.getBoundingClientRect();
-    const stripRect = strip.getBoundingClientRect();
-    const isFullyVisible =
-      tabRect.left >= stripRect.left && tabRect.right <= stripRect.right;
     const inline = tabInlineRef.current;
-
     tabInlineRef.current = 'nearest';
-    if (inline === 'nearest' && isFullyVisible) return;
 
-    tab.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline,
-    });
+    if (inline === 'center') {
+      tab.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const tabRect = tab.getBoundingClientRect();
+      const stripRect = strip.getBoundingClientRect();
+
+      const isFullyVisible =
+        tabRect.left >= stripRect.left && tabRect.right <= stripRect.right;
+
+      if (isFullyVisible) return;
+
+      tab.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    }, 40);
+
+    return () => window.clearTimeout(timer);
   }, [activeTab]);
 
   useEffect(() => {
@@ -437,8 +443,6 @@ export default function ConfigPage() {
       });
     };
 
-    // React's onScroll listener is not passive. Register the native listener
-    // explicitly so scrolling never waits for this scroll-spy calculation.
     scroller.addEventListener('scroll', handleScroll, { passive: true });
     updateActiveTab();
 
@@ -458,7 +462,7 @@ export default function ConfigPage() {
   }, []);
 
   const renderSections = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {CONFIG_SECTIONS.map((section) => (
         <section
           key={section.key}

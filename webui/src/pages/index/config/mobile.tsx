@@ -1,11 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { AbConfirm } from '@/components/ab-confirm';
-import {
-  Tabs,
-  TabsIndicator,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { ConfigTabs } from '@/components/config/tabs';
 import type { ConfigLayoutProps } from './types';
 
 export function ConfigMobile({
@@ -28,37 +22,15 @@ export function ConfigMobile({
   confirmTitle,
   confirmMessage,
 }: ConfigLayoutProps) {
-  const { t } = useTranslation();
-
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col">
-      {/* Inset section tab strip, kept outside the scrolling content. */}
-      <div className="shrink-0 px-5 pt-2">
-        <Tabs value={activeTab} onValueChange={onSelectTab}>
-          <div className="bg-brand/5 text-foreground border-brand/15 dark:bg-brand/10 dark:border-brand/25 overflow-hidden rounded-2xl border px-4">
-            <TabsList
-              ref={tabListRef}
-              variant="line"
-              className="no-scrollbar relative flex h-11! w-full max-w-full items-stretch justify-start gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain py-0"
-            >
-              {sections.map((section) => (
-                <TabsTrigger
-                  key={section.key}
-                  value={section.key}
-                  ref={(el) => {
-                    tabRefs.current[section.key] = el;
-                  }}
-                  className="data-active:text-brand h-11 items-center border-0 p-0 font-sans text-[13px] font-medium after:hidden"
-                >
-                  {t(section.titleKey)}
-                </TabsTrigger>
-              ))}
-
-              <TabsIndicator shape="dot" />
-            </TabsList>
-          </div>
-        </Tabs>
-      </div>
+      <ConfigTabs
+        sections={sections}
+        activeTab={activeTab}
+        onSelectTab={onSelectTab}
+        tabListRef={tabListRef}
+        tabRefs={tabRefs}
+      />
 
       {/* Scrolling content */}
       <div
