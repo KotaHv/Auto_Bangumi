@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AbInput } from './ab-input';
 import { cn } from '@/lib/utils';
 
 interface AbDynamicTagsProps {
@@ -50,8 +51,9 @@ export function AbDynamicTags({
       ))}
 
       {editing ? (
-        <input
+        <AbInput
           ref={inputRef}
+          variant="tag"
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -67,7 +69,6 @@ export function AbDynamicTags({
             commit();
             setEditing(false);
           }}
-          className="border-input min-h-6 w-20 rounded-md border border-dashed bg-transparent px-2 text-xs outline-none"
         />
       ) : (
         !disabled && (

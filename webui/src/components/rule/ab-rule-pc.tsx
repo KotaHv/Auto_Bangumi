@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Copy } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { AbInput } from '@/components/basic/ab-input';
 import { Separator } from '@/components/ui/separator';
 import { AbExcludeField } from './ab-exclude-field';
 import type { AbRuleLayoutProps } from './types';
@@ -27,19 +27,20 @@ export function AbRulePc({
 
         <div className="min-w-0 flex-1 space-y-3">
           <div className="border-border/70 focus-within:border-brand flex min-w-0 items-end border-b">
-            <Input
+            <AbInput
+              variant="title"
               value={rule.official_title}
               onChange={(e) => patch('official_title', e.target.value)}
               type="text"
               placeholder={t('homepage.rule.official_title')}
-              className="font-display h-6 rounded-none border-0 bg-transparent px-0 pb-0.5 font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-lg dark:bg-transparent"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <Field>
               <FieldLabel>{t('homepage.rule.year')}</FieldLabel>
-              <Input
+              <AbInput
+                variant="default"
                 value={rule.year ?? ''}
                 onChange={(e) => patch('year', e.target.value)}
                 type="text"
@@ -48,7 +49,8 @@ export function AbRulePc({
 
             <Field>
               <FieldLabel>{t('homepage.rule.season')}</FieldLabel>
-              <Input
+              <AbInput
+                variant="default"
                 value={rule.season}
                 onChange={(e) => patchNumber('season', e.target.value)}
                 type="number"
@@ -57,7 +59,8 @@ export function AbRulePc({
 
             <Field>
               <FieldLabel>{t('homepage.rule.offset')}</FieldLabel>
-              <Input
+              <AbInput
+                variant="default"
                 value={rule.offset}
                 onChange={(e) => patchNumber('offset', e.target.value)}
                 type="number"

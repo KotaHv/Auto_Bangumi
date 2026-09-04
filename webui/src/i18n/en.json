@@ -120,6 +120,7 @@
     "no_matching": "No matching logs",
     "reset": "Reset",
     "refresh_stopped": "Refresh stopped",
+    "reset_confirm": "Are you sure you want to clear the logs?",
     "start_refresh": "Start refresh",
     "stop_refresh": "Stop refresh",
     "time": "Time",

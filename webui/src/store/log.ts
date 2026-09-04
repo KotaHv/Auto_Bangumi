@@ -6,60 +6,85 @@ import { i18n } from '@/i18n';
 import { useAuthStore } from '@/store/auth';
 import { copyText } from '@/lib/clipboard';
 
+type LogLoading = false | 'visible' | 'silent';
+
+let activeLogRequest: Promise<void> | undefined;
+
 interface LogState {
   log: string;
   loaded: boolean;
+  loading: LogLoading;
+  resetting: boolean;
   lineLimit: number | null;
 
   setLineLimit: (lineLimit: number | null) => void;
-  getLog: (lineLimit?: number | null) => Promise<void>;
+  getLog: (lineLimit?: number | null, showLoading?: boolean) => Promise<void>;
   reset: () => Promise<void>;
   copy: () => Promise<void>;
 }
 
-export const useLogStore = create<LogState>((set) => ({
+export const useLogStore = create<LogState>((set, get) => ({
   log: '',
   loaded: false,
+  loading: false,
+  resetting: false,
   lineLimit: 100,
 
   setLineLimit(lineLimit) {
-    set({ lineLimit, loaded: false });
+    set({ lineLimit });
   },
 
-  async getLog(lineLimit = useLogStore.getState().lineLimit) {
+  async getLog(lineLimit = get().lineLimit, showLoading = true) {
     if (!useAuthStore.getState().isLoggedIn) return;
-    if (requestInFlight) {
-      queuedLineLimit = lineLimit;
+    const requestInProgress = get().loading !== false;
+    if (showLoading) {
+      set({ loading: 'visible' });
+    }
+    if (requestInProgress) {
+      await activeLogRequest;
       return;
     }
-    requestInFlight = true;
+    if (!showLoading) {
+      set({ loading: 'silent' });
+    }
+    const request = (async () => {
+      try {
+        const res = await apiLog.getLog(lineLimit);
+        if (get().lineLimit === lineLimit) {
+          set({ log: res, loaded: true });
+        }
+      } catch {
+        /* 拦截器已提示 */
+        if (get().lineLimit === lineLimit) {
+          set({ loaded: true });
+        }
+      } finally {
+        set({ loading: false });
+      }
+    })();
+    activeLogRequest = request;
     try {
-      const res = await apiLog.getLog(lineLimit);
-      if (useLogStore.getState().lineLimit === lineLimit) {
-        set({ log: res, loaded: true });
-      }
-    } catch {
-      /* 拦截器已提示 */
-      if (useLogStore.getState().lineLimit === lineLimit) {
-        set({ loaded: true });
-      }
+      await request;
     } finally {
-      requestInFlight = false;
-      if (queuedLineLimit !== undefined) {
-        const nextLineLimit = queuedLineLimit;
-        queuedLineLimit = undefined;
-        void useLogStore.getState().getLog(nextLineLimit);
+      if (activeLogRequest === request) {
+        activeLogRequest = undefined;
       }
     }
   },
 
   async reset() {
-    await executeApi(apiLog.clearLog, {
-      showMessage: true,
-      onSuccess() {
-        set({ log: '', loaded: true });
-      },
-    });
+    if (get().resetting) return;
+    set({ resetting: true });
+    try {
+      await executeApi(apiLog.clearLog, {
+        showMessage: true,
+        onSuccess() {
+          set({ log: '', loaded: true });
+        },
+      });
+    } finally {
+      set({ resetting: false });
+    }
   },
 
   async copy() {
@@ -73,16 +98,29 @@ export const useLogStore = create<LogState>((set) => ({
 }));
 
 let timer: number | undefined;
-let requestInFlight = false;
-let queuedLineLimit: number | null | undefined;
+let pollingActive = false;
+let pollingGeneration = 0;
+
+async function pollLog(showLoading: boolean, generation: number) {
+  await useLogStore.getState().getLog(undefined, showLoading);
+  if (!pollingActive || generation !== pollingGeneration) return;
+
+  timer = window.setTimeout(() => {
+    timer = undefined;
+    void pollLog(false, generation);
+  }, 10000);
+}
 
 export function startLogPolling() {
-  if (timer !== undefined) return;
-  useLogStore.getState().getLog();
-  timer = window.setInterval(() => useLogStore.getState().getLog(), 10000);
+  if (pollingActive) return;
+  pollingActive = true;
+  const generation = ++pollingGeneration;
+  void pollLog(true, generation);
 }
 
 export function stopLogPolling() {
-  window.clearInterval(timer);
+  pollingActive = false;
+  pollingGeneration += 1;
+  window.clearTimeout(timer);
   timer = undefined;
 }

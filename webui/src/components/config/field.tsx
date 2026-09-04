@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { AbInput } from '@/components/basic/ab-input';
+import { AbPassword } from '@/components/basic/ab-password';
 import { AbSelect } from '@/components/basic/ab-select';
 import { AbSwitch } from '@/components/basic/ab-switch';
 import { AbDynamicTags } from '@/components/basic/ab-dynamic-tags';
@@ -32,26 +31,13 @@ type RuntimeSettingFieldProps =
 
 /** Password input with a reveal toggle, keeping the masked style by default. */
 function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
-  const [visible, setVisible] = useState(false);
-
   return (
-    <div className="relative w-full sm:w-64">
-      <Input
-        {...props}
-        type={visible ? 'text' : 'password'}
-        className={cn('w-full pr-8', className)}
-      />
-      <button
-        type="button"
-        aria-label={visible ? 'hide password' : 'show password'}
-        title={visible ? 'hide password' : 'show password'}
-        onClick={() => setVisible((v) => !v)}
-        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer transition-colors"
-        tabIndex={-1}
-      >
-        {visible ? <EyeOff size={14} /> : <Eye size={14} />}
-      </button>
-    </div>
+    <AbPassword
+      {...props}
+      variant="default"
+      className={cn('w-full', className)}
+      inputGroupClassName="w-full sm:w-64"
+    />
   );
 }
 
@@ -113,7 +99,8 @@ export function SettingField<TType extends SettingControlType>(
             autoComplete="off"
           />
         ) : (
-          <Input
+          <AbInput
+            variant="default"
             {...prop}
             disabled={disabled}
             value={

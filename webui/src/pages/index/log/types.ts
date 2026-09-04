@@ -15,6 +15,7 @@ export interface LogLayoutProps {
   log: LogLine[];
   visibleLog: LogLine[];
   loaded: boolean;
+  loading: false | 'visible' | 'silent';
   debugEnable: boolean;
   filterLevel: LogLevelFilter;
   setFilterLevel: (level: LogLevelFilter) => void;
@@ -23,7 +24,7 @@ export interface LogLayoutProps {
   pollingActive: boolean;
   togglePolling: () => void;
   logContainerRef: RefObject<HTMLElement | null>;
-  getLog: () => Promise<void>;
-  reset: () => Promise<void>;
+  getLog: (lineLimit?: LogLineLimit, showLoading?: boolean) => Promise<void>;
+  onReset: () => void;
   copy: () => Promise<void>;
 }

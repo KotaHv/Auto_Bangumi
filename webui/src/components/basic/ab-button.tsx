@@ -8,6 +8,10 @@ interface AbButtonProps {
   loading?: boolean;
   disabled?: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
+  'aria-label'?: string;
+  'aria-pressed'?: boolean;
+  'aria-controls'?: string;
   children?: React.ReactNode;
   className?: string;
 }
@@ -25,6 +29,10 @@ export function AbButton({
   loading = false,
   disabled = false,
   onClick,
+  onMouseDown,
+  'aria-label': ariaLabel,
+  'aria-pressed': ariaPressed,
+  'aria-controls': ariaControls,
   children,
   className = '',
 }: AbButtonProps) {
@@ -53,6 +61,10 @@ export function AbButton({
         variant={variant}
         size={SIZE_MAP[size]}
         onClick={onClick}
+        onMouseDown={onMouseDown}
+        aria-label={ariaLabel}
+        aria-pressed={ariaPressed}
+        aria-controls={ariaControls}
         disabled={loading || disabled}
         className={className}
       >
@@ -66,6 +78,10 @@ export function AbButton({
       variant={variant}
       size={SIZE_MAP[size]}
       onClick={onClick}
+      onMouseDown={onMouseDown}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      aria-controls={ariaControls}
       disabled={loading || disabled}
       className={className}
     >

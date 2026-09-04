@@ -1,14 +1,19 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { startLogPolling, stopLogPolling, useLogStore } from '@/store/log';
 import { useConfigStore } from '@/store/config';
 import { useIsPc } from '@/hooks/use-is-pc';
+import { AbConfirm } from '@/components/ab-confirm';
 import { LogMobile } from './mobile';
 import { LogPc } from './pc';
 import type { LogLevelFilter, LogLine, LogLineLimit } from './types';
 
 export default function LogPage() {
+  const { t } = useTranslation();
   const log = useLogStore((s) => s.log);
   const loaded = useLogStore((s) => s.loaded);
+  const loading = useLogStore((s) => s.loading);
+  const resetting = useLogStore((s) => s.resetting);
   const lineLimit = useLogStore((s) => s.lineLimit);
   const setLineLimit = useLogStore((s) => s.setLineLimit);
   const getLog = useLogStore((s) => s.getLog);
@@ -23,6 +28,7 @@ export default function LogPage() {
   const [scrolled, setScrolled] = useState(false);
   const [filterLevel, setFilterLevel] = useState<LogLevelFilter>('ALL');
   const [pollingActive, setPollingActive] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const deferredLog = useDeferredValue(log);
 
   function backToBottom() {
@@ -67,8 +73,6 @@ export default function LogPage() {
 
     return list;
   }, [deferredLog]);
-
-  const logsReady = loaded && log === deferredLog;
 
   const visibleLog = useMemo(
     () =>
@@ -116,10 +120,15 @@ export default function LogPage() {
     void getLog(limit);
   }
 
+  function openResetConfirm() {
+    setShowResetConfirm(true);
+  }
+
   const props = {
     log: formatLog,
     visibleLog,
-    loaded: logsReady,
+    loaded,
+    loading,
     debugEnable,
     filterLevel,
     setFilterLevel,
@@ -129,9 +138,26 @@ export default function LogPage() {
     togglePolling,
     logContainerRef,
     getLog,
-    reset,
+    onReset: openResetConfirm,
     copy,
   };
 
-  return isPc ? <LogPc {...props} /> : <LogMobile {...props} />;
+  return (
+    <>
+      {isPc ? <LogPc {...props} /> : <LogMobile {...props} />}
+      <AbConfirm
+        show={showResetConfirm}
+        onShowChange={setShowResetConfirm}
+        title={t('log.reset')}
+        confirmType="warn"
+        confirmLoading={resetting}
+        onConfirm={async () => {
+          await reset();
+          setShowResetConfirm(false);
+        }}
+      >
+        {t('log.reset_confirm')}
+      </AbConfirm>
+    </>
+  );
 }

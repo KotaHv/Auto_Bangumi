@@ -120,6 +120,7 @@
     "no_matching": "没有匹配的日志",
     "reset": "重置",
     "refresh_stopped": "已停止刷新",
+    "reset_confirm": "确定要清空日志吗？",
     "start_refresh": "开始刷新",
     "stop_refresh": "停止刷新",
     "time": "时间",

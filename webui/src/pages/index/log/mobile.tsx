@@ -80,6 +80,7 @@ export function LogMobile({
   log,
   visibleLog,
   loaded,
+  loading,
   debugEnable,
   filterLevel,
   setFilterLevel,
@@ -89,7 +90,7 @@ export function LogMobile({
   togglePolling,
   logContainerRef,
   getLog,
-  reset,
+  onReset,
   copy,
 }: LogLayoutProps) {
   const { t } = useTranslation();
@@ -150,36 +151,40 @@ export function LogMobile({
         </CardContent>
       </Card>
 
-      <div
-        ref={(element) => {
-          logContainerRef.current = element;
-        }}
-        className="no-scrollbar my-3 min-h-0 flex-1 space-y-3 overflow-y-auto"
-      >
-        {!loaded ? (
-          <div className="text-muted-foreground flex min-h-48 items-center justify-center gap-2 text-sm">
-            <Spinner className="size-4" />
-            {t('log.loading')}
+      <div className="relative my-3 min-h-0 flex-1">
+        <div
+          ref={(element) => {
+            logContainerRef.current = element;
+          }}
+          className={`no-scrollbar h-full space-y-3 overscroll-none ${!loaded || loading === 'visible' ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        >
+          {!loaded ? (
+            <div className="min-h-48" />
+          ) : visibleLog.length === 0 ? (
+            <Empty className="min-h-64 border-0 p-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {log.length === 0 ? t('log.empty') : t('log.no_matching')}
+                </EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            visibleLog.map((item) => (
+              <MobileLogRow
+                key={item.index}
+                item={item}
+                debugEnable={debugEnable}
+              />
+            ))
+          )}
+        </div>
+        {(!loaded || loading === 'visible') && (
+          <div className="bg-card/70 absolute inset-0 z-20 flex touch-none items-center justify-center backdrop-blur-[1px]">
+            <Spinner className="text-brand size-5" />
           </div>
-        ) : visibleLog.length === 0 ? (
-          <Empty className="min-h-64 border-0 p-6">
-            <EmptyHeader>
-              <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
-                <FileText />
-              </EmptyMedia>
-              <EmptyTitle>
-                {log.length === 0 ? t('log.empty') : t('log.no_matching')}
-              </EmptyTitle>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          visibleLog.map((item) => (
-            <MobileLogRow
-              key={item.index}
-              item={item}
-              debugEnable={debugEnable}
-            />
-          ))
         )}
       </div>
 
@@ -242,7 +247,7 @@ export function LogMobile({
               size="icon"
               aria-label={t('log.reset')}
               title={t('log.reset')}
-              onClick={reset}
+              onClick={onReset}
             >
               <RotateCcw className="size-3.5" />
             </Button>

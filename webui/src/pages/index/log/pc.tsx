@@ -48,6 +48,7 @@ export function LogPc({
   log,
   visibleLog,
   loaded,
+  loading,
   debugEnable,
   filterLevel,
   setFilterLevel,
@@ -57,7 +58,7 @@ export function LogPc({
   togglePolling,
   logContainerRef,
   getLog,
-  reset,
+  onReset,
   copy,
 }: LogLayoutProps) {
   const { t } = useTranslation();
@@ -160,12 +161,9 @@ export function LogPc({
         </div>
 
         <Card className="w-full overflow-hidden rounded-2xl [--card-spacing:0px]">
-          <CardContent className="px-4 py-2 **:data-[slot=table-container]:overflow-visible">
+          <CardContent className="relative min-h-48 px-4 py-2 **:data-[slot=table-container]:overflow-visible">
             {!loaded ? (
-              <div className="text-muted-foreground flex min-h-48 items-center justify-center gap-2 text-sm">
-                <Spinner className="size-4" />
-                {t('log.loading')}
-              </div>
+              <div className="min-h-48" />
             ) : visibleLog.length === 0 ? (
               <Empty className="min-h-64 border-0 p-6">
                 <EmptyHeader>
@@ -231,6 +229,11 @@ export function LogPc({
                 </Table>
               </div>
             )}
+            {(!loaded || loading === 'visible') && (
+              <div className="bg-card/70 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                <Spinner className="text-brand size-5" />
+              </div>
+            )}
           </CardContent>
 
           <div className="bg-muted/30 border-border/70 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
@@ -279,7 +282,7 @@ export function LogPc({
                 )}
                 {pollingActive ? t('log.stop_refresh') : t('log.start_refresh')}
               </AbButton>
-              <AbButton type="ghost" size="small" onClick={reset}>
+              <AbButton type="ghost" size="small" onClick={onReset}>
                 <RotateCcw className="size-3.5" />
                 {t('log.reset')}
               </AbButton>

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AbButton } from '@/components/basic/ab-button';
 import { AbSelect } from '@/components/basic/ab-select';
 import { AbPopup } from '@/components/ab-popup';
-import { Input } from '@/components/ui/input';
+import { AbInput } from '@/components/basic/ab-input';
 import { usePlayerStore, type MediaPlayerType } from '@/store/player';
 
 interface AbPlayerSettingsProps {
@@ -53,7 +53,8 @@ export function AbPlayerSettings({
           className="w-full"
           onChange={(v) => setDraftType(v as MediaPlayerType)}
         />
-        <Input
+        <AbInput
+          variant="default"
           value={draftUrl}
           onChange={(e) => setDraftUrl(e.target.value)}
           type="text"

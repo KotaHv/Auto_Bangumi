@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff } from 'lucide-react';
-import { AbPillInput } from '@/components/basic/ab-pill-input';
+import { AbInput } from '@/components/basic/ab-input';
+import { AbPassword } from '@/components/basic/ab-password';
 import { AbButton } from '@/components/basic/ab-button';
 import { LoginGlow } from '@/components/login-glow';
 import { useAuthStore } from '@/store/auth';
@@ -14,7 +14,6 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
 
   const passwordRef = useRef<HTMLInputElement | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
@@ -43,7 +42,8 @@ export default function LoginPage() {
 
       <div className="w-85 max-w-[90vw]">
         <div className="flex flex-col gap-4">
-          <AbPillInput
+          <AbInput
+            variant="pill"
             value={user.username}
             onChange={(e) => setUser({ username: e.target.value })}
             onKeyDown={(e) => {
@@ -56,7 +56,8 @@ export default function LoginPage() {
             autoComplete="username"
           />
 
-          <AbPillInput
+          <AbPassword
+            variant="pill"
             ref={passwordRef}
             id="login-password"
             value={user.password}
@@ -67,35 +68,10 @@ export default function LoginPage() {
                 (e.target as HTMLInputElement).blur();
               }
             }}
-            type={showPassword ? 'text' : 'password'}
             name="current-password"
             placeholder={t('login.password_placeholder')}
             aria-label={t('login.password')}
             autoComplete="current-password"
-            trailing={
-              <button
-                type="button"
-                aria-label={
-                  showPassword
-                    ? t('login.hide_password')
-                    : t('login.show_password')
-                }
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/40 flex size-8 items-center justify-center rounded-full outline-none focus-visible:ring-2"
-                // Use mousedown instead of pointerdown to keep iOS Safari from moving focus.
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                }}
-                aria-pressed={showPassword}
-                aria-controls="login-password"
-                onClick={() => setShowPassword((v) => !v)}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-5" />
-                ) : (
-                  <Eye className="size-5" />
-                )}
-              </button>
-            }
           />
 
           <AbButton

@@ -12,9 +12,9 @@ import { AbButton } from './basic/ab-button';
 import { AbSelect } from './basic/ab-select';
 import { AbSwitch } from './basic/ab-switch';
 import { AbPopup } from './ab-popup';
+import { AbInput } from './basic/ab-input';
 import { AbRule } from './rule/ab-rule';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 
 const PARSER_TYPE = ['mikan', 'tmdb', 'parser'];
@@ -142,23 +142,23 @@ export function AbAddRss({
           <div className="space-y-4">
             <Field>
               <FieldLabel>{t('topbar.add.rss_link')}</FieldLabel>
-              <Input
+              <AbInput
+                variant="large"
                 value={rss.url}
                 onChange={(e) => setRss((s) => ({ ...s, url: e.target.value }))}
                 placeholder={t('topbar.add.placeholder_link')}
-                className="h-10"
               />
             </Field>
 
             <Field>
               <FieldLabel>{t('topbar.add.name')}</FieldLabel>
-              <Input
+              <AbInput
+                variant="large"
                 value={rss.name}
                 onChange={(e) =>
                   setRss((s) => ({ ...s, name: e.target.value }))
                 }
                 placeholder={t('topbar.add.placeholder_name')}
-                className="h-10"
               />
             </Field>
 
