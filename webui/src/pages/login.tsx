@@ -50,6 +50,7 @@ export default function LoginPage() {
               if (e.key === 'Enter') passwordRef.current?.focus();
             }}
             type="text"
+            name="username"
             placeholder={t('login.username_placeholder')}
             aria-label={t('login.username')}
             autoComplete="username"
@@ -57,6 +58,7 @@ export default function LoginPage() {
 
           <AbPillInput
             ref={passwordRef}
+            id="login-password"
             value={user.password}
             onChange={(e) => setUser({ password: e.target.value })}
             onKeyDown={(e) => {
@@ -66,6 +68,7 @@ export default function LoginPage() {
               }
             }}
             type={showPassword ? 'text' : 'password'}
+            name="current-password"
             placeholder={t('login.password_placeholder')}
             aria-label={t('login.password')}
             autoComplete="current-password"
@@ -77,8 +80,13 @@ export default function LoginPage() {
                     ? t('login.hide_password')
                     : t('login.show_password')
                 }
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/40 flex size-5 items-center justify-center rounded-full outline-none focus-visible:ring-2"
-                onPointerDown={(e) => e.preventDefault()}
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/40 flex size-8 items-center justify-center rounded-full outline-none focus-visible:ring-2"
+                // Use mousedown instead of pointerdown to keep iOS Safari from moving focus.
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
+                aria-pressed={showPassword}
+                aria-controls="login-password"
                 onClick={() => setShowPassword((v) => !v)}
               >
                 {showPassword ? (

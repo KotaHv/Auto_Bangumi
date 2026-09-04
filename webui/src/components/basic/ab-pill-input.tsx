@@ -7,19 +7,16 @@ function AbPillInput({
   ...props
 }: React.ComponentProps<typeof Input> & { trailing?: React.ReactNode }) {
   return (
-    <div className="relative w-full">
+    <div className="border-input bg-card focus-within:border-brand focus-within:ring-brand/20 dark:focus-within:ring-brand/25 flex h-12 w-full items-center rounded-full border transition-colors focus-within:ring-2 dark:bg-white/5">
       <Input
         {...props}
         className={cn(
-          'bg-card focus-visible:border-brand focus-visible:ring-brand/20 dark:focus-visible:ring-brand/25 h-12 w-full rounded-full px-5 text-base shadow-none placeholder:text-base md:text-base md:placeholder:text-base dark:bg-white/5',
-          trailing && 'pr-12 pl-5',
+          'h-full min-w-0 flex-1 rounded-full border-0 bg-transparent px-5 text-base shadow-none outline-none placeholder:text-base focus-visible:border-transparent focus-visible:ring-0 md:text-base md:placeholder:text-base dark:bg-transparent',
           className,
         )}
       />
       {trailing && (
-        <div className="absolute top-1/2 right-6 -translate-y-1/2">
-          {trailing}
-        </div>
+        <div className="flex w-auto shrink-0 items-center pr-3">{trailing}</div>
       )}
     </div>
   );
