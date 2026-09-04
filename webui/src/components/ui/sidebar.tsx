@@ -4,6 +4,7 @@ import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsPc } from '@/hooks/use-is-pc';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,10 +66,18 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobile = useIsMobile();
+  const isPc = useIsPc();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(defaultOpen && isPc);
   const open = openProp ?? _open;
+
+  React.useEffect(() => {
+    if (openProp === undefined) {
+      _setOpen(isPc);
+    }
+  }, [isPc, openProp]);
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
@@ -323,7 +332,11 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn('flex flex-col gap-2 p-2', className)}
+      className={cn(
+        'flex flex-col gap-2 p-2 [&>button]:h-12 [&>button]:w-full [&>button]:justify-start [&>button]:gap-2.5 [&>button]:rounded-md [&>button]:px-4 [&>button]:text-left [&>button]:transition-none [&>button>span:last-child]:max-w-[16rem] [&>button>span:last-child]:min-w-0 [&>button>span:last-child]:overflow-hidden [&>button>span:last-child]:whitespace-nowrap [&>button>span:last-child]:opacity-100 group-data-[collapsible=icon]:[&>button>span:last-child]:max-w-0 group-data-[collapsible=icon]:[&>button>span:last-child]:opacity-0',
+        '[&>button]:active:translate-y-0!',
+        className,
+      )}
       {...props}
     />
   );
@@ -475,7 +488,7 @@ const sidebarMenuButtonVariants = cva(
       size: {
         default: 'h-8 text-sm',
         sm: 'h-7 text-xs',
-        lg: 'h-12 text-sm group-data-[collapsible=icon]:p-0! [&_svg:not([class*="size-"])]:size-5',
+        lg: 'h-14 p-4.5 text-[15px] group-data-[collapsible=icon]:h-14! group-data-[collapsible=icon]:w-14! group-data-[collapsible=icon]:p-4.5! [&_svg:not([class*="size-"])]:size-5 [&>span:last-child]:max-w-[16rem] [&>span:last-child]:min-w-0 [&>span:last-child]:overflow-hidden [&>span:last-child]:whitespace-nowrap [&>span:last-child]:opacity-100 group-data-[collapsible=icon]:[&>span:last-child]:max-w-0 group-data-[collapsible=icon]:[&>span:last-child]:opacity-0',
       },
     },
     defaultVariants: {

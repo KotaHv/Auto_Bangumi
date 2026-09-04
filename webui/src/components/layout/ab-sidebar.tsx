@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AbBrand } from '@/components/layout/ab-brand';
+import { AbButton } from '@/components/basic/ab-button';
 import {
   Sidebar,
   SidebarContent,
@@ -96,17 +97,16 @@ export function AbSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <button
-          type="button"
+        <AbButton
+          type="ghost"
           aria-label="Toggle Sidebar"
           onClick={toggleSidebar}
-          className="focus-visible:ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-12 w-full items-center gap-2.5 rounded-md px-2 text-left outline-hidden transition-colors duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 focus-visible:ring-2"
         >
           <AbBrand />
-          <span className="font-display max-w-[16rem] min-w-0 overflow-hidden text-base font-semibold tracking-[0.18em] whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-linear group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0">
+          <span className="font-display text-base font-semibold tracking-[0.18em]">
             AUTOBANGUMI
           </span>
-        </button>
+        </AbButton>
       </SidebarHeader>
 
       <SidebarContent>
@@ -118,7 +118,6 @@ export function AbSidebar() {
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       size="lg"
-                      className="h-14 text-[15px] transition-[width,height,padding,gap,background-color,color,box-shadow] duration-200 ease-linear group-data-[collapsible=icon]:h-14! group-data-[collapsible=icon]:w-14! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-2!"
                       aria-label={item.label}
                       render={
                         <NavLink
@@ -131,9 +130,7 @@ export function AbSidebar() {
                       tooltip={item.label}
                     >
                       <item.icon />
-                      <span className="max-w-[16rem] min-w-0 overflow-hidden whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-linear group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0">
-                        {item.label}
-                      </span>
+                      <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ),
@@ -148,7 +145,6 @@ export function AbSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              className="h-14 text-[15px] transition-[width,height,padding,gap,background-color,color,box-shadow] duration-200 ease-linear group-data-[collapsible=icon]:h-14! group-data-[collapsible=icon]:w-14! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-2!"
               aria-label={t('sidebar.logout')}
               render={
                 <button
@@ -161,9 +157,7 @@ export function AbSidebar() {
               tooltip={t('sidebar.logout')}
             >
               <LogOut />
-              <span className="max-w-[16rem] min-w-0 overflow-hidden whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-linear group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0">
-                {t('sidebar.logout')}
-              </span>
+              <span>{t('sidebar.logout')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
