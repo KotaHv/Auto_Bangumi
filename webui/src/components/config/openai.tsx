@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -9,7 +9,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { ExperimentalOpenAI } from '#/config';
 
 export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
@@ -20,7 +20,7 @@ export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
 
   const groupErrors = getGroupErrors(errors, 'experimental_openai');
 
-  const openAIItems: SettingItem<ExperimentalOpenAI>[] = [
+  const openAIItems: ConfigFieldItem<ExperimentalOpenAI>[] = [
     {
       configKey: 'enable',
       label: t('config.experimental_openai_set.enable'),
@@ -59,7 +59,7 @@ export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
       {openAIItems.map((item) => (
         <Fragment key={item.configKey}>
           <Separator className="my-2" />
-          <SettingField
+          <ConfigField
             {...item}
             fieldKey={`experimental_openai.${item.configKey}`}
             orientation="horizontal"

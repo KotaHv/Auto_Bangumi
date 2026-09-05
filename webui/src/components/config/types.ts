@@ -1,12 +1,12 @@
 import type { ComponentProps } from 'react';
 import type { AbSelectOption } from '@/components/common/ab-select';
 
-type SettingInputProps = Omit<
+type ConfigInputProps = Omit<
   ComponentProps<'input'>,
   'value' | 'onChange' | 'disabled' | 'className'
 >;
 
-interface SettingFieldBase {
+interface ConfigFieldBase {
   label: string | (() => string);
   orientation?: 'vertical' | 'horizontal';
   /** Disable the control without hiding it (e.g. when its section is off). */
@@ -19,13 +19,13 @@ interface SettingFieldBase {
   fieldKey?: string;
 }
 
-export type SettingControlType = 'input' | 'switch' | 'select' | 'dynamic-tags';
+export type ConfigControlType = 'input' | 'switch' | 'select' | 'dynamic-tags';
 
-export type SettingFieldConfig = SettingFieldBase &
+export type ConfigFieldDefinition = ConfigFieldBase &
   (
     | {
         type: 'input';
-        prop?: SettingInputProps;
+        prop?: ConfigInputProps;
       }
     | {
         type: 'switch';
@@ -45,6 +45,6 @@ export type SettingFieldConfig = SettingFieldBase &
       }
   );
 
-export type SettingItem<T> = SettingFieldConfig & {
+export type ConfigFieldItem<T> = ConfigFieldDefinition & {
   configKey: keyof T;
 };

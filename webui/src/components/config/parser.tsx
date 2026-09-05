@@ -1,9 +1,9 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { RssParser } from '#/config';
 
 const LANGS = [
@@ -18,7 +18,7 @@ export function ConfigParser() {
   const parser = useConfigStore((s) => s.config.rss_parser);
   const updateGroup = useConfigStore((s) => s.updateGroup);
 
-  const items: SettingItem<RssParser>[] = [
+  const items: ConfigFieldItem<RssParser>[] = [
     {
       configKey: 'enable',
       label: t('config.parser_set.enable'),
@@ -42,7 +42,7 @@ export function ConfigParser() {
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <SettingField
+          <ConfigField
             {...item}
             fieldKey={`rss_parser.${item.configKey}`}
             orientation="horizontal"

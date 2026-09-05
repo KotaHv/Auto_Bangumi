@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -8,7 +8,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { Notification } from '#/config';
 
 const NOTIFICATION_TYPES = [
@@ -30,7 +30,7 @@ export function ConfigNotification({
 
   const groupErrors = getGroupErrors(errors, 'notification');
 
-  const items: SettingItem<Notification>[] = [
+  const items: ConfigFieldItem<Notification>[] = [
     {
       configKey: 'enable',
       label: t('config.notification_set.enable'),
@@ -61,7 +61,7 @@ export function ConfigNotification({
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <SettingField
+          <ConfigField
             {...item}
             fieldKey={`notification.${item.configKey}`}
             orientation="horizontal"

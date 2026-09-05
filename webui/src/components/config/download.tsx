@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -8,7 +8,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { Downloader } from '#/config';
 
 export function ConfigDownload({
@@ -26,7 +26,7 @@ export function ConfigDownload({
 
   const groupErrors = getGroupErrors(errors, 'downloader');
 
-  const items: SettingItem<Downloader>[] = [
+  const items: ConfigFieldItem<Downloader>[] = [
     {
       configKey: 'host',
       label: t('config.downloader_set.host'),
@@ -76,7 +76,7 @@ export function ConfigDownload({
 
   return (
     <div>
-      <SettingField
+      <ConfigField
         label={t('config.downloader_set.use_api_key')}
         type="switch"
         fieldKey="downloader.use_api_key"
@@ -90,7 +90,7 @@ export function ConfigDownload({
         .map((item) => (
           <Fragment key={item.configKey}>
             <Separator className="my-2" />
-            <SettingField
+            <ConfigField
               {...item}
               fieldKey={`downloader.${item.configKey}`}
               orientation="horizontal"

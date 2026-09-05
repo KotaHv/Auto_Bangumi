@@ -1,9 +1,9 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { BangumiManage } from '#/config';
 
 const RENAME_METHODS = [
@@ -19,7 +19,7 @@ export function ConfigManage() {
   const manage = useConfigStore((s) => s.config.bangumi_manage);
   const updateGroup = useConfigStore((s) => s.updateGroup);
 
-  const items: SettingItem<BangumiManage>[] = [
+  const items: ConfigFieldItem<BangumiManage>[] = [
     {
       configKey: 'enable',
       label: t('config.manage_set.enable'),
@@ -58,7 +58,7 @@ export function ConfigManage() {
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <SettingField
+          <ConfigField
             {...item}
             fieldKey={`bangumi_manage.${item.configKey}`}
             orientation="horizontal"

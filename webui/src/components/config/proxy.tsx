@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingField } from '@/components/config/field';
+import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
 import {
@@ -9,7 +9,7 @@ import {
   type ConfigFieldError,
 } from '@/lib/config-validation';
 import type { AbSelectOption } from '@/components/common/ab-select';
-import type { SettingItem } from './types';
+import type { ConfigFieldItem } from './types';
 import type { Proxy } from '#/config';
 
 const PROXY_TYPES: AbSelectOption[] = [
@@ -26,7 +26,7 @@ export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {
 
   const groupErrors = getGroupErrors(errors, 'proxy');
 
-  const items: SettingItem<Proxy>[] = [
+  const items: ConfigFieldItem<Proxy>[] = [
     {
       configKey: 'enable',
       label: t('config.proxy_set.enable'),
@@ -69,7 +69,7 @@ export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
-          <SettingField
+          <ConfigField
             {...item}
             fieldKey={`proxy.${item.configKey}`}
             orientation="horizontal"

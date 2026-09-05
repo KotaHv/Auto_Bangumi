@@ -5,9 +5,9 @@ import { AbSelect } from '@/components/common/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { AbDynamicTags } from '@/components/common/ab-dynamic-tags';
 import { cn } from '@/lib/utils';
-import type { SettingControlType, SettingFieldConfig } from './types';
+import type { ConfigControlType, ConfigFieldDefinition } from './types';
 
-type SettingValueFor<TType extends SettingControlType> = TType extends 'input'
+type ConfigValueFor<TType extends ConfigControlType> = TType extends 'input'
   ? string | number | null
   : TType extends 'switch'
     ? boolean
@@ -15,19 +15,19 @@ type SettingValueFor<TType extends SettingControlType> = TType extends 'input'
       ? string
       : string[];
 
-type SettingFieldProps<TType extends SettingControlType> = Extract<
-  SettingFieldConfig,
+type ConfigFieldProps<TType extends ConfigControlType> = Extract<
+  ConfigFieldDefinition,
   { type: TType }
 > & {
-  value: SettingValueFor<TType>;
-  onChange?: (value: SettingValueFor<TType>) => void;
+  value: ConfigValueFor<TType>;
+  onChange?: (value: ConfigValueFor<TType>) => void;
 };
 
-type RuntimeSettingFieldProps =
-  | SettingFieldProps<'input'>
-  | SettingFieldProps<'switch'>
-  | SettingFieldProps<'select'>
-  | SettingFieldProps<'dynamic-tags'>;
+type RuntimeConfigFieldProps =
+  | ConfigFieldProps<'input'>
+  | ConfigFieldProps<'switch'>
+  | ConfigFieldProps<'select'>
+  | ConfigFieldProps<'dynamic-tags'>;
 
 /** Password input with a reveal toggle, keeping the masked style by default. */
 function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
@@ -40,8 +40,8 @@ function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
   );
 }
 
-export function SettingField<TType extends SettingControlType>(
-  props: SettingFieldProps<TType>,
+export function ConfigField<TType extends ConfigControlType>(
+  props: ConfigFieldProps<TType>,
 ) {
   const {
     label,
@@ -54,7 +54,7 @@ export function SettingField<TType extends SettingControlType>(
     value,
     onChange,
     fieldKey,
-  } = props as RuntimeSettingFieldProps;
+  } = props as RuntimeConfigFieldProps;
   const labelText = typeof label === 'function' ? label() : label;
   const isDynamicTags = type === 'dynamic-tags';
   const isSwitch = type === 'switch';
