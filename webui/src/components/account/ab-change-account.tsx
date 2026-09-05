@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth';
-import { AbButton } from './basic/ab-button';
-import { AbInput } from './basic/ab-input';
-import { AbPassword } from './basic/ab-password';
-import { AbPopup } from './ab-popup';
+import { Input } from '@/components/ui/input';
+import { AbPassword } from '@/components/basic/ab-password';
+import { AbPopup } from '@/components/basic/ab-popup';
 import { Field, FieldLabel } from '@/components/ui/field';
 
 interface AbChangeAccountProps {
@@ -28,8 +28,8 @@ export function AbChangeAccount({ show, onShowChange }: AbChangeAccountProps) {
       <div className="flex flex-col gap-4">
         <Field>
           <FieldLabel>{t('topbar.profile.username')}</FieldLabel>
-          <AbInput
-            variant="default"
+          <Input
+            className="px-2"
             value={user.username}
             onChange={(e) => setUser({ username: e.target.value })}
             type="text"
@@ -42,7 +42,6 @@ export function AbChangeAccount({ show, onShowChange }: AbChangeAccountProps) {
         <Field>
           <FieldLabel>{t('topbar.profile.password')}</FieldLabel>
           <AbPassword
-            variant="default"
             value={user.password}
             onChange={(e) => setUser({ password: e.target.value })}
             name="new-password"
@@ -51,14 +50,9 @@ export function AbChangeAccount({ show, onShowChange }: AbChangeAccountProps) {
           />
         </Field>
 
-        <AbButton
-          size="normal"
-          type="brand"
-          className="w-full"
-          onClick={update}
-        >
+        <Button variant="brand" className="w-full" onClick={update}>
           {t('topbar.profile.update_btn')}
-        </AbButton>
+        </Button>
       </div>
     </AbPopup>
   );

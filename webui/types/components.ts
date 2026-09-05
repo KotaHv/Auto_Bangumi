@@ -1,11 +1,5 @@
 import type { ComponentProps } from 'react';
-
-export interface SelectItem {
-  id: number;
-  label?: string;
-  value: string;
-  disabled?: boolean;
-}
+import type { AbSelectOption } from '@/components/basic/ab-select';
 
 type SettingInputProps = Omit<
   ComponentProps<'input'>,
@@ -42,7 +36,7 @@ export type SettingFieldConfig = SettingFieldBase &
     | {
         type: 'select';
         prop: {
-          items: ReadonlyArray<SelectItem | string>;
+          items: ReadonlyArray<AbSelectOption>;
         };
       }
     | {

@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbPopup, type AbPopupWidth } from './ab-popup';
-import { AbButton } from './basic/ab-button';
+import { AbPopup, type AbPopupWidth } from '@/components/basic/ab-popup';
 
 interface AbConfirmProps {
   show: boolean;
@@ -43,24 +43,22 @@ export function AbConfirm({
         {children}
 
         <div className="flex items-center justify-center gap-2">
-          <AbButton
-            size="normal"
-            type={confirmType}
+          <Button
+            variant={confirmType === 'warn' ? 'destructive-solid' : 'brand'}
             className="min-w-16"
             loading={confirmLoading}
             onClick={onConfirm}
           >
             {confirmText ?? t('homepage.rule.confirm_btn')}
-          </AbButton>
+          </Button>
 
-          <AbButton
-            size="normal"
-            type="outline"
+          <Button
+            variant="outline"
             className="min-w-16"
             onClick={() => onShowChange(false)}
           >
             {cancelText ?? t('homepage.rule.cancel_btn')}
-          </AbButton>
+          </Button>
         </div>
       </div>
     </AbPopup>

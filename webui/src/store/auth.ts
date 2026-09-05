@@ -3,7 +3,7 @@ import type { User } from '#/auth';
 import { apiAuth } from '@/api/auth';
 import { executeApi } from '@/hooks/use-api';
 import { i18n } from '@/i18n';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 
 const LOGGED_IN_KEY = 'isLoggedIn';
 

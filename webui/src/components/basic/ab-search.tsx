@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AbInput } from './ab-input';
+import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 
 interface AbSearchProps {
@@ -45,7 +45,7 @@ export function AbSearch({
         )}
       </button>
 
-      <AbInput
+      <Input
         variant="search"
         value={inputValue}
         onChange={(e) => onInputChange(e.target.value)}

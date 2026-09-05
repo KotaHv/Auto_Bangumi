@@ -8,13 +8,14 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem, SelectItem } from '#/components';
+import type { AbSelectOption } from '@/components/basic/ab-select';
+import type { SettingItem } from '#/components';
 import type { Proxy } from '#/config';
 
-const PROXY_TYPES: SelectItem[] = [
-  { id: 0, value: 'http', label: 'HTTP' },
-  { id: 1, value: 'https', label: 'HTTPS' },
-  { id: 2, value: 'socks5', label: 'SOCKS5' },
+const PROXY_TYPES: AbSelectOption[] = [
+  { value: 'http', label: 'HTTP' },
+  { value: 'https', label: 'HTTPS' },
+  { value: 'socks5', label: 'SOCKS5' },
 ];
 
 export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {

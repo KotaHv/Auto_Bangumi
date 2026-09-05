@@ -1,8 +1,8 @@
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MonitorPlay } from 'lucide-react';
-import { AbButton } from '@/components/basic/ab-button';
-import { AbPlayerSettings } from '@/components/ab-player-settings';
+import { AbPlayerSettings } from '@/components/player/ab-player-settings';
 import {
   Empty,
   EmptyDescription,
@@ -37,13 +37,13 @@ export default function PlayerPage() {
           </EmptyMedia>
           <EmptyTitle className="text-lg">{t('player.title')}</EmptyTitle>
           <EmptyDescription>{t('player.desc')}</EmptyDescription>
-          <AbButton
-            type="brand"
+          <Button
+            variant="brand"
             className="mt-1"
             onClick={() => setShowSettings(true)}
           >
             {t('player.settings_title')}
-          </AbButton>
+          </Button>
         </Empty>
       )}
 

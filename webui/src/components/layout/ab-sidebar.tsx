@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,8 +12,7 @@ import {
   Settings,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { AbBrand } from '@/components/layout/ab-brand';
-import { AbButton } from '@/components/basic/ab-button';
+import { AbBrand } from '@/components/icons/ab-brand';
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useAppInfoStore } from '@/store/app-info';
 import { useAuthStore } from '@/store/auth';
 
 interface SidebarItem {
@@ -40,6 +41,7 @@ export function AbSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
   const logout = useAuthStore((s) => s.logout);
+  const running = useAppInfoStore((s) => s.running);
   const { setOpenMobile, toggleSidebar } = useSidebar();
 
   const items: SidebarItem[] = [
@@ -97,16 +99,16 @@ export function AbSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <AbButton
-          type="ghost"
+        <Button
+          variant="ghost"
           aria-label="Toggle Sidebar"
           onClick={toggleSidebar}
         >
-          <AbBrand />
+          <AbBrand running={running} />
           <span className="font-display text-base font-semibold tracking-[0.18em]">
             AUTOBANGUMI
           </span>
-        </AbButton>
+        </Button>
       </SidebarHeader>
 
       <SidebarContent>

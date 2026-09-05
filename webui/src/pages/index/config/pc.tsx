@@ -1,4 +1,4 @@
-import { AbConfirm } from '@/components/ab-confirm';
+import { AbConfirm } from '@/components/basic/ab-confirm';
 import { ConfigNav } from '@/components/config/nav';
 import { useTranslation } from 'react-i18next';
 import type { ConfigLayoutProps } from './types';

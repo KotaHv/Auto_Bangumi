@@ -6,7 +6,11 @@ import { useConfigStore } from '@/store/config';
 import type { SettingItem } from '#/components';
 import type { RssParser } from '#/config';
 
-const LANGS = ['zh', 'en', 'jp'] as const;
+const LANGS = [
+  { value: 'zh', label: 'zh' },
+  { value: 'en', label: 'en' },
+  { value: 'jp', label: 'jp' },
+];
 
 export function ConfigParser() {
   const { t } = useTranslation();

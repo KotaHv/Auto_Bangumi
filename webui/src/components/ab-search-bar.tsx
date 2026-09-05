@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AbSearch } from './basic/ab-search';
-import { AbBangumiCard } from './ab-bangumi-card';
+import { AbSearch } from '@/components/basic/ab-search';
+import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useSearchStore } from '@/store/search';

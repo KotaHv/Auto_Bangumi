@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { AbBangumiCard } from '@/components/ab-bangumi-card';
-import { AbEditRule } from '@/components/ab-edit-rule';
+import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
+import { AbEditRule } from '@/components/rule/ab-edit-rule';
 import { useBangumiStore } from '@/store/bangumi';
 
 export default function BangumiPage() {

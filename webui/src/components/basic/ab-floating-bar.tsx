@@ -9,9 +9,11 @@ interface AbFloatingBarProps extends React.ComponentProps<typeof Card> {
   position?: AbFloatingBarPosition;
 }
 
-const POSITION_CLASS: Record<AbFloatingBarPosition, string> = {
-  top: 'mt-3',
-  bottom: 'mb-[calc(12px+env(safe-area-inset-bottom))]',
+const floatingBarVariants = {
+  position: {
+    top: 'mt-3',
+    bottom: 'mb-[calc(12px+env(safe-area-inset-bottom))]',
+  } satisfies Record<AbFloatingBarPosition, string>,
 };
 
 export function AbFloatingBar({
@@ -23,7 +25,7 @@ export function AbFloatingBar({
     <Card
       className={cn(
         'bg-popover text-popover-foreground border-border flex shrink-0 flex-row items-center rounded-2xl px-4 py-2 shadow-lg [--card-spacing:0px]',
-        POSITION_CLASS[position],
+        floatingBarVariants.position[position],
         className,
       )}
       {...props}

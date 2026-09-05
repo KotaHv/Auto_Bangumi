@@ -1,8 +1,8 @@
 import { Field, FieldLabel } from '@/components/ui/field';
-import { AbInput } from '@/components/basic/ab-input';
+import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/basic/ab-password';
 import { AbSelect } from '@/components/basic/ab-select';
-import { AbSwitch } from '@/components/basic/ab-switch';
+import { Switch } from '@/components/ui/switch';
 import { AbDynamicTags } from '@/components/basic/ab-dynamic-tags';
 import { cn } from '@/lib/utils';
 import type { SettingControlType, SettingFieldConfig } from '#/components';
@@ -34,7 +34,6 @@ function PasswordInput({ className, ...props }: React.ComponentProps<'input'>) {
   return (
     <AbPassword
       {...props}
-      variant="default"
       className={cn('w-full', className)}
       inputGroupClassName="w-full sm:w-64"
     />
@@ -65,7 +64,7 @@ export function SettingField<TType extends SettingControlType>(
   switch (type) {
     case 'switch':
       control = (
-        <AbSwitch
+        <Switch
           checked={!!value}
           onCheckedChange={(v) => onChange?.(v)}
           disabled={disabled}
@@ -77,13 +76,11 @@ export function SettingField<TType extends SettingControlType>(
     case 'select':
       control = (
         <AbSelect
-          value={value as string}
+          value={value as string | null}
           items={prop?.items ?? []}
-          className="w-full sm:w-64"
+          triggerClassName="w-full sm:w-64"
           disabled={disabled}
-          onChange={(item) =>
-            onChange?.(typeof item === 'string' ? item : item.value)
-          }
+          onValueChange={(nextValue) => onChange?.(nextValue)}
         />
       );
       break;
@@ -99,8 +96,7 @@ export function SettingField<TType extends SettingControlType>(
             autoComplete="off"
           />
         ) : (
-          <AbInput
-            variant="default"
+          <Input
             {...prop}
             disabled={disabled}
             value={
@@ -115,7 +111,7 @@ export function SettingField<TType extends SettingControlType>(
                   : e.target.value;
               onChange?.(Number.isNaN(v) ? e.target.value : v);
             }}
-            className="w-full sm:w-64"
+            className="w-full px-2 sm:w-64"
           />
         );
       break;

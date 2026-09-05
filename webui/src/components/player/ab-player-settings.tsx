@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbButton } from '@/components/basic/ab-button';
 import { AbSelect } from '@/components/basic/ab-select';
-import { AbPopup } from '@/components/ab-popup';
-import { AbInput } from '@/components/basic/ab-input';
+import { AbPopup } from '@/components/basic/ab-popup';
+import { Input } from '@/components/ui/input';
 import { usePlayerStore, type MediaPlayerType } from '@/store/player';
 
 interface AbPlayerSettingsProps {
@@ -49,17 +49,19 @@ export function AbPlayerSettings({
       <div className="flex flex-col gap-4">
         <AbSelect
           value={draftType}
-          items={['jump', 'iframe']}
-          className="w-full"
-          onChange={(v) => setDraftType(v as MediaPlayerType)}
+          items={[
+            { value: 'jump', label: 'jump' },
+            { value: 'iframe', label: 'iframe' },
+          ]}
+          triggerClassName="w-full"
+          onValueChange={(value) => setDraftType(value as MediaPlayerType)}
         />
-        <AbInput
-          variant="default"
+        <Input
+          className="w-full px-2"
           value={draftUrl}
           onChange={(e) => setDraftUrl(e.target.value)}
           type="text"
           placeholder={t('player.url_placeholder')}
-          className="w-full"
         />
         {draftType === 'jump' && (
           <p className="text-muted-foreground text-center text-xs">
@@ -67,9 +69,9 @@ export function AbPlayerSettings({
           </p>
         )}
         <p className="text-muted-foreground text-xs">{t('player.edit_hint')}</p>
-        <AbButton type="brand" className="w-full" onClick={apply}>
+        <Button variant="brand" className="w-full" onClick={apply}>
           {t('player.apply_btn')}
-        </AbButton>
+        </Button>
       </div>
     </AbPopup>
   );

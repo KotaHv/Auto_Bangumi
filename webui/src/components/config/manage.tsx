@@ -6,7 +6,12 @@ import { useConfigStore } from '@/store/config';
 import type { SettingItem } from '#/components';
 import type { BangumiManage } from '#/config';
 
-const RENAME_METHODS = ['normal', 'pn', 'advance', 'none'] as const;
+const RENAME_METHODS = [
+  { value: 'normal', label: 'normal' },
+  { value: 'pn', label: 'pn' },
+  { value: 'advance', label: 'advance' },
+  { value: 'none', label: 'none' },
+];
 
 export function ConfigManage() {
   const { t } = useTranslation();

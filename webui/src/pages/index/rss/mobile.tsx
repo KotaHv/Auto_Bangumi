@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
-import { AbButton } from '@/components/basic/ab-button';
 import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
-import { AbConfirm } from '@/components/ab-confirm';
-import { AbTag } from '@/components/basic/ab-tag';
-import { message } from '@/components/message';
+import { AbConfirm } from '@/components/basic/ab-confirm';
+import { Badge } from '@/components/ui/badge';
+import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -62,14 +61,14 @@ export function RSSMobile({
   function renderTags(rssItem: RSS) {
     return (
       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        {rssItem.parser && <AbTag type="primary" title={rssItem.parser} />}
+        {rssItem.parser && <Badge variant="primary">{rssItem.parser}</Badge>}
         {rssItem.aggregate && (
-          <AbTag type="primary" title={t('rss.aggregate')} />
+          <Badge variant="primary">{t('rss.aggregate')}</Badge>
         )}
         {rssItem.enabled ? (
-          <AbTag type="active" title="active" />
+          <Badge variant="active">active</Badge>
         ) : (
-          <AbTag type="inactive" title="inactive" />
+          <Badge variant="inactive">inactive</Badge>
         )}
       </div>
     );
@@ -116,15 +115,14 @@ export function RSSMobile({
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
-          <AbButton
-            type="brand"
-            size="normal"
+          <Button
+            variant="brand"
             className="px-3"
             disabled={selectedRSS.length === 0}
             onClick={enableSelected}
           >
             {t('rss.enable')}
-          </AbButton>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

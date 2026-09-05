@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Copy } from 'lucide-react';
 import { FieldLabel } from '@/components/ui/field';
-import { AbInput } from '@/components/basic/ab-input';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { AbExcludeField } from './ab-exclude-field';
 import type { AbRuleLayoutProps } from './types';
@@ -18,13 +18,13 @@ export function AbRuleMobile({
     <div>
       <div className="flex flex-col gap-3">
         <div className="border-border/70 focus-within:border-brand flex min-w-0 items-end border-b">
-          <AbInput
+          <Input
             variant="title"
+            className="text-center"
             value={rule.official_title}
             onChange={(e) => patch('official_title', e.target.value)}
             type="text"
             placeholder={t('homepage.rule.official_title')}
-            className="text-center"
           />
         </div>
 
@@ -42,12 +42,11 @@ export function AbRuleMobile({
               <FieldLabel className="w-14 shrink-0">
                 {t('homepage.rule.year')}
               </FieldLabel>
-              <AbInput
-                variant="default"
+              <Input
+                className="flex-1 px-2"
                 value={rule.year ?? ''}
                 onChange={(e) => patch('year', e.target.value)}
                 type="text"
-                className="flex-1"
               />
             </div>
 
@@ -55,12 +54,11 @@ export function AbRuleMobile({
               <FieldLabel className="w-14 shrink-0">
                 {t('homepage.rule.season')}
               </FieldLabel>
-              <AbInput
-                variant="default"
+              <Input
+                className="flex-1 px-2"
                 value={rule.season}
                 onChange={(e) => patchNumber('season', e.target.value)}
                 type="number"
-                className="flex-1"
               />
             </div>
 
@@ -68,12 +66,11 @@ export function AbRuleMobile({
               <FieldLabel className="w-14 shrink-0">
                 {t('homepage.rule.offset')}
               </FieldLabel>
-              <AbInput
-                variant="default"
+              <Input
+                className="flex-1 px-2"
                 value={rule.offset}
                 onChange={(e) => patchNumber('offset', e.target.value)}
                 type="number"
-                className="flex-1"
               />
             </div>
 

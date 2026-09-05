@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { apiConfig } from '@/api/config';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 import { executeApi } from '@/hooks/use-api';
 import { i18n } from '@/i18n';
 import { useProgramStore } from '@/store/program';

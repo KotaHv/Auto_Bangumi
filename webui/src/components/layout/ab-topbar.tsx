@@ -21,9 +21,9 @@ import type { BangumiRule } from '#/bangumi';
 import { ruleTemplate } from '#/bangumi';
 import { useTheme } from '@/hooks/use-theme';
 import { AbSearchBar } from '@/components/ab-search-bar';
-import { AbAddRss } from '@/components/ab-add-rss';
-import { AbChangeAccount } from '@/components/ab-change-account';
-import { AbPlayerSettings } from '@/components/ab-player-settings';
+import { AbAddRss } from '@/components/rss/ab-add-rss';
+import { AbChangeAccount } from '@/components/account/ab-change-account';
+import { AbPlayerSettings } from '@/components/player/ab-player-settings';
 import { LanguageIcon } from '@/components/icons/language-icon';
 import { Button } from '@/components/ui/button';
 import {

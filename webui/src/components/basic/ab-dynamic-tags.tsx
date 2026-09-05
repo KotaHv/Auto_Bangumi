@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AbInput } from './ab-input';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 interface AbDynamicTagsProps {
@@ -51,7 +51,7 @@ export function AbDynamicTags({
       ))}
 
       {editing ? (
-        <AbInput
+        <Input
           ref={inputRef}
           variant="tag"
           autoFocus

@@ -1,8 +1,8 @@
-import { ImageOff, Pencil } from 'lucide-react';
+import { ImageOff, Pencil, Plus } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type { BangumiRule } from '#/bangumi';
-import { AbAdd } from './basic/ab-add';
-import { AbTag } from './basic/ab-tag';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
 const FLUSH_CARD = { '--card-spacing': '0px' } as CSSProperties;
@@ -54,22 +54,25 @@ export function AbBangumiCard({
             <div className="mt-1 flex flex-wrap gap-1">
               {(['season', 'group_name', 'subtitle'] as const).map((key) =>
                 bangumi[key] ? (
-                  <AbTag
-                    key={key}
-                    title={
-                      key === 'season'
-                        ? `Season ${bangumi[key]}`
-                        : String(bangumi[key])
-                    }
-                    type="primary"
-                  />
+                  <Badge key={key} variant="primary">
+                    {key === 'season'
+                      ? `Season ${bangumi[key]}`
+                      : String(bangumi[key])}
+                  </Badge>
                 ) : null,
               )}
             </div>
           </div>
 
           <span onClick={(e) => e.stopPropagation()}>
-            <AbAdd round type="medium" onClick={onClick} />
+            <Button
+              size="icon-sm"
+              aria-label="add"
+              className="rounded-full"
+              onClick={onClick}
+            >
+              <Plus />
+            </Button>
           </span>
         </div>
       </Card>

@@ -1,23 +1,27 @@
+import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDownload } from '@/api/download';
 import { apiRSS } from '@/api/rss';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 import { executeApi } from '@/hooks/use-api';
 import { useBangumiStore } from '@/store/bangumi';
 import { rssTemplate } from '#/rss';
 import type { BangumiRule } from '#/bangumi';
 import type { RSS } from '#/rss';
-import { AbButton } from './basic/ab-button';
-import { AbSelect } from './basic/ab-select';
-import { AbSwitch } from './basic/ab-switch';
-import { AbPopup } from './ab-popup';
-import { AbInput } from './basic/ab-input';
-import { AbRule } from './rule/ab-rule';
+import { AbSelect } from '@/components/basic/ab-select';
+import { Switch } from '@/components/ui/switch';
+import { AbPopup } from '@/components/basic/ab-popup';
+import { Input } from '@/components/ui/input';
+import { AbRule } from '@/components/rule/ab-rule';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 
-const PARSER_TYPE = ['mikan', 'tmdb', 'parser'];
+const PARSER_TYPE = [
+  { value: 'mikan', label: 'mikan' },
+  { value: 'tmdb', label: 'tmdb' },
+  { value: 'parser', label: 'parser' },
+];
 
 interface AbAddRssProps {
   show: boolean;
@@ -142,7 +146,7 @@ export function AbAddRss({
           <div className="space-y-4">
             <Field>
               <FieldLabel>{t('topbar.add.rss_link')}</FieldLabel>
-              <AbInput
+              <Input
                 variant="large"
                 value={rss.url}
                 onChange={(e) => setRss((s) => ({ ...s, url: e.target.value }))}
@@ -152,7 +156,7 @@ export function AbAddRss({
 
             <Field>
               <FieldLabel>{t('topbar.add.name')}</FieldLabel>
-              <AbInput
+              <Input
                 variant="large"
                 value={rss.name}
                 onChange={(e) =>
@@ -169,7 +173,7 @@ export function AbAddRss({
                   className="min-h-9 w-full items-center justify-between gap-3 sm:w-fit sm:justify-start sm:gap-2"
                 >
                   <FieldLabel>{t('topbar.add.aggregate')}</FieldLabel>
-                  <AbSwitch
+                  <Switch
                     checked={rss.aggregate}
                     onCheckedChange={(aggregate) =>
                       setRss((s) => ({ ...s, aggregate }))
@@ -188,13 +192,9 @@ export function AbAddRss({
                   <AbSelect
                     value={rss.parser}
                     items={PARSER_TYPE}
-                    className="w-24 sm:w-24"
-                    onChange={(parser) =>
-                      setRss((s) => ({
-                        ...s,
-                        parser:
-                          typeof parser === 'string' ? parser : parser.value,
-                      }))
+                    triggerClassName="w-24 sm:w-24"
+                    onValueChange={(parser) =>
+                      setRss((s) => ({ ...s, parser }))
                     }
                   />
                 </Field>
@@ -205,15 +205,14 @@ export function AbAddRss({
           <Separator className="my-4" />
 
           <div className="flex justify-end">
-            <AbButton
-              size="normal"
-              type="brand"
+            <Button
+              variant="brand"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
               loading={windowState.loading}
               onClick={addRss}
             >
               {t('topbar.add.button')}
-            </AbButton>
+            </Button>
           </div>
         </div>
       ) : (
@@ -223,25 +222,23 @@ export function AbAddRss({
           <Separator className="my-4" />
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-            <AbButton
-              size="normal"
-              type="outline"
+            <Button
+              variant="outline"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
               loading={collectLoading}
               onClick={collect}
             >
               {t('topbar.add.collect')}
-            </AbButton>
+            </Button>
 
-            <AbButton
-              size="normal"
-              type="brand"
+            <Button
+              variant="brand"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
               loading={subscribeLoading}
               onClick={subscribe}
             >
               {t('topbar.add.subscribe')}
-            </AbButton>
+            </Button>
           </div>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -7,10 +8,9 @@ import {
   ListFilter,
   Rss as RssIcon,
 } from 'lucide-react';
-import { AbButton } from '@/components/basic/ab-button';
-import { AbConfirm } from '@/components/ab-confirm';
-import { AbTag } from '@/components/basic/ab-tag';
-import { message } from '@/components/message';
+import { AbConfirm } from '@/components/basic/ab-confirm';
+import { Badge } from '@/components/ui/badge';
+import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -65,14 +65,14 @@ export function RSSPc({
   function renderTags(rssItem: RSS) {
     return (
       <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-1.5">
-        {rssItem.parser && <AbTag type="primary" title={rssItem.parser} />}
+        {rssItem.parser && <Badge variant="primary">{rssItem.parser}</Badge>}
         {rssItem.aggregate && (
-          <AbTag type="primary" title={t('rss.aggregate')} />
+          <Badge variant="primary">{t('rss.aggregate')}</Badge>
         )}
         {rssItem.enabled ? (
-          <AbTag type="active" title="active" />
+          <Badge variant="active">active</Badge>
         ) : (
-          <AbTag type="inactive" title="inactive" />
+          <Badge variant="inactive">inactive</Badge>
         )}
       </div>
     );
@@ -122,28 +122,28 @@ export function RSSPc({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-1">
-          <AbButton
-            type="brand"
-            size="normal"
+          <Button
+            variant="brand"
+
             className="min-w-20"
             onClick={enableSelected}
           >
             {t('rss.enable')}
-          </AbButton>
-          <AbButton type="ghost" size="normal" onClick={refreshSelected}>
+          </Button>
+          <Button variant="ghost" onClick={refreshSelected}>
             {t('rss.refresh')}
-          </AbButton>
-          <AbButton type="ghost" size="normal" onClick={disableSelected}>
+          </Button>
+          <Button variant="ghost" onClick={disableSelected}>
             {t('rss.disable')}
-          </AbButton>
-          <AbButton
-            type="ghost"
-            size="normal"
+          </Button>
+          <Button
+            variant="ghost"
+
             className="text-destructive"
             onClick={() => setShowDeleteConfirm(true)}
           >
             {t('rss.delete')}
-          </AbButton>
+          </Button>
         </div>
       </div>
     );

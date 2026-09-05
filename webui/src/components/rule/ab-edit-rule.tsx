@@ -1,13 +1,13 @@
+import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiBangumi } from '@/api/bangumi';
 import { apiDownload } from '@/api/download';
 import { executeApi } from '@/hooks/use-api';
 import { useBangumiStore } from '@/store/bangumi';
-import { AbButton } from './basic/ab-button';
-import { AbConfirm } from './ab-confirm';
-import { AbPopup } from './ab-popup';
-import { AbRule } from './rule/ab-rule';
+import { AbConfirm } from '@/components/basic/ab-confirm';
+import { AbPopup } from '@/components/basic/ab-popup';
+import { AbRule } from '@/components/rule/ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 
@@ -114,49 +114,37 @@ export function AbEditRule() {
 
         <div className="flex flex-wrap items-center gap-2 sm:justify-between">
           <div className="flex gap-1">
-            <AbButton
-              size="normal"
-              type="ghost"
-              onClick={() => setForceCollectDialog(true)}
-            >
+            <Button variant="ghost" onClick={() => setForceCollectDialog(true)}>
               {t('homepage.rule.force_collect')}
-            </AbButton>
+            </Button>
 
-            <AbButton
-              size="normal"
-              type="ghost"
-              loading={loading.rename}
-              onClick={rename}
-            >
+            <Button variant="ghost" loading={loading.rename} onClick={rename}>
               {t('homepage.rule.rename')}
-            </AbButton>
+            </Button>
 
-            <AbButton
-              size="normal"
-              type="ghost"
+            <Button
+              variant="ghost"
               onClick={() => showDeleteFileDialog('disable')}
             >
               {t('homepage.rule.disable')}
-            </AbButton>
+            </Button>
 
-            <AbButton
-              size="normal"
-              type="ghost"
+            <Button
+              variant="ghost"
               className="text-destructive"
               onClick={() => showDeleteFileDialog('delete')}
             >
               {t('homepage.rule.delete')}
-            </AbButton>
+            </Button>
           </div>
 
-          <AbButton
-            size="normal"
-            type="brand"
+          <Button
+            variant="brand"
             className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
             onClick={() => updateRule(rule.id, rule)}
           >
             {t('homepage.rule.apply')}
-          </AbButton>
+          </Button>
         </div>
       </div>
 

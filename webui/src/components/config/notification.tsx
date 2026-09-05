@@ -12,11 +12,11 @@ import type { SettingItem } from '#/components';
 import type { Notification } from '#/config';
 
 const NOTIFICATION_TYPES = [
-  'telegram',
-  'server-chan',
-  'bark',
-  'wecom',
-] as const;
+  { value: 'telegram', label: 'telegram' },
+  { value: 'server-chan', label: 'server-chan' },
+  { value: 'bark', label: 'bark' },
+  { value: 'wecom', label: 'wecom' },
+];
 
 export function ConfigNotification({
   errors = [],

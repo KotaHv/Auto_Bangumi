@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 import { returnUserLangMsg } from '@/i18n';
 
 type AnyAsyncFunction<TData = unknown> = (...args: never[]) => Promise<TData>;

@@ -1,7 +1,7 @@
 import Axios from 'axios';
 import type { AxiosError, AxiosResponse } from 'axios';
 import type { ApiError, ApiSuccess } from '#/api';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 import { i18n, returnUserLangText } from '@/i18n';
 import { useAuthStore } from '@/store/auth';
 

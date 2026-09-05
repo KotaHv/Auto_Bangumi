@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -7,80 +6,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { SelectItem as SelectItemType } from '#/components';
 
-interface AbSelectProps {
-  value?: SelectItemType | string;
-  items: ReadonlyArray<SelectItemType | string>;
-  className?: string;
+export interface AbSelectOption<T extends string = string> {
+  value: T;
+  label: string;
+  disabled?: boolean;
+}
+
+export interface AbSelectProps<T extends string = string> {
+  value: T | null;
+  items: ReadonlyArray<AbSelectOption<T>>;
+  onValueChange: (value: T) => void;
+  placeholder?: string;
+  triggerClassName?: string;
   size?: 'sm' | 'default';
   disabled?: boolean;
-  onChange?: (item: SelectItemType | string) => void;
+  id?: string;
+  name?: string;
+  required?: boolean;
 }
 
-function getLabel(item: SelectItemType | string) {
-  return typeof item === 'string' ? item : (item.label ?? item.value);
-}
-
-/**
- * Object items are keyed by their `value` (not `id`) so the select's value
- * matches the raw config value passed in from outside.
- */
-function getItemValue(item: SelectItemType | string) {
-  return typeof item === 'string' ? item : item.value;
-}
-
-function isDisabled(item: SelectItemType | string) {
-  return typeof item === 'object' && !!item.disabled;
-}
-
-export function AbSelect({
+export function AbSelect<T extends string = string>({
   value,
   items,
-  className = '',
+  onValueChange,
+  placeholder,
+  triggerClassName,
   size = 'default',
   disabled = false,
-  onChange,
-}: AbSelectProps) {
-  const selected =
-    items.find((item) => getItemValue(item) === value) ?? items[0] ?? '';
-
-  const itemsData = items.map((item) => ({
-    label: getLabel(item),
-    value: getItemValue(item),
-    disabled: isDisabled(item),
-  }));
-
-  useEffect(() => {
-    if (!value && items[0] !== undefined) {
-      onChange?.(items[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  id,
+  name,
+  required = false,
+}: AbSelectProps<T>) {
   return (
     <Select
-      items={itemsData}
-      value={getItemValue(selected)}
-      disabled={disabled}
-      onValueChange={(id) => {
-        const index = items.findIndex((i) => getItemValue(i) === id);
-        if (index !== -1) onChange?.(items[index]);
+      items={items}
+      value={value}
+      disabled={disabled || items.length === 0}
+      id={id}
+      name={name}
+      required={required}
+      onValueChange={(nextValue) => {
+        if (nextValue !== null) onValueChange(nextValue);
       }}
     >
-      <SelectTrigger size={size} className={className}>
-        <SelectValue>{getLabel(selected)}</SelectValue>
+      <SelectTrigger size={size} className={triggerClassName}>
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
 
       <SelectContent>
         <SelectGroup>
           {items.map((item) => (
             <SelectItem
-              key={getItemValue(item)}
-              value={getItemValue(item)}
-              disabled={isDisabled(item)}
+              key={item.value}
+              value={item.value}
+              disabled={item.disabled}
             >
-              {getLabel(item)}
+              {item.label}
             </SelectItem>
           ))}
         </SelectGroup>

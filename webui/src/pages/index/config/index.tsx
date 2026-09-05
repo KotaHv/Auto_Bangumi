@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBlocker, useSearchParams } from 'react-router';
@@ -10,8 +11,7 @@ import {
   Settings2,
   Sparkles,
 } from 'lucide-react';
-import { AbButton } from '@/components/basic/ab-button';
-import { message } from '@/components/message';
+import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfigDownload } from '@/components/config/download';
@@ -522,24 +522,24 @@ export default function ConfigPage() {
 
   const renderFooterActions = () => (
     <>
-      <AbButton
-        type="outline"
+      <Button
+        variant="outline"
         className="h-9 min-w-20 sm:min-w-24"
         onClick={() => setShowCancelConfirm(true)}
         disabled={!configChanged || saving}
       >
         {t('config.cancel')}
-      </AbButton>
+      </Button>
 
-      <AbButton
-        type="brand"
+      <Button
+        variant="brand"
         className="h-9 min-w-24 sm:min-w-28"
         onClick={applyChanges}
         loading={saving}
         disabled={!configChanged || saving}
       >
         {t('config.apply')}
-      </AbButton>
+      </Button>
     </>
   );
 

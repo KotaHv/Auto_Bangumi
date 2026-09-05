@@ -1,9 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbInput } from '@/components/basic/ab-input';
+import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/basic/ab-password';
-import { AbButton } from '@/components/basic/ab-button';
-import { LoginGlow } from '@/components/login-glow';
+import { LoginGlow } from '@/components/login/login-glow';
 import { useAuthStore } from '@/store/auth';
 
 export default function LoginPage() {
@@ -42,7 +42,7 @@ export default function LoginPage() {
 
       <div className="w-85 max-w-[90vw]">
         <div className="flex flex-col gap-4">
-          <AbInput
+          <Input
             variant="pill"
             value={user.username}
             onChange={(e) => setUser({ username: e.target.value })}
@@ -74,15 +74,14 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
 
-          <AbButton
-            size="normal"
-            type="brand"
+          <Button
+            variant="brand"
             className="h-12 w-full rounded-full text-base"
             loading={loading}
             onClick={handleLogin}
           >
             {t('login.login_btn')}
-          </AbButton>
+          </Button>
         </div>
       </div>
     </div>
