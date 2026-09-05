@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AbSearch } from '@/components/common/ab-search';
+import { AbSearch } from './ab-search';
 import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
