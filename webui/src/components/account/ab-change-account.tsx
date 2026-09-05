@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth';
 import { Input } from '@/components/ui/input';
-import { AbPassword } from '@/components/basic/ab-password';
-import { AbPopup } from '@/components/basic/ab-popup';
+import { AbPassword } from '@/components/common/ab-password';
+import { AbPopup } from '@/components/common/ab-popup';
 import { Field, FieldLabel } from '@/components/ui/field';
 
 interface AbChangeAccountProps {

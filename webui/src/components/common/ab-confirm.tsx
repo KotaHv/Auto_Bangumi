@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbPopup, type AbPopupWidth } from '@/components/basic/ab-popup';
+import { AbPopup, type AbPopupWidth } from '@/components/common/ab-popup';
 
 interface AbConfirmProps {
   show: boolean;

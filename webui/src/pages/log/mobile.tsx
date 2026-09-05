@@ -12,8 +12,8 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
-import { AbSelect } from '@/components/basic/ab-select';
+import { AbFloatingBar } from '@/components/common/ab-floating-bar';
+import { AbSelect } from '@/components/common/ab-select';
 import {
   Empty,
   EmptyHeader,

@@ -8,7 +8,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { AbSelectOption } from '@/components/basic/ab-select';
+import type { AbSelectOption } from '@/components/common/ab-select';
 import type { SettingItem } from '#/components';
 import type { Proxy } from '#/config';
 

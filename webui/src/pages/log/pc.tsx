@@ -11,7 +11,7 @@ import {
   CircleAlert,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AbSelect } from '@/components/basic/ab-select';
+import { AbSelect } from '@/components/common/ab-select';
 import {
   Empty,
   EmptyHeader,

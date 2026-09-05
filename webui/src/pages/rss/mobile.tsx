@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
-import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
-import { AbConfirm } from '@/components/basic/ab-confirm';
+import { AbFloatingBar } from '@/components/common/ab-floating-bar';
+import { AbConfirm } from '@/components/common/ab-confirm';
 import { Badge } from '@/components/ui/badge';
 import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';

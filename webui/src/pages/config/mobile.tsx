@@ -1,5 +1,5 @@
-import { AbConfirm } from '@/components/basic/ab-confirm';
-import { AbFloatingBar } from '@/components/basic/ab-floating-bar';
+import { AbConfirm } from '@/components/common/ab-confirm';
+import { AbFloatingBar } from '@/components/common/ab-floating-bar';
 import { ConfigTabs } from '@/components/config/tabs';
 import type { ConfigLayoutProps } from './types';
 

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { BangumiRule } from '#/bangumi';
-import { AbDynamicTags } from '@/components/basic/ab-dynamic-tags';
+import { AbDynamicTags } from '@/components/common/ab-dynamic-tags';
 import { Field, FieldLabel } from '@/components/ui/field';
 
 interface AbExcludeFieldProps {

@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbSelect } from '@/components/basic/ab-select';
-import { AbPopup } from '@/components/basic/ab-popup';
+import { AbSelect } from '@/components/common/ab-select';
+import { AbPopup } from '@/components/common/ab-popup';
 import { Input } from '@/components/ui/input';
 import { usePlayerStore, type MediaPlayerType } from '@/store/player';
 

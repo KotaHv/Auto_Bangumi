@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import type { AbSelectOption } from '@/components/basic/ab-select';
+import type { AbSelectOption } from '@/components/common/ab-select';
 
 type SettingInputProps = Omit<
   ComponentProps<'input'>,

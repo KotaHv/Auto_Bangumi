@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { startLogPolling, stopLogPolling, useLogStore } from '@/store/log';
 import { useConfigStore } from '@/store/config';
 import { useIsPc } from '@/hooks/use-is-pc';
-import { AbConfirm } from '@/components/basic/ab-confirm';
+import { AbConfirm } from '@/components/common/ab-confirm';
 import { LogMobile } from './mobile';
 import { LogPc } from './pc';
 import type { LogLevelFilter, LogLine, LogLineLimit } from './types';

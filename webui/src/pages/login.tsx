@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
-import { AbPassword } from '@/components/basic/ab-password';
+import { AbPassword } from '@/components/common/ab-password';
 import { LoginGlow } from '@/components/login/login-glow';
 import { useAuthStore } from '@/store/auth';
 

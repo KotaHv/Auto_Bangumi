@@ -8,7 +8,7 @@ import {
   ListFilter,
   Rss as RssIcon,
 } from 'lucide-react';
-import { AbConfirm } from '@/components/basic/ab-confirm';
+import { AbConfirm } from '@/components/common/ab-confirm';
 import { Badge } from '@/components/ui/badge';
 import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';

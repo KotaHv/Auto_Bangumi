@@ -1,9 +1,9 @@
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { AbPassword } from '@/components/basic/ab-password';
-import { AbSelect } from '@/components/basic/ab-select';
+import { AbPassword } from '@/components/common/ab-password';
+import { AbSelect } from '@/components/common/ab-select';
 import { Switch } from '@/components/ui/switch';
-import { AbDynamicTags } from '@/components/basic/ab-dynamic-tags';
+import { AbDynamicTags } from '@/components/common/ab-dynamic-tags';
 import { cn } from '@/lib/utils';
 import type { SettingControlType, SettingFieldConfig } from '#/components';
 
