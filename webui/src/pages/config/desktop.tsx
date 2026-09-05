@@ -3,7 +3,7 @@ import { ConfigNav } from '@/components/config/nav';
 import { useTranslation } from 'react-i18next';
 import type { ConfigLayoutProps } from './types';
 
-export function ConfigPc({
+export function ConfigDesktop({
   sections,
   activeTab,
   onSelectTab,

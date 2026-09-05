@@ -45,7 +45,7 @@ function getTypeStyle(type: string) {
   }
 }
 
-export function LogPc({
+export function LogDesktop({
   log,
   visibleLog,
   loaded,

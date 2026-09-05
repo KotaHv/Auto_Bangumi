@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useRSSStore } from '@/store/rss';
-import { useIsPc } from '@/hooks/use-is-pc';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import { RSSMobile } from './mobile';
-import { RSSPc } from './pc';
+import { RSSDesktop } from './desktop';
 import type { RSSLayoutProps } from './types';
 
 export default function RSSPage() {
@@ -14,7 +14,7 @@ export default function RSSPage() {
   const disableSelected = useRSSStore((s) => s.disableSelected);
   const deleteSelected = useRSSStore((s) => s.deleteSelected);
   const refreshSelected = useRSSStore((s) => s.refreshSelected);
-  const isPc = useIsPc();
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     getAll();
@@ -31,5 +31,5 @@ export default function RSSPage() {
     refreshSelected,
   };
 
-  return isPc ? <RSSPc {...props} /> : <RSSMobile {...props} />;
+  return isDesktop ? <RSSDesktop {...props} /> : <RSSMobile {...props} />;
 }

@@ -23,9 +23,9 @@ import { ConfigParser } from '@/components/config/parser';
 import { ConfigProxy } from '@/components/config/proxy';
 import { useConfigStore } from '@/store/config';
 import { getConfigErrors } from '@/lib/config-validation';
-import { useIsPc } from '@/hooks/use-is-pc';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import { ConfigMobile } from './mobile';
-import { ConfigPc } from './pc';
+import { ConfigDesktop } from './desktop';
 import type { ConfigSection } from './types';
 import type { Config } from '#/config';
 
@@ -45,10 +45,10 @@ function hasConfigChanges(
 // The tab strip is outside the scrolling content, so section positions only
 // need to account for the scroll container's own padding.
 const useTabOffset = () => {
-  const isPc = useIsPc();
+  const isDesktop = useIsDesktop();
   const ref = useRef(0);
 
-  return { isPc, tabOffsetRef: ref };
+  return { isDesktop, tabOffsetRef: ref };
 };
 
 function ConfigSkeletonRow() {
@@ -150,7 +150,7 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { isPc, tabOffsetRef } = useTabOffset();
+  const { isDesktop, tabOffsetRef } = useTabOffset();
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLElement | null>>({});
   const contentRef = useRef<HTMLDivElement>(null);
@@ -564,8 +564,8 @@ export default function ConfigPage() {
     confirmMessage: t('config.cancel_confirm.message'),
   };
 
-  return isPc ? (
-    <ConfigPc {...layoutProps} />
+  return isDesktop ? (
+    <ConfigDesktop {...layoutProps} />
   ) : (
     <ConfigMobile {...layoutProps} />
   );

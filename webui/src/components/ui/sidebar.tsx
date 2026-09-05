@@ -4,7 +4,7 @@ import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useIsPc } from '@/hooks/use-is-pc';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,17 +66,17 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobile = useIsMobile();
-  const isPc = useIsPc();
+  const isDesktop = useIsDesktop();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  const [_open, _setOpen] = React.useState(defaultOpen && isPc);
+  const [_open, _setOpen] = React.useState(defaultOpen && isDesktop);
   const open = openProp ?? _open;
 
   React.useEffect(() => {
     if (openProp === undefined) {
-      _setOpen(isPc);
+      _setOpen(isDesktop);
     }
-  }, [isPc, openProp]);
+  }, [isDesktop, openProp]);
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {

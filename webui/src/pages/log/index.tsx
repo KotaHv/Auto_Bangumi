@@ -2,10 +2,10 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { startLogPolling, stopLogPolling, useLogStore } from '@/store/log';
 import { useConfigStore } from '@/store/config';
-import { useIsPc } from '@/hooks/use-is-pc';
+import { useIsDesktop } from '@/hooks/use-desktop';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { LogMobile } from './mobile';
-import { LogPc } from './pc';
+import { LogDesktop } from './desktop';
 import type { LogLevelFilter, LogLine, LogLineLimit } from './types';
 
 export default function LogPage() {
@@ -22,7 +22,7 @@ export default function LogPage() {
 
   const debugEnable = useConfigStore((s) => s.config.log.debug_enable);
   const getConfig = useConfigStore((s) => s.getConfig);
-  const isPc = useIsPc();
+  const isDesktop = useIsDesktop();
 
   const logContainerRef = useRef<HTMLElement | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -144,7 +144,7 @@ export default function LogPage() {
 
   return (
     <>
-      {isPc ? <LogPc {...props} /> : <LogMobile {...props} />}
+      {isDesktop ? <LogDesktop {...props} /> : <LogMobile {...props} />}
       <AbConfirm
         show={showResetConfirm}
         onShowChange={setShowResetConfirm}

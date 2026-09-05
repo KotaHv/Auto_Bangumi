@@ -32,7 +32,7 @@ import type { RSS } from '#/rss';
 import type { RSSLayoutProps } from './types';
 import { cn } from '@/lib/utils';
 
-export function RSSPc({
+export function RSSDesktop({
   rss,
   selectedRSS,
   setSelectedRSS,
