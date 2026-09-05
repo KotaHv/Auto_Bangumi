@@ -46,10 +46,8 @@ import { useProgramStore } from '@/store/program';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/bangumi': 'Bangumi List',
-  '/calendar': 'Calendar',
   '/rss': 'RSS',
   '/player': 'Player',
-  '/downloader': 'Downloader',
   '/log': 'Log',
   '/config': 'Config',
 };

@@ -1,6 +1,6 @@
 import { Navigate, createHashRouter } from 'react-router';
 import LoginPage from '@/pages/login';
-import RootLayout from '@/root-layout';
+import RootLayout from '@/app/layouts/root-layout';
 import {
   RequireAuth,
   RedirectIfLoggedIn,
@@ -23,11 +23,12 @@ export const router = createHashRouter([
       {
         path: '',
         lazy: async () => {
-          const { default: IndexPage } = await import('@/pages/index');
+          const { default: AppLayout } =
+            await import('@/app/layouts/app-layout');
           return {
             Component: () => (
               <RequireAuth>
-                <IndexPage />
+                <AppLayout />
               </RequireAuth>
             ),
           };
@@ -37,49 +38,29 @@ export const router = createHashRouter([
           {
             path: 'bangumi',
             lazy: () =>
-              import('@/pages/index/bangumi').then(
-                ({ default: Component }) => ({
-                  Component,
-                }),
-              ),
-          },
-          {
-            path: 'calendar',
-            lazy: () =>
-              import('@/pages/index/calendar').then(
-                ({ default: Component }) => ({
-                  Component,
-                }),
-              ),
+              import('@/pages/bangumi').then(({ default: Component }) => ({
+                Component,
+              })),
           },
           {
             path: 'rss',
             lazy: () =>
-              import('@/pages/index/rss').then(({ default: Component }) => ({
+              import('@/pages/rss').then(({ default: Component }) => ({
                 Component,
               })),
           },
           { path: 'player', element: <RedirectPlayerIfJump /> },
           {
-            path: 'downloader',
-            lazy: () =>
-              import('@/pages/index/downloader').then(
-                ({ default: Component }) => ({
-                  Component,
-                }),
-              ),
-          },
-          {
             path: 'log',
             lazy: () =>
-              import('@/pages/index/log').then(({ default: Component }) => ({
+              import('@/pages/log').then(({ default: Component }) => ({
                 Component,
               })),
           },
           {
             path: 'config',
             lazy: () =>
-              import('@/pages/index/config').then(({ default: Component }) => ({
+              import('@/pages/config').then(({ default: Component }) => ({
                 Component,
               })),
           },

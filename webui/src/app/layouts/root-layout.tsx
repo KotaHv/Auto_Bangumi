@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router';
-import { AppProviders } from '@/components/app-providers';
+import { AppProviders } from '@/app/providers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 export default function RootLayout() {

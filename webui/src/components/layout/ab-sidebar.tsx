@@ -1,16 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import {
-  CalendarDays,
-  Download,
-  FileClock,
-  House,
-  LogOut,
-  Play,
-  Rss,
-  Settings,
-} from 'lucide-react';
+import { FileClock, House, LogOut, Play, Rss, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AbBrand } from '@/components/icons/ab-brand';
 import {
@@ -54,41 +45,27 @@ export function AbSidebar() {
     },
     {
       id: 2,
-      icon: CalendarDays,
-      label: t('sidebar.calendar'),
-      path: '/calendar',
-      hidden: true,
-    },
-    {
-      id: 3,
       icon: Rss,
       label: t('sidebar.rss'),
       path: '/rss',
       hidden: false,
     },
     {
-      id: 4,
+      id: 3,
       icon: Play,
       label: t('sidebar.player'),
       path: '/player',
       hidden: false,
     },
     {
-      id: 5,
-      icon: Download,
-      label: t('sidebar.downloader'),
-      path: '/downloader',
-      hidden: localStorage.getItem('enable_downloader_iframe') !== '1',
-    },
-    {
-      id: 6,
+      id: 4,
       icon: FileClock,
       label: t('sidebar.log'),
       path: '/log',
       hidden: false,
     },
     {
-      id: 7,
+      id: 5,
       icon: Settings,
       label: t('sidebar.config'),
       path: '/config',

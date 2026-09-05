@@ -3,7 +3,7 @@ import { AbSidebar } from '@/components/layout/ab-sidebar';
 import { AbTopbar } from '@/components/layout/ab-topbar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
-export default function IndexPage() {
+export default function AppLayout() {
   return (
     <SidebarProvider>
       <AbSidebar />

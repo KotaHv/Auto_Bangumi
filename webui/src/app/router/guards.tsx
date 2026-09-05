@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth';
 import { usePlayerStore } from '@/store/player';
 import type { ReactNode } from 'react';
 
-const PlayerPage = lazy(() => import('@/pages/index/player'));
+const PlayerPage = lazy(() => import('@/pages/player'));
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
