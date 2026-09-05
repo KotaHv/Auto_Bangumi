@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiBangumi } from '@/api/bangumi';
+import { apiDownload } from '@/api/download';
 import { executeApi } from '@/hooks/use-api';
 import { ruleTemplate } from '#/bangumi';
 import type { BangumiRule } from '#/bangumi';
@@ -16,6 +17,8 @@ interface BangumiState {
   getAll: () => Promise<void>;
   refreshData: () => Promise<void>;
   updateRule: (id: number, rule: BangumiRule) => Promise<void>;
+  renameRule: (rule: BangumiRule) => Promise<void>;
+  forceCollectRule: (rule: BangumiRule) => Promise<void>;
   enableRule: (id: number) => Promise<void>;
   disableRule: (id: number | number[], file: boolean) => Promise<void>;
   deleteRule: (id: number | number[], file: boolean) => Promise<void>;
@@ -23,11 +26,6 @@ interface BangumiState {
   openEditPopup: (data: BangumiRule) => void;
   closeEditPopup: () => void;
   setEditItem: (item: BangumiRule) => void;
-  ruleManage: (
-    type: 'disable' | 'delete',
-    id: number,
-    deleteFile: boolean,
-  ) => void;
 }
 
 function sortByIdDesc(arr: BangumiRule[]) {
@@ -65,6 +63,32 @@ export const useBangumiStore = create<BangumiState>((set, get) => ({
         },
       },
       id,
+      rule,
+    );
+  },
+
+  async renameRule(rule) {
+    await executeApi(
+      apiBangumi.rename,
+      {
+        showMessage: true,
+        onSuccess() {
+          get().refreshData();
+        },
+      },
+      rule,
+    );
+  },
+
+  async forceCollectRule(rule) {
+    await executeApi(
+      apiDownload.forceCollect,
+      {
+        showMessage: true,
+        onSuccess() {
+          get().refreshData();
+        },
+      },
       rule,
     );
   },
@@ -129,13 +153,5 @@ export const useBangumiStore = create<BangumiState>((set, get) => ({
 
   setEditItem(item) {
     set((state) => ({ editRule: { ...state.editRule, item } }));
-  },
-
-  ruleManage(type, id, deleteFile) {
-    if (type === 'disable') {
-      get().disableRule(id, deleteFile);
-    } else {
-      get().deleteRule(id, deleteFile);
-    }
   },
 }));

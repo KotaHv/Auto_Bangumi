@@ -6,7 +6,8 @@ import { useIsDesktop } from '@/hooks/use-desktop';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { LogMobile } from './mobile';
 import { LogDesktop } from './desktop';
-import type { LogLevelFilter, LogLine, LogLineLimit } from './types';
+import { parseLog } from './parse-log';
+import type { LogLevelFilter, LogLineLimit } from './types';
 
 export default function LogPage() {
   const { t } = useTranslation();
@@ -37,42 +38,7 @@ export default function LogPage() {
     }
   }
 
-  const formatLog = useMemo<LogLine[]>(() => {
-    const lines = deferredLog
-      .trim()
-      .split('\n')
-      .filter((i) => i !== '');
-    const startIndex = lines.findIndex((i) => /Version/.test(i));
-    const logs = lines.slice(startIndex === -1 ? 0 : startIndex);
-
-    const list: LogLine[] = [];
-
-    for (const line of logs) {
-      const parts = line.split('|');
-      if (parts.length >= 3) {
-        const [moduleName, ...contents] = parts.slice(2).join('|').split('-');
-        list.push({
-          index: list.length,
-          date: parts[0].trim(),
-          type: parts[1].trim(),
-          module: moduleName.trim(),
-          content: contents.join('-').trim(),
-        });
-      } else if (list.length > 0) {
-        list[list.length - 1].content += `\n${line}`;
-      } else {
-        list.push({
-          index: list.length,
-          date: '',
-          type: '',
-          module: '',
-          content: line,
-        });
-      }
-    }
-
-    return list;
-  }, [deferredLog]);
+  const formatLog = useMemo(() => parseLog(deferredLog), [deferredLog]);
 
   const visibleLog = useMemo(
     () =>

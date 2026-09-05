@@ -4,13 +4,10 @@ import { useTranslation } from 'react-i18next';
 import {
   CheckCircle2,
   CircleOff,
-  Copy,
   ListFilter,
   Rss as RssIcon,
 } from 'lucide-react';
 import { AbConfirm } from '@/components/common/ab-confirm';
-import { Badge } from '@/components/ui/badge';
-import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -27,10 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { copyText } from '@/lib/clipboard';
 import type { RSS } from '#/rss';
 import type { RSSLayoutProps } from './types';
 import { cn } from '@/lib/utils';
+import { AbRssLink } from '@/components/rss/ab-rss-link';
+import { AbRssTags } from '@/components/rss/ab-rss-tags';
 
 export function RSSDesktop({
   rss,
@@ -62,22 +60,6 @@ export function RSSDesktop({
     );
   }
 
-  function renderTags(rssItem: RSS) {
-    return (
-      <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-1.5">
-        {rssItem.parser && <Badge variant="primary">{rssItem.parser}</Badge>}
-        {rssItem.aggregate && (
-          <Badge variant="primary">{t('rss.aggregate')}</Badge>
-        )}
-        {rssItem.enabled ? (
-          <Badge variant="active">active</Badge>
-        ) : (
-          <Badge variant="inactive">inactive</Badge>
-        )}
-      </div>
-    );
-  }
-
   function renderSelectionCheckbox(rssItem: RSS) {
     return (
       <Checkbox
@@ -86,28 +68,6 @@ export function RSSDesktop({
         onCheckedChange={(checked) => toggleRow(rssItem.id, checked)}
         aria-label={`${t('rss.selectbox')} ${rssItem.name}`}
       />
-    );
-  }
-
-  async function copyRssLink(url: string) {
-    if (await copyText(url)) {
-      message.success(t('notify.copy_success'));
-    } else {
-      message.error(t('notify.copy_failed'));
-    }
-  }
-
-  function renderCopyButton(url: string) {
-    return (
-      <button
-        type="button"
-        aria-label={t('notify.copy')}
-        title={t('notify.copy')}
-        className="text-brand/70 hover:text-brand focus-visible:ring-brand/40 flex size-7 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-2"
-        onClick={() => copyRssLink(url)}
-      >
-        <Copy className="size-3.5" />
-      </button>
     );
   }
 
@@ -268,18 +228,13 @@ export function RSSDesktop({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="bg-muted/50 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
-                            <span
-                              className="min-w-0 flex-1 truncate font-mono text-xs"
-                              title={item.url}
-                            >
-                              {item.url}
-                            </span>
-                            {renderCopyButton(item.url)}
-                          </div>
+                          <AbRssLink url={item.url} textClassName="truncate" />
                         </TableCell>
                         <TableCell className="text-right">
-                          {renderTags(item)}
+                          <AbRssTags
+                            rss={item}
+                            className="w-full justify-end"
+                          />
                         </TableCell>
                       </TableRow>
                     ))}

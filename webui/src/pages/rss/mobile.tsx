@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
+import { EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
 import { AbFloatingBar } from '@/components/common/ab-floating-bar';
 import { AbConfirm } from '@/components/common/ab-confirm';
-import { Badge } from '@/components/ui/badge';
-import { message } from '@/lib/message';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -14,7 +12,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -23,8 +20,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import type { RSS } from '#/rss';
 import type { RSSLayoutProps } from './types';
+import { AbRssLink } from '@/components/rss/ab-rss-link';
+import { AbRssTags } from '@/components/rss/ab-rss-tags';
 
 export function RSSMobile({
   rss,
@@ -55,44 +53,6 @@ export function RSSMobile({
           ? selectedRSS
           : [...selectedRSS, id]
         : selectedRSS.filter((i) => i !== id),
-    );
-  }
-
-  function renderTags(rssItem: RSS) {
-    return (
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        {rssItem.parser && <Badge variant="primary">{rssItem.parser}</Badge>}
-        {rssItem.aggregate && (
-          <Badge variant="primary">{t('rss.aggregate')}</Badge>
-        )}
-        {rssItem.enabled ? (
-          <Badge variant="active">active</Badge>
-        ) : (
-          <Badge variant="inactive">inactive</Badge>
-        )}
-      </div>
-    );
-  }
-
-  async function copyRssLink(url: string) {
-    if (await copyText(url)) {
-      message.success(t('notify.copy_success'));
-    } else {
-      message.error(t('notify.copy_failed'));
-    }
-  }
-
-  function renderCopyButton(url: string) {
-    return (
-      <button
-        type="button"
-        aria-label={t('notify.copy')}
-        title={t('notify.copy')}
-        className="text-brand/70 hover:text-brand focus-visible:ring-brand/40 flex size-7 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-2"
-        onClick={() => copyRssLink(url)}
-      >
-        <Copy className="size-3.5" />
-      </button>
     );
   }
 
@@ -199,16 +159,15 @@ export function RSSMobile({
                     aria-label={`${t('rss.selectbox')} ${item.name}`}
                   />
                 </div>
-                <div className="text-muted-foreground bg-muted/50 mt-3 flex min-w-0 items-center gap-1 rounded-lg px-2 py-1">
-                  <span
-                    className="min-w-0 flex-1 font-mono text-[11px] leading-relaxed break-all"
-                    title={item.url}
-                  >
-                    {item.url}
-                  </span>
-                  {renderCopyButton(item.url)}
+                <div className="mt-3">
+                  <AbRssLink
+                    url={item.url}
+                    textClassName="text-[11px] leading-relaxed break-all"
+                  />
                 </div>
-                <div className="mt-3">{renderTags(item)}</div>
+                <div className="mt-3">
+                  <AbRssTags rss={item} />
+                </div>
               </CardContent>
             </Card>
           ))

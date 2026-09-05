@@ -1,9 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiBangumi } from '@/api/bangumi';
-import { apiDownload } from '@/api/download';
-import { executeApi } from '@/hooks/use-api';
 import { useBangumiStore } from '@/store/bangumi';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { AbPopup } from '@/components/common/ab-popup';
@@ -18,10 +15,12 @@ export function AbEditRule() {
     editRule,
     closeEditPopup,
     setEditItem,
-    getAll,
     updateRule,
+    renameRule,
+    forceCollectRule,
     enableRule,
-    ruleManage,
+    disableRule,
+    deleteRule,
   } = useBangumiStore();
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
@@ -33,6 +32,7 @@ export function AbEditRule() {
   const [forceCollectDialog, setForceCollectDialog] = useState(false);
 
   const [loading, setLoading] = useState({
+    enable: false,
     collect: false,
     rename: false,
     deleteFileYes: false,
@@ -53,39 +53,35 @@ export function AbEditRule() {
     setDeleteFileDialog({ show: true, type, deleteFile: false });
   }
 
-  function emitdeleteFile() {
-    ruleManage(deleteFileDialog.type, rule.id, deleteFileDialog.deleteFile);
+  function enable() {
+    setLoading((l) => ({ ...l, enable: true }));
+    void enableRule(rule.id).finally(() =>
+      setLoading((l) => ({ ...l, enable: false })),
+    );
+  }
+
+  function deleteOrDisableRule() {
+    setLoading((l) => ({ ...l, deleteFileYes: true }));
+
+    const action =
+      deleteFileDialog.type === 'disable' ? disableRule : deleteRule;
+
+    void action(rule.id, deleteFileDialog.deleteFile).finally(() => {
+      setLoading((l) => ({ ...l, deleteFileYes: false }));
+    });
   }
 
   function forceCollect() {
-    executeApi(
-      apiDownload.forceCollect,
-      {
-        showMessage: true,
-        onBeforeExecute: () => setLoading((l) => ({ ...l, collect: true })),
-        onSuccess() {
-          getAll();
-          closeEditPopup();
-        },
-        onFinally: () => setLoading((l) => ({ ...l, collect: false })),
-      },
-      rule,
+    setLoading((l) => ({ ...l, collect: true }));
+    void forceCollectRule(rule).finally(() =>
+      setLoading((l) => ({ ...l, collect: false })),
     );
   }
 
   function rename() {
-    executeApi(
-      apiBangumi.rename,
-      {
-        showMessage: true,
-        onBeforeExecute: () => setLoading((l) => ({ ...l, rename: true })),
-        onSuccess() {
-          getAll();
-          closeEditPopup();
-        },
-        onFinally: () => setLoading((l) => ({ ...l, rename: false })),
-      },
-      rule,
+    setLoading((l) => ({ ...l, rename: true }));
+    void renameRule(rule).finally(() =>
+      setLoading((l) => ({ ...l, rename: false })),
     );
   }
 
@@ -95,7 +91,8 @@ export function AbEditRule() {
       onShowChange={(v) => !v && closeEditPopup()}
       title={t('homepage.rule.enable_rule')}
       width="sm"
-      onConfirm={() => enableRule(rule.id)}
+      confirmLoading={loading.enable}
+      onConfirm={enable}
     >
       {t('homepage.rule.enable_hit')}
     </AbConfirm>
@@ -158,10 +155,7 @@ export function AbEditRule() {
         }
         confirmType={deleteFileDialog.type === 'delete' ? 'warn' : 'brand'}
         confirmLoading={loading.deleteFileYes}
-        onConfirm={() => {
-          setLoading((l) => ({ ...l, deleteFileYes: true }));
-          emitdeleteFile();
-        }}
+        onConfirm={deleteOrDisableRule}
       >
         <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
           <Checkbox
