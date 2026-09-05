@@ -20,7 +20,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { BangumiRule } from '#/bangumi';
 import { ruleTemplate } from '#/bangumi';
 import { useTheme } from '@/hooks/use-theme';
-import { AbSearchBar } from '@/components/ab-search-bar';
+import { AbSearchBar } from '@/components/search/ab-search-bar';
 import { AbAddRss } from '@/components/rss/ab-add-rss';
 import { AbChangeAccount } from '@/components/account/ab-change-account';
 import { AbPlayerSettings } from '@/components/player/ab-player-settings';
