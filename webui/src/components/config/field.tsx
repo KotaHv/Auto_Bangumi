@@ -5,7 +5,7 @@ import { AbSelect } from '@/components/common/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { AbDynamicTags } from '@/components/common/ab-dynamic-tags';
 import { cn } from '@/lib/utils';
-import type { SettingControlType, SettingFieldConfig } from '#/components';
+import type { SettingControlType, SettingFieldConfig } from './types';
 
 type SettingValueFor<TType extends SettingControlType> = TType extends 'input'
   ? string | number | null

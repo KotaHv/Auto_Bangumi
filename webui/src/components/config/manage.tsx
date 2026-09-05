@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SettingField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import { useConfigStore } from '@/store/config';
-import type { SettingItem } from '#/components';
+import type { SettingItem } from './types';
 import type { BangumiManage } from '#/config';
 
 const RENAME_METHODS = [

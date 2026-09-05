@@ -9,7 +9,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem } from '#/components';
+import type { SettingItem } from './types';
 import type { ExperimentalOpenAI } from '#/config';
 
 export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {

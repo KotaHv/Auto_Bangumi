@@ -9,7 +9,7 @@ import {
   type ConfigFieldError,
 } from '@/lib/config-validation';
 import type { AbSelectOption } from '@/components/common/ab-select';
-import type { SettingItem } from '#/components';
+import type { SettingItem } from './types';
 import type { Proxy } from '#/config';
 
 const PROXY_TYPES: AbSelectOption[] = [

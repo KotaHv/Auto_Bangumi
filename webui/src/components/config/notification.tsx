@@ -8,7 +8,7 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { SettingItem } from '#/components';
+import type { SettingItem } from './types';
 import type { Notification } from '#/config';
 
 const NOTIFICATION_TYPES = [
