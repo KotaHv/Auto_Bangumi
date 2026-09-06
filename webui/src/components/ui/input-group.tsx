@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, type InputVariant } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
@@ -109,13 +109,18 @@ function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {
 
 function InputGroupInput({
   className,
+  preserveRadius = false,
   ...props
-}: React.ComponentProps<'input'>) {
+}: React.ComponentProps<'input'> & {
+  variant?: InputVariant;
+  preserveRadius?: boolean;
+}) {
   return (
     <Input
       data-slot="input-group-control"
       className={cn(
-        'flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent',
+        'flex-1 border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent',
+        !preserveRadius && 'rounded-none',
         className,
       )}
       {...props}

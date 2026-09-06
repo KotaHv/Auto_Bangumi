@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import {
   InputGroup,
+  InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
@@ -18,13 +19,12 @@ type AbPasswordProps = Omit<React.ComponentProps<'input'>, 'type'> & {
 const passwordVariants = {
   default: {
     inputGroup: '',
-    inputGroupInput: 'px-2',
+    inputGroupInput: '',
   },
   pill: {
     inputGroup:
       'bg-card focus-within:border-brand h-12 rounded-full dark:bg-white/5',
-    inputGroupInput:
-      'h-full rounded-none border-0 bg-transparent px-5 text-base shadow-none placeholder:text-base focus-visible:border-transparent focus-visible:ring-0 md:text-base md:placeholder:text-base dark:bg-transparent',
+    inputGroupInput: 'h-full focus-visible:border-transparent ',
   },
 } satisfies Record<
   AbPasswordVariant,
@@ -53,25 +53,36 @@ export function AbPassword({
       <InputGroupInput
         {...props}
         id={inputId}
+        variant={variant}
+        preserveRadius
         type={showPassword ? 'text' : 'password'}
-        className={cn(passwordVariants[variant].inputGroupInput, className)}
-      />
-      <InputGroupButton
-        size="icon-xs"
-        aria-label={
-          showPassword ? t('login.hide_password') : t('login.show_password')
-        }
-        aria-pressed={showPassword}
-        aria-controls={inputId}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => setShowPassword((v) => !v)}
-      >
-        {showPassword ? (
-          <EyeOff className="size-5" />
-        ) : (
-          <Eye className="size-5" />
+        className={cn(
+          passwordVariants[variant].inputGroupInput,
+          className,
+          'rounded-r-none',
         )}
-      </InputGroupButton>
+      />
+      <InputGroupAddon
+        align="inline-end"
+        className={variant === 'pill' ? 'pr-5' : 'pr-1.5'}
+      >
+        <InputGroupButton
+          size="icon-xs"
+          aria-label={
+            showPassword ? t('login.hide_password') : t('login.show_password')
+          }
+          aria-pressed={showPassword}
+          aria-controls={inputId}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setShowPassword((v) => !v)}
+        >
+          {showPassword ? (
+            <EyeOff className="size-5" />
+          ) : (
+            <Eye className="size-5" />
+          )}
+        </InputGroupButton>
+      </InputGroupAddon>
     </InputGroup>
   );
 }
