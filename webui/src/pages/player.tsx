@@ -39,7 +39,7 @@ export default function PlayerPage() {
           <EmptyDescription>{t('player.desc')}</EmptyDescription>
           <Button
             variant="brand"
-            className="mt-1"
+            className="mt-1 px-4 py-2"
             onClick={() => setShowSettings(true)}
           >
             {t('player.settings_title')}
