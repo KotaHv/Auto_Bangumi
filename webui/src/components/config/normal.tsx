@@ -2,22 +2,32 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import {
   formatConfigError,
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { Program } from '#/config';
+import type { Log, Program } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
-export function ConfigNormal({ errors = [] }: { errors?: ConfigFieldError[] }) {
+interface ConfigNormalFieldsProps {
+  program: Program;
+  log: Log;
+  disabled: boolean;
+  groupErrors?: Record<string, ConfigFieldError>;
+  onProgramChange?: (patch: Partial<Program>) => void;
+  onLogChange?: (patch: Partial<Log>) => void;
+}
+
+export function ConfigNormalFields({
+  program,
+  log,
+  disabled,
+  groupErrors = {},
+  onProgramChange,
+  onLogChange,
+}: ConfigNormalFieldsProps) {
   const { t } = useTranslation();
-
-  const program = useConfigStore((s) => s.config.program);
-  const log = useConfigStore((s) => s.config.log);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
-
-  const groupErrors = getGroupErrors(errors, 'program');
 
   const items: {
     configKey: keyof Program;
@@ -54,13 +64,14 @@ export function ConfigNormal({ errors = [] }: { errors?: ConfigFieldError[] }) {
             prop={item.prop}
             description={item.description}
             orientation="horizontal"
+            disabled={disabled}
             error={
               groupErrors[item.configKey]
                 ? formatConfigError(groupErrors[item.configKey], item.label)
                 : undefined
             }
             value={program[item.configKey]}
-            onChange={(v) => updateGroup('program', { [item.configKey]: v })}
+            onChange={(v) => onProgramChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
@@ -71,9 +82,25 @@ export function ConfigNormal({ errors = [] }: { errors?: ConfigFieldError[] }) {
         type="switch"
         fieldKey="log.debug_enable"
         orientation="horizontal"
+        disabled={disabled}
         value={log.debug_enable}
-        onChange={(v) => updateGroup('log', { debug_enable: v })}
+        onChange={(v) => onLogChange?.({ debug_enable: v })}
       />
     </div>
+  );
+}
+
+export function ConfigNormal() {
+  const { config, updateGroup, errors } = useConfigDraft();
+
+  return (
+    <ConfigNormalFields
+      program={config.program}
+      log={config.log}
+      disabled={false}
+      groupErrors={getGroupErrors(errors, 'program')}
+      onProgramChange={(patch) => updateGroup('program', patch)}
+      onLogChange={(patch) => updateGroup('log', patch)}
+    />
   );
 }

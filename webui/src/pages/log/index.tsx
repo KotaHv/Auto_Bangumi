@@ -1,7 +1,11 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { startLogPolling, stopLogPolling, useLogStore } from '@/store/log';
-import { useConfigStore } from '@/store/config';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiLog } from '@/api/log';
+import { configOptions, logKeys, logOptions } from '@/query/options';
+import { message } from '@/lib/message';
+import { returnUserLangMsg } from '@/i18n';
+import { copyText } from '@/lib/clipboard';
 import { useIsDesktop } from '@/hooks/use-desktop';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { LogMobile } from './mobile';
@@ -11,26 +15,32 @@ import type { LogLevelFilter, LogLineLimit } from './types';
 
 export default function LogPage() {
   const { t } = useTranslation();
-  const log = useLogStore((s) => s.log);
-  const loaded = useLogStore((s) => s.loaded);
-  const loading = useLogStore((s) => s.loading);
-  const resetting = useLogStore((s) => s.resetting);
-  const lineLimit = useLogStore((s) => s.lineLimit);
-  const setLineLimit = useLogStore((s) => s.setLineLimit);
-  const getLog = useLogStore((s) => s.getLog);
-  const reset = useLogStore((s) => s.reset);
-  const copy = useLogStore((s) => s.copy);
-
-  const debugEnable = useConfigStore((s) => s.config.log.debug_enable);
-  const getConfig = useConfigStore((s) => s.getConfig);
-  const isDesktop = useIsDesktop();
-
-  const logContainerRef = useRef<HTMLElement | null>(null);
-  const [scrolled, setScrolled] = useState(false);
+  const queryClient = useQueryClient();
+  const [lineLimit, setLineLimit] = useState<LogLineLimit>(100);
   const [filterLevel, setFilterLevel] = useState<LogLevelFilter>('ALL');
   const [pollingActive, setPollingActive] = useState(true);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const deferredLog = useDeferredValue(log);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  const logQuery = useQuery({
+    ...logOptions(lineLimit),
+    refetchInterval: pollingActive ? 10000 : false,
+  });
+  const { data: config } = useQuery(configOptions());
+  const logText = logQuery.data ?? '';
+  const deferredLog = useDeferredValue(logText);
+  const debugEnable = config?.log.debug_enable ?? false;
+  const isDesktop = useIsDesktop();
+  const logContainerRef = useRef<HTMLElement | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  const resetMutation = useMutation({
+    mutationFn: apiLog.clearLog,
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      queryClient.setQueriesData<string>({ queryKey: logKeys.all }, '');
+      void queryClient.invalidateQueries({ queryKey: logKeys.all });
+    },
+  });
 
   function backToBottom() {
     if (logContainerRef.current) {
@@ -39,7 +49,6 @@ export default function LogPage() {
   }
 
   const formatLog = useMemo(() => parseLog(deferredLog), [deferredLog]);
-
   const visibleLog = useMemo(
     () =>
       filterLevel === 'ALL'
@@ -49,62 +58,63 @@ export default function LogPage() {
   );
 
   useEffect(() => {
-    getConfig();
-    startLogPolling();
-    setPollingActive(true);
-
-    if (log) {
-      backToBottom();
-    } else {
-      setScrolled(false);
-    }
-
-    return () => stopLogPolling();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (!scrolled && deferredLog) {
       setScrolled(true);
       requestAnimationFrame(backToBottom);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deferredLog]);
+  }, [deferredLog, scrolled]);
 
-  function togglePolling() {
-    if (pollingActive) {
-      stopLogPolling();
-      setPollingActive(false);
-    } else {
-      startLogPolling();
-      setPollingActive(true);
+  async function getLog(
+    requestedLimit = lineLimit,
+    showLoading = true,
+  ): Promise<void> {
+    if (requestedLimit !== lineLimit) {
+      setLineLimit(requestedLimit);
+    }
+    if (showLoading) setManualRefreshing(true);
+    try {
+      await queryClient.refetchQueries({
+        queryKey: logOptions(requestedLimit).queryKey,
+        type: 'active',
+      });
+    } finally {
+      if (showLoading) setManualRefreshing(false);
     }
   }
 
   function changeLineLimit(limit: LogLineLimit) {
     setLineLimit(limit);
-    void getLog(limit);
+    setScrolled(false);
   }
 
-  function openResetConfirm() {
-    setShowResetConfirm(true);
+  async function copy() {
+    if (await copyText(logText)) {
+      message.success(t('notify.copy_success'));
+    } else {
+      message.error(t('notify.copy_failed'));
+    }
   }
 
   const props = {
     log: formatLog,
     visibleLog,
-    loaded,
-    loading,
+    loaded: logQuery.isFetched,
+    loading:
+      logQuery.isPending || manualRefreshing
+        ? ('visible' as const)
+        : logQuery.isFetching
+          ? ('silent' as const)
+          : (false as const),
     debugEnable,
     filterLevel,
     setFilterLevel,
     lineLimit,
     setLineLimit: changeLineLimit,
     pollingActive,
-    togglePolling,
+    togglePolling: () => setPollingActive((active) => !active),
     logContainerRef,
     getLog,
-    onReset: openResetConfirm,
+    onReset: () => setShowResetConfirm(true),
     copy,
   };
 
@@ -116,9 +126,9 @@ export default function LogPage() {
         onShowChange={setShowResetConfirm}
         title={t('log.reset')}
         confirmType="warn"
-        confirmLoading={resetting}
+        confirmLoading={resetMutation.isPending}
         onConfirm={async () => {
-          await reset();
+          await resetMutation.mutateAsync().catch(() => undefined);
           setShowResetConfirm(false);
         }}
       >

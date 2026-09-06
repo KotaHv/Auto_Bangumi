@@ -165,141 +165,147 @@ export function LogDesktop({
             </CardContent>
           </Card>
         </div>
-
-        <Card className="w-full overflow-hidden rounded-2xl [--card-spacing:0px]">
-          <CardContent className="relative min-h-48 px-4 py-2 **:data-[slot=table-container]:overflow-visible">
-            {!loaded ? (
-              <div className="min-h-48" />
-            ) : visibleLog.length === 0 ? (
-              <Empty className="min-h-64 border-0 p-6">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
-                    <FileText />
-                  </EmptyMedia>
-                  <EmptyTitle>
-                    {log.length === 0 ? t('log.empty') : t('log.no_matching')}
-                  </EmptyTitle>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <div
-                ref={(element) => {
-                  logContainerRef.current = element;
-                }}
-                className="ab-log-scrollbar max-h-[calc(100dvh-16rem)] min-h-32 overflow-auto overscroll-contain"
-              >
-                <Table className="w-full table-fixed">
-                  <TableHeader className="bg-card sticky top-0 z-10">
-                    <TableRow>
-                      <TableHead className="w-[20%] text-center text-sm font-semibold">
-                        {t('log.time')}
-                      </TableHead>
-                      <TableHead className="w-[10%] text-center text-sm font-semibold">
-                        {t('log.level')}
-                      </TableHead>
-                      {debugEnable && (
-                        <TableHead className="w-[25%] text-center text-sm font-semibold">
-                          {t('log.module')}
+        <div className="min-h-0 flex-1">
+          <Card className="flex max-h-full w-full flex-col overflow-hidden rounded-2xl [--card-spacing:0px]">
+            <CardContent className="relative min-h-0 overflow-hidden px-4 py-2 **:data-[slot=table-container]:overflow-visible">
+              {!loaded ? (
+                <div className="min-h-48" />
+              ) : visibleLog.length === 0 ? (
+                <Empty className="min-h-48 border-0 p-6">
+                  <EmptyHeader>
+                    <EmptyMedia
+                      variant="icon"
+                      className="bg-brand/10 text-brand"
+                    >
+                      <FileText />
+                    </EmptyMedia>
+                    <EmptyTitle>
+                      {log.length === 0 ? t('log.empty') : t('log.no_matching')}
+                    </EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <div
+                  ref={(element) => {
+                    logContainerRef.current = element;
+                  }}
+                  className="ab-log-scrollbar max-h-full min-h-0 overflow-auto overscroll-contain"
+                >
+                  <Table className="w-full table-fixed">
+                    <TableHeader className="bg-card sticky top-0 z-10">
+                      <TableRow>
+                        <TableHead className="w-[20%] text-center text-sm font-semibold">
+                          {t('log.time')}
                         </TableHead>
-                      )}
-                      <TableHead className="text-center text-sm font-semibold">
-                        {t('log.message')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {visibleLog.map((item) => (
-                      <TableRow key={item.index}>
-                        <TableCell className="text-muted-foreground min-w-0 font-mono text-xs wrap-break-word break-all whitespace-pre-wrap tabular-nums">
-                          {item.date || '-'}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span
-                            className={cn(
-                              'inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide',
-                              getTypeStyle(item.type),
-                            )}
-                          >
-                            {item.type || 'LOG'}
-                          </span>
-                        </TableCell>
+                        <TableHead className="w-[10%] text-center text-sm font-semibold">
+                          {t('log.level')}
+                        </TableHead>
                         {debugEnable && (
-                          <TableCell className="min-w-0 pr-4 wrap-break-word break-all whitespace-pre-wrap text-cyan-700 dark:text-cyan-300">
-                            {item.module || '-'}
-                          </TableCell>
+                          <TableHead className="w-[25%] text-center text-sm font-semibold">
+                            {t('log.module')}
+                          </TableHead>
                         )}
-                        <TableCell className="min-w-0 wrap-break-word whitespace-pre-wrap">
-                          {item.content}
-                        </TableCell>
+                        <TableHead className="text-center text-sm font-semibold">
+                          {t('log.message')}
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-            {(!loaded || loading === 'visible') && (
-              <div className="bg-card/70 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                <Spinner className="text-brand size-5" />
-              </div>
-            )}
-          </CardContent>
+                    </TableHeader>
 
-          <div className="bg-muted/30 border-border/70 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-xs">
-                {t('log.level')}
-              </span>
-              <AbSelect
-                value={filterLevel}
-                items={levelItems}
-                size="sm"
-                triggerClassName="bg-background w-32 text-xs"
-                onValueChange={(value) => {
-                  setFilterLevel(value as LogLevelFilter);
-                }}
-              />
-              <Separator orientation="vertical" className="mx-1 h-5" />
-              <span className="text-muted-foreground text-xs">
-                {t('log.lines.label')}
-              </span>
-              <AbSelect
-                value={lineLimit === null ? 'all' : String(lineLimit)}
-                items={lineLimitItems}
-                size="sm"
-                triggerClassName="bg-background w-24 text-xs"
-                onValueChange={(value) => {
-                  setLineLimit(
-                    value === 'all' ? null : (Number(value) as LogLineLimit),
-                  );
-                }}
-              />
-            </div>
+                    <TableBody>
+                      {visibleLog.map((item) => (
+                        <TableRow key={item.index}>
+                          <TableCell className="text-muted-foreground min-w-0 font-mono text-xs wrap-break-word break-all whitespace-pre-wrap tabular-nums">
+                            {item.date || '-'}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide',
+                                getTypeStyle(item.type),
+                              )}
+                            >
+                              {item.type || 'LOG'}
+                            </span>
+                          </TableCell>
+                          {debugEnable && (
+                            <TableCell className="min-w-0 pr-4 wrap-break-word break-all whitespace-pre-wrap text-cyan-700 dark:text-cyan-300">
+                              {item.module || '-'}
+                            </TableCell>
+                          )}
+                          <TableCell className="min-w-0 wrap-break-word whitespace-pre-wrap">
+                            {item.content}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+              {(!loaded || loading === 'visible') && (
+                <div className="bg-card/70 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                  <Spinner className="text-brand size-5" />
+                </div>
+              )}
+            </CardContent>
 
-            <div className="flex flex-wrap items-center justify-end gap-1">
-              <Button variant="ghost" size="sm" onClick={() => getLog()}>
-                <RefreshCw className="size-3.5" />
-                {t('log.update_now')}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={togglePolling}>
-                {pollingActive ? (
-                  <Pause className="size-3.5" />
-                ) : (
-                  <Play className="size-3.5" />
-                )}
-                {pollingActive ? t('log.stop_refresh') : t('log.start_refresh')}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onReset}>
-                <RotateCcw className="size-3.5" />
-                {t('log.reset')}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={copy}>
-                <Clipboard className="size-3.5" />
-                {t('log.copy')}
-              </Button>
+            <div className="bg-muted/30 border-border/70 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-xs">
+                  {t('log.level')}
+                </span>
+                <AbSelect
+                  value={filterLevel}
+                  items={levelItems}
+                  size="sm"
+                  triggerClassName="bg-background w-32 text-xs"
+                  onValueChange={(value) => {
+                    setFilterLevel(value as LogLevelFilter);
+                  }}
+                />
+                <Separator orientation="vertical" className="mx-1 h-5" />
+                <span className="text-muted-foreground text-xs">
+                  {t('log.lines.label')}
+                </span>
+                <AbSelect
+                  value={lineLimit === null ? 'all' : String(lineLimit)}
+                  items={lineLimitItems}
+                  size="sm"
+                  triggerClassName="bg-background w-24 text-xs"
+                  onValueChange={(value) => {
+                    setLineLimit(
+                      value === 'all' ? null : (Number(value) as LogLineLimit),
+                    );
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-1">
+                <Button variant="ghost" size="sm" onClick={() => getLog()}>
+                  <RefreshCw className="size-3.5" />
+                  {t('log.update_now')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={togglePolling}>
+                  {pollingActive ? (
+                    <Pause className="size-3.5" />
+                  ) : (
+                    <Play className="size-3.5" />
+                  )}
+                  {pollingActive
+                    ? t('log.stop_refresh')
+                    : t('log.start_refresh')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={onReset}>
+                  <RotateCcw className="size-3.5" />
+                  {t('log.reset')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={copy}>
+                  <Clipboard className="size-3.5" />
+                  {t('log.copy')}
+                </Button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );

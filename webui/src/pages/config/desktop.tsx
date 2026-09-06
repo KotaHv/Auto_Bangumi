@@ -1,4 +1,3 @@
-import { AbConfirm } from '@/components/common/ab-confirm';
 import { ConfigNav } from '@/components/config/nav';
 import { useTranslation } from 'react-i18next';
 import type { ConfigLayoutProps } from './types';
@@ -8,18 +7,8 @@ export function ConfigDesktop({
   activeTab,
   onSelectTab,
   contentRef,
-  renderSections,
-  renderFooterStatus,
-  renderFooterActions,
-  showFooter,
-  showLeaveConfirm,
-  onLeaveShowChange,
-  onConfirmLeave,
-  showCancelConfirm,
-  onCancelShowChange,
-  onCancelChanges,
-  confirmTitle,
-  confirmMessage,
+  content,
+  footer,
 }: ConfigLayoutProps) {
   const { t } = useTranslation();
 
@@ -46,38 +35,20 @@ export function ConfigDesktop({
               ref={contentRef}
               className="no-scrollbar min-h-0 flex-1 scroll-pt-5 overflow-x-hidden overflow-y-auto overscroll-contain px-6 py-5"
             >
-              {renderSections()}
+              {content}
             </div>
 
-            {showFooter && (
+            {footer && (
               <div className="bg-muted/30 border-border/70 flex shrink-0 items-center justify-between gap-4 border-t px-6 py-3">
-                {renderFooterStatus()}
+                {footer.status}
                 <div className="flex shrink-0 items-center gap-2">
-                  {renderFooterActions()}
+                  {footer.actions}
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        <AbConfirm
-          show={showLeaveConfirm}
-          onShowChange={onLeaveShowChange}
-          title={confirmTitle}
-          onConfirm={onConfirmLeave}
-        >
-          {confirmMessage}
-        </AbConfirm>
       </div>
-
-      <AbConfirm
-        show={showCancelConfirm}
-        onShowChange={onCancelShowChange}
-        title={confirmTitle}
-        onConfirm={onCancelChanges}
-      >
-        {confirmMessage}
-      </AbConfirm>
     </div>
   );
 }

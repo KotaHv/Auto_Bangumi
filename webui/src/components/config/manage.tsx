@@ -2,9 +2,9 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import type { ConfigFieldItem } from './types';
 import type { BangumiManage } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
 const RENAME_METHODS = [
   { value: 'normal', label: 'normal' },
@@ -13,11 +13,18 @@ const RENAME_METHODS = [
   { value: 'none', label: 'none' },
 ];
 
-export function ConfigManage() {
-  const { t } = useTranslation();
+interface ConfigManageFieldsProps {
+  manage: BangumiManage;
+  disabled: boolean;
+  onChange?: (patch: Partial<BangumiManage>) => void;
+}
 
-  const manage = useConfigStore((s) => s.config.bangumi_manage);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
+export function ConfigManageFields({
+  manage,
+  disabled,
+  onChange,
+}: ConfigManageFieldsProps) {
+  const { t } = useTranslation();
 
   const items: ConfigFieldItem<BangumiManage>[] = [
     {
@@ -62,14 +69,26 @@ export function ConfigManage() {
             {...item}
             fieldKey={`bangumi_manage.${item.configKey}`}
             orientation="horizontal"
-            disabled={item.configKey !== 'enable' && !manage.enable}
-            value={manage[item.configKey]}
-            onChange={(v) =>
-              updateGroup('bangumi_manage', { [item.configKey]: v })
+            disabled={
+              disabled || (item.configKey !== 'enable' && !manage.enable)
             }
+            value={manage[item.configKey]}
+            onChange={(v) => onChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function ConfigManage() {
+  const { config, updateGroup } = useConfigDraft();
+
+  return (
+    <ConfigManageFields
+      manage={config.bangumi_manage}
+      disabled={false}
+      onChange={(patch) => updateGroup('bangumi_manage', patch)}
+    />
   );
 }

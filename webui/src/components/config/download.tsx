@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import {
   formatConfigError,
   getGroupErrors,
@@ -10,21 +9,28 @@ import {
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
 import type { Downloader } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
-export function ConfigDownload({
-  errors = [],
-}: {
-  errors?: ConfigFieldError[];
-}) {
+interface ConfigDownloadFieldsProps {
+  downloader: Downloader;
+  useApiKey: boolean;
+  disabled: boolean;
+  groupErrors?: Record<string, ConfigFieldError>;
+  showAllFields?: boolean;
+  onChange?: (patch: Partial<Downloader>) => void;
+  onUseApiKeyChange?: (value: boolean) => void;
+}
+
+export function ConfigDownloadFields({
+  downloader,
+  useApiKey,
+  disabled,
+  groupErrors = {},
+  showAllFields = false,
+  onChange,
+  onUseApiKeyChange,
+}: ConfigDownloadFieldsProps) {
   const { t } = useTranslation();
-
-  const downloader = useConfigStore((s) => s.config.downloader);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
-  const useApiKey = useConfigStore((s) => s.useApiKey);
-  const setUseApiKey = (v: boolean) =>
-    useConfigStore.setState({ useApiKey: v });
-
-  const groupErrors = getGroupErrors(errors, 'downloader');
 
   const items: ConfigFieldItem<Downloader>[] = [
     {
@@ -81,12 +87,13 @@ export function ConfigDownload({
         type="switch"
         fieldKey="downloader.use_api_key"
         orientation="horizontal"
+        disabled={disabled}
         value={useApiKey}
-        onChange={setUseApiKey}
+        onChange={onUseApiKeyChange}
       />
 
       {items
-        .filter((item) => isVisible(item.configKey))
+        .filter((item) => showAllFields || isVisible(item.configKey))
         .map((item) => (
           <Fragment key={item.configKey}>
             <Separator className="my-2" />
@@ -94,6 +101,7 @@ export function ConfigDownload({
               {...item}
               fieldKey={`downloader.${item.configKey}`}
               orientation="horizontal"
+              disabled={disabled}
               error={
                 groupErrors[item.configKey]
                   ? formatConfigError(
@@ -105,12 +113,26 @@ export function ConfigDownload({
                   : undefined
               }
               value={downloader[item.configKey]}
-              onChange={(v) =>
-                updateGroup('downloader', { [item.configKey]: v })
-              }
+              onChange={(v) => onChange?.({ [item.configKey]: v })}
             />
           </Fragment>
         ))}
     </div>
+  );
+}
+
+export function ConfigDownload() {
+  const { config, updateGroup, useApiKey, setUseApiKey, errors } =
+    useConfigDraft();
+
+  return (
+    <ConfigDownloadFields
+      downloader={config.downloader}
+      useApiKey={useApiKey}
+      disabled={false}
+      groupErrors={getGroupErrors(errors, 'downloader')}
+      onChange={(patch) => updateGroup('downloader', patch)}
+      onUseApiKeyChange={setUseApiKey}
+    />
   );
 }

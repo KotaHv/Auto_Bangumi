@@ -1,17 +1,13 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
 import { AbEditRule } from '@/components/rule/ab-edit-rule';
-import { useBangumiStore } from '@/store/bangumi';
+import { bangumiListOptions } from '@/query/options';
 
 export default function BangumiPage() {
-  const bangumi = useBangumiStore((s) => s.bangumi);
-  const getAll = useBangumiStore((s) => s.getAll);
-  const openEditPopup = useBangumiStore((s) => s.openEditPopup);
-
-  useEffect(() => {
-    getAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: bangumi } = useQuery(bangumiListOptions());
+  const [editRuleId, setEditRuleId] = useState<number>();
+  const editRule = bangumi?.find((rule) => rule.id === editRuleId);
 
   return (
     <div className="h-full grow overflow-auto p-6">
@@ -21,13 +17,19 @@ export default function BangumiPage() {
             <AbBangumiCard
               bangumi={i}
               type="primary"
-              onClick={() => openEditPopup(i)}
+              onClick={() => setEditRuleId(i.id)}
             />
           </div>
         ))}
       </div>
 
-      <AbEditRule />
+      {editRule && (
+        <AbEditRule
+          key={editRule.id}
+          rule={editRule}
+          onClose={() => setEditRuleId(undefined)}
+        />
+      )}
     </div>
   );
 }

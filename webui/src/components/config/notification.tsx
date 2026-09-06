@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import {
   formatConfigError,
   getGroupErrors,
@@ -10,6 +9,7 @@ import {
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
 import type { Notification } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
 const NOTIFICATION_TYPES = [
   { value: 'telegram', label: 'telegram' },
@@ -18,17 +18,20 @@ const NOTIFICATION_TYPES = [
   { value: 'wecom', label: 'wecom' },
 ];
 
-export function ConfigNotification({
-  errors = [],
-}: {
-  errors?: ConfigFieldError[];
-}) {
+interface ConfigNotificationFieldsProps {
+  notification: Notification;
+  disabled: boolean;
+  groupErrors?: Record<string, ConfigFieldError>;
+  onChange?: (patch: Partial<Notification>) => void;
+}
+
+export function ConfigNotificationFields({
+  notification,
+  disabled,
+  groupErrors = {},
+  onChange,
+}: ConfigNotificationFieldsProps) {
   const { t } = useTranslation();
-
-  const notification = useConfigStore((s) => s.config.notification);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
-
-  const groupErrors = getGroupErrors(errors, 'notification');
 
   const items: ConfigFieldItem<Notification>[] = [
     {
@@ -65,7 +68,9 @@ export function ConfigNotification({
             {...item}
             fieldKey={`notification.${item.configKey}`}
             orientation="horizontal"
-            disabled={item.configKey !== 'enable' && !notification.enable}
+            disabled={
+              disabled || (item.configKey !== 'enable' && !notification.enable)
+            }
             error={
               groupErrors[item.configKey]
                 ? formatConfigError(
@@ -77,12 +82,23 @@ export function ConfigNotification({
                 : undefined
             }
             value={notification[item.configKey]}
-            onChange={(v) =>
-              updateGroup('notification', { [item.configKey]: v })
-            }
+            onChange={(v) => onChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function ConfigNotification() {
+  const { config, updateGroup, errors } = useConfigDraft();
+
+  return (
+    <ConfigNotificationFields
+      notification={config.notification}
+      disabled={false}
+      groupErrors={getGroupErrors(errors, 'notification')}
+      onChange={(patch) => updateGroup('notification', patch)}
+    />
   );
 }

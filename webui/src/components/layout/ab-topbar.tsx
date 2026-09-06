@@ -39,10 +39,13 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { startAppInfoPolling, stopAppInfoPolling } from '@/store/app-info';
-import { useBangumiStore } from '@/store/bangumi';
 import { changeLocale } from '@/i18n';
-import { useProgramStore } from '@/store/program';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiBangumi } from '@/api/bangumi';
+import { apiProgram } from '@/api/program';
+import { message } from '@/lib/message';
+import { returnUserLangMsg } from '@/i18n';
+import { bangumiKeys, programKeys } from '@/query/options';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/bangumi': 'Bangumi List',
@@ -78,8 +81,22 @@ export function AbTopbar() {
   const [searchRule, setSearchRule] = useState<BangumiRule>(ruleTemplate);
   const [showSearch, setShowSearch] = useState(false);
 
-  const program = useProgramStore.getState();
-  const refreshPoster = useBangumiStore((s) => s.refreshPoster);
+  const queryClient = useQueryClient();
+  const programMutation = useMutation({
+    mutationFn: (action: 'start' | 'stop' | 'restart' | 'shutdown') =>
+      apiProgram[action](),
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      await queryClient.invalidateQueries({ queryKey: programKeys.status() });
+    },
+  });
+  const refreshPosterMutation = useMutation({
+    mutationFn: apiBangumi.refreshPoster,
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      await queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
 
   const controlItems: {
     id: number;
@@ -87,25 +104,35 @@ export function AbTopbar() {
     label: string;
     handle?: () => unknown;
   }[] = [
-    { id: 1, icon: Play, label: t('topbar.start'), handle: program.start },
-    { id: 2, icon: Pause, label: t('topbar.pause'), handle: program.pause },
+    {
+      id: 1,
+      icon: Play,
+      label: t('topbar.start'),
+      handle: () => programMutation.mutate('start'),
+    },
+    {
+      id: 2,
+      icon: Pause,
+      label: t('topbar.pause'),
+      handle: () => programMutation.mutate('stop'),
+    },
     {
       id: 3,
       icon: RotateCw,
       label: t('topbar.restart'),
-      handle: program.restart,
+      handle: () => programMutation.mutate('restart'),
     },
     {
       id: 4,
       icon: Power,
       label: t('topbar.shutdown'),
-      handle: program.shutdown,
+      handle: () => programMutation.mutate('shutdown'),
     },
     {
       id: 5,
       icon: RefreshCw,
       label: t('topbar.refresh_poster'),
-      handle: refreshPoster,
+      handle: () => refreshPosterMutation.mutate(),
     },
   ];
 
@@ -119,11 +146,6 @@ export function AbTopbar() {
       window.setTimeout(() => setSearchRule(ruleTemplate), 300);
     }
   }, [showAddRSS]);
-
-  useEffect(() => {
-    startAppInfoPolling();
-    return () => stopAppInfoPolling();
-  }, []);
 
   return (
     <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">

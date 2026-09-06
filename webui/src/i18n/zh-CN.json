@@ -65,6 +65,10 @@
     "unsaved": "有未保存的修改",
     "invalid": "部分字段无效，请修正后再应用。",
     "navigation_title": "配置",
+    "loading": "配置加载中...",
+    "load_failed_title": "配置加载失败",
+    "load_failed": "无法从服务器加载配置。",
+    "retry": "重试",
     "save_success": "配置已保存",
     "save_failed": "配置保存失败，修改仍未保存。"
   },

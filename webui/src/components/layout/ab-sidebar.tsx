@@ -17,8 +17,13 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useAppInfoStore } from '@/store/app-info';
 import { useAuthStore } from '@/store/auth';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiAuth } from '@/api/auth';
+import { message } from '@/lib/message';
+import { returnUserLangMsg } from '@/i18n';
+import { programStatusOptions } from '@/query/options';
+import { removeProtectedQueries } from '@/query/client';
 
 interface SidebarItem {
   id: number;
@@ -31,8 +36,17 @@ interface SidebarItem {
 export function AbSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
-  const logout = useAuthStore((s) => s.logout);
-  const running = useAppInfoStore((s) => s.running);
+  const setLoggedIn = useAuthStore((s) => s.setLoggedIn);
+  const { data: status } = useQuery(programStatusOptions());
+  const logoutMutation = useMutation({
+    mutationFn: apiAuth.logout,
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      setLoggedIn(false);
+      removeProtectedQueries();
+    },
+  });
+  const running = status?.status ?? false;
   const { setOpenMobile, toggleSidebar } = useSidebar();
 
   const items: SidebarItem[] = [
@@ -129,7 +143,7 @@ export function AbSidebar() {
                 <button
                   onClick={() => {
                     setOpenMobile(false);
-                    logout();
+                    logoutMutation.mutate();
                   }}
                 />
               }

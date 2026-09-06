@@ -65,6 +65,10 @@
     "unsaved": "Unsaved changes",
     "invalid": "Some fields are invalid. Fix them before applying.",
     "navigation_title": "Configuration",
+    "loading": "Loading configuration...",
+    "load_failed_title": "Unable to load configuration",
+    "load_failed": "The configuration could not be loaded from the server.",
+    "retry": "Retry",
     "save_success": "Configuration saved",
     "save_failed": "Failed to save configuration. Your changes are still unsaved."
   },

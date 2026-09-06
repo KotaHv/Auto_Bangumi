@@ -1,4 +1,3 @@
-import { AbConfirm } from '@/components/common/ab-confirm';
 import { AbFloatingBar } from '@/components/common/ab-floating-bar';
 import { ConfigTabs } from '@/components/config/tabs';
 import type { ConfigLayoutProps } from './types';
@@ -10,18 +9,8 @@ export function ConfigMobile({
   tabListRef,
   tabRefs,
   contentRef,
-  renderSections,
-  renderFooterStatus,
-  renderFooterActions,
-  showFooter,
-  showLeaveConfirm,
-  onLeaveShowChange,
-  onConfirmLeave,
-  showCancelConfirm,
-  onCancelShowChange,
-  onCancelChanges,
-  confirmTitle,
-  confirmMessage,
+  content,
+  footer,
 }: ConfigLayoutProps) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -38,36 +27,18 @@ export function ConfigMobile({
           ref={contentRef}
           className="no-scrollbar my-4 h-full min-h-0 flex-1 scroll-pt-4 overflow-x-hidden overflow-y-auto overscroll-contain"
         >
-          {renderSections()}
+          {content}
         </div>
 
-        {showFooter && (
+        {footer && (
           <AbFloatingBar position="bottom" className="justify-between gap-3">
-            <div className="min-w-0">{renderFooterStatus()}</div>
+            <div className="min-w-0">{footer.status}</div>
             <div className="flex shrink-0 items-center gap-2">
-              {renderFooterActions()}
+              {footer.actions}
             </div>
           </AbFloatingBar>
         )}
       </div>
-
-      <AbConfirm
-        show={showLeaveConfirm}
-        onShowChange={onLeaveShowChange}
-        title={confirmTitle}
-        onConfirm={onConfirmLeave}
-      >
-        {confirmMessage}
-      </AbConfirm>
-
-      <AbConfirm
-        show={showCancelConfirm}
-        onShowChange={onCancelShowChange}
-        title={confirmTitle}
-        onConfirm={onCancelChanges}
-      >
-        {confirmMessage}
-      </AbConfirm>
     </div>
   );
 }

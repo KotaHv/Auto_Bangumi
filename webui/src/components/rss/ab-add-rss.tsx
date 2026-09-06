@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiDownload } from '@/api/download';
 import { apiRSS } from '@/api/rss';
 import { message } from '@/lib/message';
-import { executeApi } from '@/hooks/use-api';
-import { useBangumiStore } from '@/store/bangumi';
+import { bangumiKeys, rssKeys } from '@/query/options';
+import { returnUserLangMsg } from '@/i18n';
 import { rssTemplate } from '#/rss';
 import type { BangumiRule } from '#/bangumi';
 import type { RSS } from '#/rss';
@@ -36,17 +37,46 @@ export function AbAddRss({
   rule,
   onRuleChange,
 }: AbAddRssProps) {
-  const { getAll } = useBangumiStore();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   const [rss, setRss] = useState<RSS>(rssTemplate);
-  const [windowState, setWindowState] = useState({
-    loading: false,
-    rule: false,
-    next: false,
+  const [windowState, setWindowState] = useState({ rule: false, next: false });
+  const addMutation = useMutation({
+    mutationFn: apiRSS.add,
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
+      onShowChange(false);
+    },
   });
-  const [collectLoading, setCollectLoading] = useState(false);
-  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const analysisMutation = useMutation({
+    mutationFn: apiDownload.analysis,
+    onSuccess: (data) => {
+      onRuleChange(data);
+      setWindowState((s) => ({ ...s, next: true, rule: true }));
+    },
+  });
+  const collectMutation = useMutation({
+    mutationFn: apiDownload.collection,
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      await queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+      onShowChange(false);
+    },
+  });
+  const subscribeMutation = useMutation({
+    mutationFn: ({ rule, rss }: { rule: BangumiRule; rss: RSS }) =>
+      apiDownload.subscribe(rule, rss),
+    onSuccess: async (data) => {
+      message.success(returnUserLangMsg(data));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: bangumiKeys.list() }),
+        queryClient.invalidateQueries({ queryKey: rssKeys.list() }),
+      ]);
+      onShowChange(false);
+    },
+  });
 
   useEffect(() => {
     if (!show) {
@@ -67,70 +97,18 @@ export function AbAddRss({
         }),
       );
     } else if (rss.aggregate) {
-      executeApi(
-        apiRSS.add,
-        {
-          showMessage: true,
-          onBeforeExecute: () =>
-            setWindowState((s) => ({ ...s, loading: true })),
-          onSuccess() {
-            onShowChange(false);
-          },
-          onFinally: () => setWindowState((s) => ({ ...s, loading: false })),
-        },
-        rss,
-      );
+      addMutation.mutate(rss);
     } else {
-      executeApi(
-        apiDownload.analysis,
-        {
-          showMessage: true,
-          onBeforeExecute: () =>
-            setWindowState((s) => ({ ...s, loading: true })),
-          onSuccess(res) {
-            if (res) {
-              onRuleChange(res);
-            }
-            setWindowState((s) => ({ ...s, next: true, rule: true }));
-          },
-          onFinally: () => setWindowState((s) => ({ ...s, loading: false })),
-        },
-        rss,
-      );
+      analysisMutation.mutate(rss);
     }
   }
 
   function collect() {
-    executeApi(
-      apiDownload.collection,
-      {
-        showMessage: true,
-        onBeforeExecute: () => setCollectLoading(true),
-        onSuccess() {
-          getAll();
-          onShowChange(false);
-        },
-        onFinally: () => setCollectLoading(false),
-      },
-      rule,
-    );
+    collectMutation.mutate(rule);
   }
 
   function subscribe() {
-    executeApi(
-      apiDownload.subscribe,
-      {
-        showMessage: true,
-        onBeforeExecute: () => setSubscribeLoading(true),
-        onSuccess() {
-          getAll();
-          onShowChange(false);
-        },
-        onFinally: () => setSubscribeLoading(false),
-      },
-      rule,
-      rss,
-    );
+    subscribeMutation.mutate({ rule, rss });
   }
 
   return (
@@ -208,7 +186,7 @@ export function AbAddRss({
             <Button
               variant="brand"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
-              loading={windowState.loading}
+              loading={addMutation.isPending || analysisMutation.isPending}
               onClick={addRss}
             >
               {t('topbar.add.button')}
@@ -225,7 +203,7 @@ export function AbAddRss({
             <Button
               variant="outline"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
-              loading={collectLoading}
+              loading={collectMutation.isPending}
               onClick={collect}
             >
               {t('topbar.add.collect')}
@@ -234,7 +212,7 @@ export function AbAddRss({
             <Button
               variant="brand"
               className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
-              loading={subscribeLoading}
+              loading={subscribeMutation.isPending}
               onClick={subscribe}
             >
               {t('topbar.add.subscribe')}

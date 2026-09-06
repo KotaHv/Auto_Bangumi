@@ -1,27 +1,28 @@
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBangumiStore } from '@/store/bangumi';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiBangumi } from '@/api/bangumi';
+import { apiDownload } from '@/api/download';
+import { bangumiKeys } from '@/query/options';
+import { message } from '@/lib/message';
+import { returnUserLangMsg } from '@/i18n';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { AbPopup } from '@/components/common/ab-popup';
 import { AbRule } from '@/components/rule/ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import type { BangumiRule } from '#/bangumi';
 
-export function AbEditRule() {
+interface AbEditRuleProps {
+  rule: BangumiRule;
+  onClose: () => void;
+}
+
+export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   const { t } = useTranslation();
-
-  const {
-    editRule,
-    closeEditPopup,
-    setEditItem,
-    updateRule,
-    renameRule,
-    forceCollectRule,
-    enableRule,
-    disableRule,
-    deleteRule,
-  } = useBangumiStore();
+  const queryClient = useQueryClient();
+  const [draftRule, setDraftRule] = useState(() => rule);
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
     show: boolean;
@@ -31,67 +32,90 @@ export function AbEditRule() {
 
   const [forceCollectDialog, setForceCollectDialog] = useState(false);
 
-  const [loading, setLoading] = useState({
-    enable: false,
-    collect: false,
-    rename: false,
-    deleteFileYes: false,
+  const updateMutation = useMutation({
+    mutationFn: ({ id, rule }: { id: number; rule: BangumiRule }) =>
+      apiBangumi.updateRule(id, rule),
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
   });
-
-  const show = editRule.show;
-  const rule = editRule.item;
-
-  useEffect(() => {
-    if (!show) {
-      setDeleteFileDialog({ show: false, type: 'disable', deleteFile: false });
-      setForceCollectDialog(false);
-      setLoading((l) => ({ ...l, deleteFileYes: false }));
-    }
-  }, [show]);
+  const renameMutation = useMutation({
+    mutationFn: apiBangumi.rename,
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
+  const collectMutation = useMutation({
+    mutationFn: apiDownload.forceCollect,
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
+  const enableMutation = useMutation({
+    mutationFn: apiBangumi.enableRule,
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
+  const disableMutation = useMutation({
+    mutationFn: ({ id, file }: { id: number; file: boolean }) =>
+      apiBangumi.disableRule(id, file),
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, file }: { id: number; file: boolean }) =>
+      apiBangumi.deleteRule(id, file),
+    onSuccess: (data) => {
+      message.success(returnUserLangMsg(data));
+      onClose();
+      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
+    },
+  });
 
   function showDeleteFileDialog(type: 'disable' | 'delete') {
     setDeleteFileDialog({ show: true, type, deleteFile: false });
   }
 
   function enable() {
-    setLoading((l) => ({ ...l, enable: true }));
-    void enableRule(rule.id).finally(() =>
-      setLoading((l) => ({ ...l, enable: false })),
-    );
+    enableMutation.mutate(draftRule.id);
   }
 
   function deleteOrDisableRule() {
-    setLoading((l) => ({ ...l, deleteFileYes: true }));
-
-    const action =
-      deleteFileDialog.type === 'disable' ? disableRule : deleteRule;
-
-    void action(rule.id, deleteFileDialog.deleteFile).finally(() => {
-      setLoading((l) => ({ ...l, deleteFileYes: false }));
-    });
+    const variables = { id: draftRule.id, file: deleteFileDialog.deleteFile };
+    if (deleteFileDialog.type === 'disable') {
+      disableMutation.mutate(variables);
+    } else {
+      deleteMutation.mutate(variables);
+    }
   }
 
   function forceCollect() {
-    setLoading((l) => ({ ...l, collect: true }));
-    void forceCollectRule(rule).finally(() =>
-      setLoading((l) => ({ ...l, collect: false })),
-    );
+    collectMutation.mutate(draftRule);
   }
 
   function rename() {
-    setLoading((l) => ({ ...l, rename: true }));
-    void renameRule(rule).finally(() =>
-      setLoading((l) => ({ ...l, rename: false })),
-    );
+    renameMutation.mutate(draftRule);
   }
 
-  return rule.deleted ? (
+  return draftRule.deleted ? (
     <AbConfirm
-      show={show}
-      onShowChange={(v) => !v && closeEditPopup()}
+      show
+      onShowChange={(v) => !v && onClose()}
       title={t('homepage.rule.enable_rule')}
       width="sm"
-      confirmLoading={loading.enable}
+      confirmLoading={enableMutation.isPending}
       onConfirm={enable}
     >
       {t('homepage.rule.enable_hit')}
@@ -99,13 +123,13 @@ export function AbEditRule() {
   ) : (
     <AbPopup
       title={t('homepage.rule.edit_rule')}
-      show={show}
-      onShowChange={(v) => !v && closeEditPopup()}
+      show
+      onShowChange={(v) => !v && onClose()}
       width="xl"
       className="shadow-2xl"
     >
       <div>
-        <AbRule rule={rule} onChange={setEditItem} />
+        <AbRule rule={draftRule} onChange={setDraftRule} />
 
         <Separator className="my-4" />
 
@@ -115,7 +139,11 @@ export function AbEditRule() {
               {t('homepage.rule.force_collect')}
             </Button>
 
-            <Button variant="ghost" loading={loading.rename} onClick={rename}>
+            <Button
+              variant="ghost"
+              loading={renameMutation.isPending}
+              onClick={rename}
+            >
               {t('homepage.rule.rename')}
             </Button>
 
@@ -138,7 +166,10 @@ export function AbEditRule() {
           <Button
             variant="brand"
             className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
-            onClick={() => updateRule(rule.id, rule)}
+            loading={updateMutation.isPending}
+            onClick={() =>
+              updateMutation.mutate({ id: draftRule.id, rule: draftRule })
+            }
           >
             {t('homepage.rule.apply')}
           </Button>
@@ -154,7 +185,7 @@ export function AbEditRule() {
             : t('homepage.rule.delete_hit')
         }
         confirmType={deleteFileDialog.type === 'delete' ? 'warn' : 'brand'}
-        confirmLoading={loading.deleteFileYes}
+        confirmLoading={disableMutation.isPending || deleteMutation.isPending}
         onConfirm={deleteOrDisableRule}
       >
         <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
@@ -173,7 +204,7 @@ export function AbEditRule() {
         onShowChange={setForceCollectDialog}
         title={t('homepage.rule.force_collect')}
         width="sm"
-        confirmLoading={loading.collect}
+        confirmLoading={collectMutation.isPending}
         onConfirm={forceCollect}
       >
         {t('homepage.rule.force_collect_hit')}

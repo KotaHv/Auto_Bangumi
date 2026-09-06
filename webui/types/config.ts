@@ -50,58 +50,6 @@ export interface Config {
   };
 }
 
-export const initConfig: Config = {
-  program: {
-    rss_time: 0,
-    rename_time: 0,
-    webui_port: 0,
-  },
-  downloader: {
-    host: '',
-    username: '',
-    password: '',
-    api_key: null,
-    path: '',
-    ssl: false,
-  },
-  rss_parser: {
-    enable: true,
-    filter: [],
-    language: 'zh',
-  },
-  bangumi_manage: {
-    enable: true,
-    eps_complete: true,
-    rename_method: 'normal',
-    group_tag: true,
-    remove_bad_torrent: true,
-    retain_latest_media_version: false,
-  },
-  log: {
-    debug_enable: false,
-  },
-  proxy: {
-    enable: false,
-    type: 'http',
-    host: '',
-    port: 0,
-    username: '',
-    password: '',
-  },
-  notification: {
-    enable: false,
-    type: 'telegram',
-    token: '',
-    chat_id: '',
-  },
-  experimental_openai: {
-    enable: false,
-    api_key: '',
-    base_url: 'https://api.openai.com/v1/',
-    model: 'gpt-5.6-luna',
-  },
-};
-
 type getItem<T extends keyof Config> = Pick<Config, T>[T];
 
 export type Program = getItem<'program'>;

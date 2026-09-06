@@ -1,28 +1,53 @@
 import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/common/ab-password';
 import { LoginGlow } from '@/components/login/login-glow';
+import { apiAuth } from '@/api/auth';
 import { useAuthStore } from '@/store/auth';
+import { message } from '@/lib/message';
 
 export default function LoginPage() {
   const { t } = useTranslation();
 
-  const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
-  const login = useAuthStore((s) => s.login);
+  const setLoggedIn = useAuthStore((s) => s.setLoggedIn);
+  const [user, setUser] = useState({ username: '', password: '' });
 
   const passwordRef = useRef<HTMLInputElement | null>(null);
-  const [loading, setLoading] = useState(false);
+  const loginMutation = useMutation({
+    mutationFn: () => apiAuth.login(user.username, user.password),
+    onSuccess: () => {
+      setLoggedIn(true);
+      setUser({ username: '', password: '' });
+      message.success(t('notify.login_success'));
+    },
+    onError: (error) => {
+      if ((error as { status?: number }).status === 404) {
+        message.error(t('notify.please_update'));
+      }
+    },
+  });
 
   async function handleLogin() {
-    setLoading(true);
-    try {
-      await login();
-    } finally {
-      setLoading(false);
+    if (user.username === '') {
+      message.warning(
+        t('notify.please_enter', { field: t('topbar.profile.username') }),
+      );
+      return;
     }
+    if (user.password === '') {
+      message.warning(
+        t('notify.please_enter', { field: t('topbar.profile.password') }),
+      );
+      return;
+    }
+    if (user.password.length < 8) {
+      message.error(t('notify.password_length_error'));
+      return;
+    }
+    loginMutation.mutate();
   }
 
   return (
@@ -45,7 +70,9 @@ export default function LoginPage() {
           <Input
             variant="pill"
             value={user.username}
-            onChange={(e) => setUser({ username: e.target.value })}
+            onChange={(e) =>
+              setUser((s) => ({ ...s, username: e.target.value }))
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') passwordRef.current?.focus();
             }}
@@ -61,7 +88,9 @@ export default function LoginPage() {
             ref={passwordRef}
             id="login-password"
             value={user.password}
-            onChange={(e) => setUser({ password: e.target.value })}
+            onChange={(e) =>
+              setUser((s) => ({ ...s, password: e.target.value }))
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 handleLogin();
@@ -77,7 +106,7 @@ export default function LoginPage() {
           <Button
             variant="brand"
             className="h-12 w-full rounded-full text-base"
-            loading={loading}
+            loading={loginMutation.isPending}
             onClick={handleLogin}
           >
             {t('login.login_btn')}

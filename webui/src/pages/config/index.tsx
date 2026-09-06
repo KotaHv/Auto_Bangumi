@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBlocker, useSearchParams } from 'react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
   Download,
@@ -12,21 +13,24 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { message } from '@/lib/message';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { returnUserLangMsg } from '@/i18n';
+import { AbConfirm } from '@/components/common/ab-confirm';
 import { ConfigDownload } from '@/components/config/download';
+import { ConfigLoadError } from '@/components/config/config-load-error';
 import { ConfigManage } from '@/components/config/manage';
 import { ConfigNormal } from '@/components/config/normal';
 import { ConfigNotification } from '@/components/config/notification';
 import { ConfigOpenAI } from '@/components/config/openai';
 import { ConfigParser } from '@/components/config/parser';
 import { ConfigProxy } from '@/components/config/proxy';
-import { useConfigStore } from '@/store/config';
+import { apiConfig } from '@/api/config';
+import { apiProgram } from '@/api/program';
+import { configKeys, configOptions } from '@/query/options';
 import { getConfigErrors } from '@/lib/config-validation';
-import { useIsDesktop } from '@/hooks/use-desktop';
-import { ConfigMobile } from './mobile';
-import { ConfigDesktop } from './desktop';
-import type { ConfigSection } from './types';
+import { ConfigPageLayout } from './layout';
+import { ConfigLoadingView } from './loading';
+import { ConfigSections } from './sections';
+import { ConfigDraftContext, type ConfigSection } from './types';
 import type { Config } from '#/config';
 
 function hasConfigChanges(
@@ -45,30 +49,10 @@ function hasConfigChanges(
 // The tab strip is outside the scrolling content, so section positions only
 // need to account for the scroll container's own padding.
 const useTabOffset = () => {
-  const isDesktop = useIsDesktop();
   const ref = useRef(0);
 
-  return { isDesktop, tabOffsetRef: ref };
+  return { tabOffsetRef: ref };
 };
-
-function ConfigSkeletonRow() {
-  return (
-    <div className="flex min-h-8 items-center justify-between gap-6">
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="h-8 w-full sm:w-64" />
-    </div>
-  );
-}
-
-function ConfigSectionSkeleton() {
-  return (
-    <div className="space-y-2 py-1">
-      <ConfigSkeletonRow />
-      <ConfigSkeletonRow />
-      <ConfigSkeletonRow />
-    </div>
-  );
-}
 
 const CONFIG_SECTIONS: ConfigSection[] = [
   {
@@ -116,16 +100,61 @@ const CONFIG_SECTIONS: ConfigSection[] = [
 ];
 
 export default function ConfigPage() {
+  const configQuery = useQuery(configOptions());
+
+  if (configQuery.isPending) {
+    return <ConfigLoadingView sections={CONFIG_SECTIONS} />;
+  }
+
+  if (!configQuery.data) {
+    return <ConfigLoadError onRetry={() => void configQuery.refetch()} />;
+  }
+
+  return <ConfigEditor fetchedConfig={configQuery.data} />;
+}
+
+function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const [draftConfig, setDraftConfig] = useState<Config>();
+  const [draftUseApiKey, setDraftUseApiKey] = useState<boolean>();
 
-  const getConfig = useConfigStore((s) => s.getConfig);
-  const setConfig = useConfigStore((s) => s.setConfig);
-  const config = useConfigStore((s) => s.config);
-  const savedConfig = useConfigStore((s) => s.savedConfig);
-  const useApiKey = useConfigStore((s) => s.useApiKey);
-  const savedUseApiKey = useConfigStore((s) => s.savedUseApiKey);
-  const loaded = useConfigStore((s) => s.loaded);
+  useEffect(() => {
+    if (!draftConfig) {
+      setDraftConfig(fetchedConfig);
+      setDraftUseApiKey(!!fetchedConfig.downloader.api_key);
+    }
+  }, [draftConfig, fetchedConfig]);
+
+  const config = draftConfig ?? fetchedConfig;
+  const savedConfig = fetchedConfig;
+  const useApiKey = draftUseApiKey ?? !!fetchedConfig.downloader.api_key;
+  const savedUseApiKey = !!fetchedConfig.downloader.api_key;
+
+  function shallowEqual<T extends object>(a: T, b: T) {
+    const keys = Object.keys(a) as Array<keyof T>;
+    return (
+      keys.length === Object.keys(b).length &&
+      keys.every((key) => Object.is(a[key], b[key]))
+    );
+  }
+
+  function updateGroup<TKey extends keyof Config>(
+    key: TKey,
+    patch: Partial<Config[TKey]>,
+  ) {
+    setDraftConfig((current) => {
+      const base = current ?? config;
+      const nextGroup = { ...base[key], ...patch };
+      return {
+        ...base,
+        [key]: shallowEqual(nextGroup, savedConfig[key])
+          ? savedConfig[key]
+          : nextGroup,
+      };
+    });
+  }
   const configChanged = hasConfigChanges(
     config,
     savedConfig,
@@ -147,10 +176,9 @@ export default function ConfigPage() {
   });
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { isDesktop, tabOffsetRef } = useTabOffset();
+  const { tabOffsetRef } = useTabOffset();
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLElement | null>>({});
   const contentRef = useRef<HTMLDivElement>(null);
@@ -160,11 +188,6 @@ export default function ConfigPage() {
   const finishProgrammaticRef = useRef<(() => void) | null>(null);
   const tabInlineRef = useRef<ScrollLogicalPosition>('nearest');
   const initialUrlSyncRef = useRef(false);
-
-  useEffect(() => {
-    getConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function setActiveTab(
     key: string,
@@ -240,7 +263,11 @@ export default function ConfigPage() {
   function cancelChanges() {
     setShowCancelConfirm(false);
     setSaveError(null);
-    getConfig();
+    setDraftConfig(undefined);
+    setDraftUseApiKey(undefined);
+    void queryClient.refetchQueries({
+      queryKey: configOptions().queryKey,
+    });
   }
 
   function getSectionKey(group: string) {
@@ -269,8 +296,27 @@ export default function ConfigPage() {
     });
   }
 
+  const restartMutation = useMutation({
+    mutationFn: apiProgram.restart,
+    onSuccess: (data) => message.success(returnUserLangMsg(data)),
+  });
+  const saveMutation = useMutation({
+    mutationFn: ({ next }: { next: Config }) => apiConfig.updateConfig(next),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: configKeys.current() });
+      const savedConfig = queryClient.getQueryData<Config>(
+        configKeys.current(),
+      );
+      if (savedConfig) {
+        setDraftConfig(savedConfig);
+        setDraftUseApiKey(!!savedConfig.downloader.api_key);
+      }
+      restartMutation.mutate();
+    },
+  });
+
   async function applyChanges() {
-    if (saving) return;
+    if (saveMutation.isPending) return;
 
     if (errors.length > 0) {
       focusConfigError(errors[0]);
@@ -278,16 +324,31 @@ export default function ConfigPage() {
     }
 
     setSaveError(null);
-    setSaving(true);
-    try {
-      const success = await setConfig();
-      if (success) {
-        message.success(t('config.save_success'));
-      } else {
-        setSaveError(t('config.save_failed'));
+    const next: Config = {
+      ...config,
+      downloader: { ...config.downloader, api_key: null },
+    };
+    if (useApiKey) {
+      const key = config.downloader.api_key?.trim() ?? '';
+      if (!key) {
+        message.warning(
+          t('notify.please_enter', {
+            field: t('config.downloader_set.api_key'),
+          }),
+        );
+        return;
       }
-    } finally {
-      setSaving(false);
+      if (!/^qbt_[A-Za-z0-9]{28}$/.test(key)) {
+        message.error(t('notify.api_key_format_error'));
+        return;
+      }
+      next.downloader = { ...config.downloader, api_key: key };
+    }
+    try {
+      await saveMutation.mutateAsync({ next });
+      message.success(t('config.save_success'));
+    } catch {
+      setSaveError(t('config.save_failed'));
     }
   }
 
@@ -304,13 +365,7 @@ export default function ConfigPage() {
   // `?tab=` changes keep the same pathname and never trigger the blocker.
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     if (nextLocation.pathname === currentLocation.pathname) return false;
-    const state = useConfigStore.getState();
-    return hasConfigChanges(
-      state.config,
-      state.savedConfig,
-      state.useApiKey,
-      state.savedUseApiKey,
-    );
+    return configChanged;
   });
 
   useEffect(() => {
@@ -335,21 +390,20 @@ export default function ConfigPage() {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        const state = useConfigStore.getState();
         const dirty = hasConfigChanges(
-          state.config,
-          state.savedConfig,
-          state.useApiKey,
-          state.savedUseApiKey,
+          config,
+          savedConfig,
+          useApiKey,
+          savedUseApiKey,
         );
-        if (dirty && !getConfigErrors(state.config, state.useApiKey).length) {
+        if (dirty && !hasErrors) {
           applyChanges();
         }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [config, savedConfig, useApiKey, savedUseApiKey, saveMutation.isPending]);
 
   useEffect(() => {
     const param = searchParams.get('tab');
@@ -461,32 +515,12 @@ export default function ConfigPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const renderSections = () => (
-    <div className="space-y-6 sm:space-y-8">
-      {CONFIG_SECTIONS.map((section) => (
-        <section
-          key={section.key}
-          id={section.key}
-          ref={(el) => {
-            sectionRefs.current[section.key] = el;
-          }}
-          className="min-w-0 scroll-mt-0"
-        >
-          <h2 className="text-brand mb-2 pl-4 font-sans text-[15px] font-semibold select-text lg:font-medium">
-            {t(section.titleKey)}
-          </h2>
-          <Card className="border-border overflow-hidden rounded-2xl [--card-spacing:0px]">
-            <CardContent className="px-4 py-2">
-              {loaded ? (
-                <section.Comp errors={errors} />
-              ) : (
-                <ConfigSectionSkeleton />
-              )}
-            </CardContent>
-          </Card>
-        </section>
-      ))}
-    </div>
+  const content = (
+    <ConfigSections
+      sections={CONFIG_SECTIONS}
+      sectionRefs={sectionRefs}
+      renderSection={(section) => <section.Comp />}
+    />
   );
 
   function renderFooterStatus() {
@@ -526,7 +560,7 @@ export default function ConfigPage() {
         variant="outline"
         className="h-9 min-w-20 sm:min-w-24"
         onClick={() => setShowCancelConfirm(true)}
-        disabled={!configChanged || saving}
+        disabled={!configChanged || saveMutation.isPending}
       >
         {t('config.cancel')}
       </Button>
@@ -535,8 +569,8 @@ export default function ConfigPage() {
         variant="brand"
         className="h-9 min-w-24 sm:min-w-28"
         onClick={applyChanges}
-        loading={saving}
-        disabled={!configChanged || saving}
+        loading={saveMutation.isPending}
+        disabled={!configChanged || saveMutation.isPending}
       >
         {t('config.apply')}
       </Button>
@@ -550,23 +584,44 @@ export default function ConfigPage() {
     tabListRef,
     tabRefs,
     contentRef,
-    renderSections,
-    renderFooterStatus,
-    renderFooterActions,
-    showFooter: configChanged,
-    showLeaveConfirm,
-    onLeaveShowChange: handleLeaveShowChange,
-    onConfirmLeave: confirmLeave,
-    showCancelConfirm,
-    onCancelShowChange: setShowCancelConfirm,
-    onCancelChanges: cancelChanges,
-    confirmTitle: t('config.cancel_confirm.title'),
-    confirmMessage: t('config.cancel_confirm.message'),
+    content,
+    footer: configChanged
+      ? {
+          status: renderFooterStatus(),
+          actions: renderFooterActions(),
+        }
+      : undefined,
   };
 
-  return isDesktop ? (
-    <ConfigDesktop {...layoutProps} />
-  ) : (
-    <ConfigMobile {...layoutProps} />
+  return (
+    <>
+      <ConfigDraftContext.Provider
+        value={{
+          config,
+          updateGroup,
+          useApiKey,
+          setUseApiKey: setDraftUseApiKey,
+          errors,
+        }}
+      >
+        <ConfigPageLayout {...layoutProps} />
+      </ConfigDraftContext.Provider>
+      <AbConfirm
+        show={showLeaveConfirm}
+        onShowChange={handleLeaveShowChange}
+        title={t('config.cancel_confirm.title')}
+        onConfirm={confirmLeave}
+      >
+        {t('config.cancel_confirm.message')}
+      </AbConfirm>
+      <AbConfirm
+        show={showCancelConfirm}
+        onShowChange={setShowCancelConfirm}
+        title={t('config.cancel_confirm.title')}
+        onConfirm={cancelChanges}
+      >
+        {t('config.cancel_confirm.message')}
+      </AbConfirm>
+    </>
   );
 }

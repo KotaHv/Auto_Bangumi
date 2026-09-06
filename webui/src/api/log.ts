@@ -2,9 +2,10 @@ import { axios } from '@/utils/axios';
 import type { ApiSuccess } from '#/api';
 
 export const apiLog = {
-  async getLog(lines: number | null = 100) {
+  async getLog(lines: number | null = 100, signal?: AbortSignal) {
     const { data } = await axios.get<string>('api/v1/log', {
       params: { lines: lines ?? 'all' },
+      signal,
     });
     return data;
   },

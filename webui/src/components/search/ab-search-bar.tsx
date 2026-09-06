@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AbSearch } from './ab-search';
 import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useSearchStore } from '@/store/search';
+import { searchProviderOptions } from '@/query/options';
+import { useSearchSSE } from '@/hooks/use-search-sse';
 import type { BangumiRule } from '#/bangumi';
 
 interface AbSearchBarProps {
@@ -13,29 +15,20 @@ interface AbSearchBarProps {
 
 export function AbSearchBar({ onAddBangumi, className }: AbSearchBarProps) {
   const [open, setOpen] = useState(false);
-
-  const {
-    providers,
-    provider,
-    loading,
+  const [inputValue, setInputValue] = useState('');
+  const [provider, setProvider] = useState('mikan');
+  const [searchTrigger, setSearchTrigger] = useState(0);
+  const { data: providers = [] } = useQuery(searchProviderOptions());
+  const { bangumiList, loading } = useSearchSSE(
     inputValue,
-    bangumiList,
-    setInputValue,
-    setProvider,
-    getProviders,
-    onSearch,
-    clearSearch,
-  } = useSearchStore();
-
-  useEffect(() => {
-    getProviders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    provider,
+    searchTrigger,
+  );
 
   function handleOpenChange(next: boolean) {
     if (!next) {
       setOpen(false);
-      clearSearch();
+      setInputValue('');
     } else {
       setOpen(true);
     }
@@ -53,7 +46,7 @@ export function AbSearchBar({ onAddBangumi, className }: AbSearchBarProps) {
           loading={loading}
           inputValue={inputValue}
           onInputChange={setInputValue}
-          onSearch={onSearch}
+          onSearch={() => setSearchTrigger((value) => value + 1)}
           onSelectProvider={setProvider}
         />
 

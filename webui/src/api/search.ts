@@ -39,6 +39,7 @@ export const apiSearch = {
           ev,
         );
         eventSource.close();
+        observer.error(new Error('Search stream closed unexpectedly.'));
       };
 
       return () => {
@@ -49,8 +50,10 @@ export const apiSearch = {
     return bangumiInfo$;
   },
 
-  async getProvider() {
-    const { data } = await axios.get<string[]>('api/v1/search/provider');
+  async getProvider(signal?: AbortSignal) {
+    const { data } = await axios.get<string[]>('api/v1/search/provider', {
+      signal,
+    });
     return data;
   },
 };

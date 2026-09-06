@@ -4,8 +4,10 @@ import type { BangumiAPI, BangumiRule } from '#/bangumi';
 import type { ApiSuccess } from '#/api';
 
 export const apiBangumi = {
-  async getAll() {
-    const { data } = await axios.get<BangumiAPI[]>('api/v1/bangumi/get/all');
+  async getAll(signal?: AbortSignal) {
+    const { data } = await axios.get<BangumiAPI[]>('api/v1/bangumi/get/all', {
+      signal,
+    });
     const result: BangumiRule[] = data.map((bangumi) => ({
       ...bangumi,
       filter: bangumi.filter.split(','),

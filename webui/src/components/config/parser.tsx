@@ -2,9 +2,9 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import type { ConfigFieldItem } from './types';
 import type { RssParser } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
 const LANGS = [
   { value: 'zh', label: 'zh' },
@@ -12,11 +12,18 @@ const LANGS = [
   { value: 'jp', label: 'jp' },
 ];
 
-export function ConfigParser() {
-  const { t } = useTranslation();
+interface ConfigParserFieldsProps {
+  parser: RssParser;
+  disabled: boolean;
+  onChange?: (patch: Partial<RssParser>) => void;
+}
 
-  const parser = useConfigStore((s) => s.config.rss_parser);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
+export function ConfigParserFields({
+  parser,
+  disabled,
+  onChange,
+}: ConfigParserFieldsProps) {
+  const { t } = useTranslation();
 
   const items: ConfigFieldItem<RssParser>[] = [
     {
@@ -46,12 +53,26 @@ export function ConfigParser() {
             {...item}
             fieldKey={`rss_parser.${item.configKey}`}
             orientation="horizontal"
-            disabled={item.configKey !== 'enable' && !parser.enable}
+            disabled={
+              disabled || (item.configKey !== 'enable' && !parser.enable)
+            }
             value={parser[item.configKey]}
-            onChange={(v) => updateGroup('rss_parser', { [item.configKey]: v })}
+            onChange={(v) => onChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function ConfigParser() {
+  const { config, updateGroup } = useConfigDraft();
+
+  return (
+    <ConfigParserFields
+      parser={config.rss_parser}
+      disabled={false}
+      onChange={(patch) => updateGroup('rss_parser', patch)}
+    />
   );
 }

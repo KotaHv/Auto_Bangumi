@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import {
   formatConfigError,
   getGroupErrors,
@@ -11,14 +10,22 @@ import {
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
 import type { ExperimentalOpenAI } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
-export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
+interface ConfigOpenAIFieldsProps {
+  openAI: ExperimentalOpenAI;
+  disabled: boolean;
+  groupErrors?: Record<string, ConfigFieldError>;
+  onChange?: (patch: Partial<ExperimentalOpenAI>) => void;
+}
+
+export function ConfigOpenAIFields({
+  openAI,
+  disabled,
+  groupErrors = {},
+  onChange,
+}: ConfigOpenAIFieldsProps) {
   const { t } = useTranslation();
-
-  const openAI = useConfigStore((s) => s.config.experimental_openai);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
-
-  const groupErrors = getGroupErrors(errors, 'experimental_openai');
 
   const openAIItems: ConfigFieldItem<ExperimentalOpenAI>[] = [
     {
@@ -63,7 +70,9 @@ export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
             {...item}
             fieldKey={`experimental_openai.${item.configKey}`}
             orientation="horizontal"
-            disabled={item.configKey !== 'enable' && !openAI.enable}
+            disabled={
+              disabled || (item.configKey !== 'enable' && !openAI.enable)
+            }
             error={
               groupErrors[item.configKey]
                 ? formatConfigError(
@@ -75,12 +84,23 @@ export function ConfigOpenAI({ errors = [] }: { errors?: ConfigFieldError[] }) {
                 : undefined
             }
             value={openAI[item.configKey]}
-            onChange={(v) =>
-              updateGroup('experimental_openai', { [item.configKey]: v })
-            }
+            onChange={(v) => onChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function ConfigOpenAI() {
+  const { config, updateGroup, errors } = useConfigDraft();
+
+  return (
+    <ConfigOpenAIFields
+      openAI={config.experimental_openai}
+      disabled={false}
+      groupErrors={getGroupErrors(errors, 'experimental_openai')}
+      onChange={(patch) => updateGroup('experimental_openai', patch)}
+    />
   );
 }

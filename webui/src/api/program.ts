@@ -14,9 +14,10 @@ export const apiProgram = {
     const { data } = await axios.get<ApiSuccess>('api/v1/stop');
     return data;
   },
-  async status() {
+  async status(signal?: AbortSignal) {
     const { data } = await axios.get<{ status: boolean; version: string }>(
       'api/v1/status',
+      { signal },
     );
 
     return data!;

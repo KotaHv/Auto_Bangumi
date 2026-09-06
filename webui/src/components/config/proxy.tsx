@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
-import { useConfigStore } from '@/store/config';
 import {
   formatConfigError,
   getGroupErrors,
@@ -11,6 +10,7 @@ import {
 import type { AbSelectOption } from '@/components/common/ab-select';
 import type { ConfigFieldItem } from './types';
 import type { Proxy } from '#/config';
+import { useConfigDraft } from '@/pages/config/types';
 
 const PROXY_TYPES: AbSelectOption[] = [
   { value: 'http', label: 'HTTP' },
@@ -18,13 +18,20 @@ const PROXY_TYPES: AbSelectOption[] = [
   { value: 'socks5', label: 'SOCKS5' },
 ];
 
-export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {
+interface ConfigProxyFieldsProps {
+  proxy: Proxy;
+  disabled: boolean;
+  groupErrors?: Record<string, ConfigFieldError>;
+  onChange?: (patch: Partial<Proxy>) => void;
+}
+
+export function ConfigProxyFields({
+  proxy,
+  disabled,
+  groupErrors = {},
+  onChange,
+}: ConfigProxyFieldsProps) {
   const { t } = useTranslation();
-
-  const proxy = useConfigStore((s) => s.config.proxy);
-  const updateGroup = useConfigStore((s) => s.updateGroup);
-
-  const groupErrors = getGroupErrors(errors, 'proxy');
 
   const items: ConfigFieldItem<Proxy>[] = [
     {
@@ -73,7 +80,9 @@ export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {
             {...item}
             fieldKey={`proxy.${item.configKey}`}
             orientation="horizontal"
-            disabled={item.configKey !== 'enable' && !proxy.enable}
+            disabled={
+              disabled || (item.configKey !== 'enable' && !proxy.enable)
+            }
             error={
               groupErrors[item.configKey]
                 ? formatConfigError(
@@ -85,10 +94,23 @@ export function ConfigProxy({ errors = [] }: { errors?: ConfigFieldError[] }) {
                 : undefined
             }
             value={proxy[item.configKey]}
-            onChange={(v) => updateGroup('proxy', { [item.configKey]: v })}
+            onChange={(v) => onChange?.({ [item.configKey]: v })}
           />
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function ConfigProxy() {
+  const { config, updateGroup, errors } = useConfigDraft();
+
+  return (
+    <ConfigProxyFields
+      proxy={config.proxy}
+      disabled={false}
+      groupErrors={getGroupErrors(errors, 'proxy')}
+      onChange={(patch) => updateGroup('proxy', patch)}
+    />
   );
 }

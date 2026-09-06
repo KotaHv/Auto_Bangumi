@@ -3,8 +3,8 @@ import type { Config } from '#/config';
 import type { ApiSuccess } from '#/api';
 
 export const apiConfig = {
-  async getConfig() {
-    const { data } = await axios.get<Config>('api/v1/config/get');
+  async getConfig(signal?: AbortSignal) {
+    const { data } = await axios.get<Config>('api/v1/config/get', { signal });
     return data;
   },
   async updateConfig(newConfig: Config) {

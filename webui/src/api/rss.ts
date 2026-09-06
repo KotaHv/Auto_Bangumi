@@ -4,8 +4,8 @@ import type { Torrent } from '#/torrent';
 import type { ApiSuccess } from '#/api';
 
 export const apiRSS = {
-  async get() {
-    const { data } = await axios.get<RSS[]>('api/v1/rss');
+  async get(signal?: AbortSignal) {
+    const { data } = await axios.get<RSS[]>('api/v1/rss', { signal });
     return data!;
   },
 
