@@ -7,7 +7,7 @@ export default function AppLayout() {
   return (
     <SidebarProvider>
       <AbSidebar />
-      <SidebarInset className="h-svh min-h-0 overflow-hidden">
+      <SidebarInset className="h-dvh min-h-0 overflow-hidden">
         <AbTopbar />
         <main className="min-h-0 flex-1 overflow-hidden">
           <Outlet />

@@ -5,7 +5,6 @@ import { apiLog } from '@/api/log';
 import { apiProgram } from '@/api/program';
 import { apiRSS } from '@/api/rss';
 import { apiSearch } from '@/api/search';
-import type { SearchResult } from '@/types/bangumi';
 import { sortBangumiActiveFirst, sortRssActiveFirst } from '@/utils/sort';
 
 export const bangumiKeys = {
@@ -79,18 +78,7 @@ export function programStatusOptions() {
 export const searchKeys = {
   all: ['search'] as const,
   providers: () => [...searchKeys.all, 'providers'] as const,
-  results: (keyword: string, provider: string) =>
-    [...searchKeys.all, 'results', { keyword, provider }] as const,
 };
-
-export function emptySearchResultsOptions(keyword: string, provider: string) {
-  return queryOptions<SearchResult[], Error, SearchResult[]>({
-    queryKey: searchKeys.results(keyword, provider),
-    queryFn: () => Promise.resolve([]),
-    enabled: false,
-    meta: { requiresAuth: true },
-  });
-}
 
 export function searchProviderOptions() {
   return queryOptions({

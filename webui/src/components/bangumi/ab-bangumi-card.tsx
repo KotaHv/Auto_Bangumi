@@ -1,11 +1,8 @@
 import { ImageOff, Pencil, Plus } from 'lucide-react';
-import type { CSSProperties } from 'react';
 import type { BangumiRule } from '@/types/bangumi';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-
-const FLUSH_CARD = { '--card-spacing': '0px' } as CSSProperties;
 
 interface AbBangumiCardProps {
   type?: 'primary' | 'search' | 'mobile';
@@ -27,53 +24,70 @@ export function AbBangumiCard({
   onClick,
 }: AbBangumiCardProps) {
   if (type === 'search') {
+    const hasMetadata =
+      Boolean(bangumi.season) ||
+      Boolean(bangumi.group_name) ||
+      Boolean(bangumi.subtitle);
+
     return (
       <Card
         variant="ring"
-        style={FLUSH_CARD}
-        className="w-120 max-w-[90vw] cursor-pointer p-2 shadow-sm"
+        className="group/search bg-card hover:ring-foreground/20 w-[90vw] cursor-pointer shadow-sm transition-all duration-200 [--card-spacing:0px] hover:-translate-y-px hover:shadow-md md:w-90"
         onClick={onClick}
       >
-        <div className="flex items-center gap-3">
-          <div className="relative h-11 w-18 shrink-0 overflow-hidden rounded-md">
+        <div className="grid grid-cols-[auto_minmax(0,2fr)_minmax(0,3fr)_auto] items-center gap-2 md:gap-3">
+          <div className="bg-muted/40 aspect-3/4 w-16 overflow-hidden md:w-20">
             {bangumi.poster_link ? (
               <img
                 src={bangumi.poster_link}
                 alt="poster"
-                className="h-full w-full object-cover"
+                className="size-full object-cover transition-transform duration-300 group-hover/search:scale-[1.03]"
               />
             ) : (
               <PosterPlaceholder />
             )}
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="text-primary truncate text-sm font-medium">
-              {bangumi.official_title}
-            </div>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {(['season', 'group_name', 'subtitle'] as const).map((key) =>
-                bangumi[key] ? (
-                  <Badge key={key} variant="primary">
-                    {key === 'season'
-                      ? `Season ${bangumi[key]}`
-                      : String(bangumi[key])}
-                  </Badge>
-                ) : null,
-              )}
-            </div>
+          <div className="font-heading min-w-0 text-center text-sm leading-snug font-medium">
+            {bangumi.official_title}
           </div>
 
-          <span onClick={(e) => e.stopPropagation()}>
-            <Button
-              size="icon-sm"
-              aria-label="add"
-              className="rounded-full"
-              onClick={onClick}
-            >
-              <Plus />
-            </Button>
-          </span>
+          {hasMetadata ? (
+            <div className="flex min-w-0 flex-col items-center gap-1">
+              {bangumi.season && (
+                <Badge className="bg-brand border-brand h-5 max-w-full min-w-10 justify-center px-2 text-[11px] text-white">
+                  S{String(bangumi.season).padStart(2, '0')}
+                </Badge>
+              )}
+
+              {bangumi.group_name && (
+                <Badge className="bg-foreground text-background border-foreground h-5 max-w-full min-w-10 justify-center px-2 text-[11px]">
+                  <span className="truncate">{bangumi.group_name}</span>
+                </Badge>
+              )}
+
+              {bangumi.subtitle && (
+                <Badge className="bg-brand/20 text-brand border-brand/30 h-5 max-w-full min-w-10 justify-center px-2 text-[11px]">
+                  <span className="truncate">{bangumi.subtitle}</span>
+                </Badge>
+              )}
+            </div>
+          ) : (
+            <div />
+          )}
+
+          <Button
+            variant="brand"
+            size="icon-sm"
+            aria-label="add"
+            className="mr-2 size-7 rounded-full shadow-sm transition-transform group-hover/search:scale-105"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClick?.();
+            }}
+          >
+            <Plus />
+          </Button>
         </div>
       </Card>
     );
@@ -82,8 +96,7 @@ export function AbBangumiCard({
   return (
     <Card
       variant="ring"
-      style={FLUSH_CARD}
-      className="group bg-card relative w-full cursor-pointer overflow-hidden rounded-xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group bg-card relative w-full cursor-pointer overflow-hidden rounded-xl shadow-sm transition-all duration-200 [--card-spacing:0px] hover:-translate-y-0.5 hover:shadow-lg"
       onClick={onClick}
     >
       <div className="bg-muted/40 relative aspect-5/7 w-full overflow-hidden">

@@ -1,46 +1,89 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  catchError,
+  EMPTY,
+  finalize,
+  of,
+  Subject,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 import { apiSearch } from '@/api/search';
-import { emptySearchResultsOptions, searchKeys } from '@/query/options';
-import type { SearchResult } from '@/types/bangumi';
+import type { BangumiRule, SearchResult } from '@/types/bangumi';
 
-export function useSearchSSE(keyword: string, provider: string, trigger = 0) {
-  const queryClient = useQueryClient();
-  const query = useQuery(emptySearchResultsOptions(keyword, provider));
-  const [searching, setSearching] = useState(false);
+type SearchMode = 'auto' | 'immediate';
+
+type SearchRequest = {
+  keyword: string;
+  provider: string;
+  mode: SearchMode;
+};
+
+export function useSearchSSE() {
+  const requestsRef = useRef<Subject<SearchRequest> | null>(null);
+  if (!requestsRef.current) {
+    requestsRef.current = new Subject<SearchRequest>();
+  }
+
+  const [bangumiList, setBangumiList] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchProvider, setSearchProvider] = useState('');
 
   useEffect(() => {
-    if (!keyword) {
-      setSearching(false);
-      return;
-    }
+    const requests$ = requestsRef.current;
+    if (!requests$) return;
 
-    setSearching(true);
-    let subscription: { unsubscribe: () => void } | undefined;
-    const timer = window.setTimeout(() => {
-      const queryKey = searchKeys.results(keyword, provider);
-      queryClient.setQueryData<SearchResult[]>(queryKey, []);
-      subscription = apiSearch.get(keyword, provider).subscribe({
-        next: (value) => {
-          queryClient.setQueryData<SearchResult[]>(queryKey, (current = []) => [
-            ...current,
-            { order: current.length + 1, value },
-          ]);
-          setSearching(false);
-        },
-        error: () => setSearching(false),
-        complete: () => setSearching(false),
-      });
-    }, 600);
+    const subscription = requests$
+      .pipe(
+        switchMap(({ keyword, provider, mode }) => {
+          if (!keyword) {
+            setBangumiList([]);
+            setSearchKeyword('');
+            setSearchProvider('');
+            setLoading(false);
+            return EMPTY;
+          }
 
-    return () => {
-      window.clearTimeout(timer);
-      subscription?.unsubscribe();
-    };
-  }, [keyword, provider, queryClient, trigger]);
+          const start$ = mode === 'auto' ? timer(600) : of(0);
+          return start$.pipe(
+            switchMap(() => {
+              setBangumiList([]);
+              setSearchKeyword(keyword);
+              setSearchProvider(provider);
+              setLoading(true);
+              return apiSearch.get(keyword, provider).pipe(
+                tap((value: BangumiRule) => {
+                  setBangumiList((current) => [
+                    ...current,
+                    { order: current.length + 1, value },
+                  ]);
+                }),
+                catchError(() => EMPTY),
+                finalize(() => setLoading(false)),
+              );
+            }),
+          );
+        }),
+      )
+      .subscribe();
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const search = useCallback(
+    (keyword: string, provider: string, mode: SearchMode) => {
+      requestsRef.current?.next({ keyword, provider, mode });
+    },
+    [],
+  );
 
   return {
-    bangumiList: query.data ?? [],
-    loading: searching,
+    bangumiList,
+    loading,
+    searchKeyword,
+    searchProvider,
+    search,
   };
 }

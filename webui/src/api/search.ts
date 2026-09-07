@@ -31,15 +31,13 @@ export const apiSearch = {
         }
       };
 
-      eventSource.onerror = (ev) => {
-        console.error(
-          '[/search/bangumi] Server Error |',
-          { keyword },
-          'error:',
-          ev,
-        );
+      // The backend closes this finite SSE stream when the search finishes.
+      // EventSource reports that closure through `onerror`, so treat it as
+      // completion rather than a transport error. This also means genuine
+      // connection failures cannot currently be distinguished from normal completion.
+      eventSource.onerror = () => {
         eventSource.close();
-        observer.error(new Error('Search stream closed unexpectedly.'));
+        observer.complete();
       };
 
       return () => {
