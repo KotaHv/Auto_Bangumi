@@ -17,7 +17,7 @@ export default function PlayerPage() {
   const url = usePlayerStore((s) => s.url);
   const type = usePlayerStore((s) => s.type);
 
-  const [showSettings, setShowSettings] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false);
 
   return (
     <div className="flex h-full flex-col">
@@ -40,14 +40,14 @@ export default function PlayerPage() {
           <Button
             variant="brand"
             className="mt-1 px-4 py-2"
-            onClick={() => setShowSettings(true)}
+            onClick={() => setOpenSettings(true)}
           >
             {t('player.settings_title')}
           </Button>
         </Empty>
       )}
 
-      <AbPlayerSettings show={showSettings} onShowChange={setShowSettings} />
+      <AbPlayerSettings open={openSettings} onOpenChange={setOpenSettings} />
     </div>
   );
 }

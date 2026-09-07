@@ -18,8 +18,8 @@ const WIDTH_CLASS: Record<AbPopupWidth, string> = {
 
 interface AbPopupProps {
   title: string;
-  show: boolean;
-  onShowChange: (show: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   maskClick?: boolean;
   width?: AbPopupWidth;
   className?: string;
@@ -29,8 +29,8 @@ interface AbPopupProps {
 
 export function AbPopup({
   title,
-  show,
-  onShowChange,
+  open,
+  onOpenChange,
   maskClick = true,
   width = 'md',
   className = '',
@@ -39,15 +39,15 @@ export function AbPopup({
 }: AbPopupProps) {
   return (
     <Dialog
-      open={show}
-      onOpenChange={onShowChange}
+      open={open}
+      onOpenChange={onOpenChange}
       disablePointerDismissal={!maskClick}
     >
       <DialogContent
         className={cn(WIDTH_CLASS[width], 'max-w-[92vw]', className)}
         showCloseButton={false}
         initialFocus={false}
-        onOverlayClick={() => maskClick && onShowChange(false)}
+        onOverlayClick={() => maskClick && onOpenChange(false)}
       >
         <DialogHeader>
           <DialogTitle className={titleCss}>{title}</DialogTitle>

@@ -25,20 +25,34 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   const [draftRule, setDraftRule] = useState(() => rule);
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
-    show: boolean;
+    open: boolean;
     type: 'disable' | 'delete';
     deleteFile: boolean;
-  }>({ show: false, type: 'disable', deleteFile: false });
+  }>({ open: false, type: 'disable', deleteFile: false });
 
-  const [forceCollectDialog, setForceCollectDialog] = useState(false);
+  const [openForceCollectDialog, setOpenForceCollectDialog] = useState(false);
+
+  function updateBangumiListItem(
+    id: number,
+    updater: (item: BangumiRule) => BangumiRule | null,
+  ) {
+    queryClient.setQueryData<BangumiRule[]>(bangumiKeys.list(), (current) => {
+      if (!current) return current;
+      return current.flatMap((item) => {
+        if (item.id !== id) return [item];
+        const next = updater(item);
+        return next ? [next] : [];
+      });
+    });
+  }
 
   const updateMutation = useMutation({
     mutationFn: ({ id, rule }: { id: number; rule: BangumiRule }) =>
       apiBangumi.updateRule(id, rule),
-    onSuccess: (data) => {
+    onSuccess: (data, { rule }) => {
       message.success(returnUserLangMsg(data));
+      updateBangumiListItem(rule.id, () => rule);
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
   const renameMutation = useMutation({
@@ -46,7 +60,6 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
   const collectMutation = useMutation({
@@ -54,38 +67,37 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
   const enableMutation = useMutation({
     mutationFn: apiBangumi.enableRule,
-    onSuccess: (data) => {
+    onSuccess: (data, id) => {
       message.success(returnUserLangMsg(data));
+      updateBangumiListItem(id, (item) => ({ ...item, deleted: false }));
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
   const disableMutation = useMutation({
     mutationFn: ({ id, file }: { id: number; file: boolean }) =>
       apiBangumi.disableRule(id, file),
-    onSuccess: (data) => {
+    onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
+      updateBangumiListItem(id, (item) => ({ ...item, deleted: true }));
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
   const deleteMutation = useMutation({
     mutationFn: ({ id, file }: { id: number; file: boolean }) =>
       apiBangumi.deleteRule(id, file),
-    onSuccess: (data) => {
+    onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
+      updateBangumiListItem(id, () => null);
       onClose();
-      void queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
 
-  function showDeleteFileDialog(type: 'disable' | 'delete') {
-    setDeleteFileDialog({ show: true, type, deleteFile: false });
+  function openDeleteFileDialog(type: 'disable' | 'delete') {
+    setDeleteFileDialog({ open: true, type, deleteFile: false });
   }
 
   function enable() {
@@ -111,8 +123,8 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
   return draftRule.deleted ? (
     <AbConfirm
-      show
-      onShowChange={(v) => !v && onClose()}
+      open
+      onOpenChange={(v) => !v && onClose()}
       title={t('homepage.rule.enable_rule')}
       width="sm"
       confirmLoading={enableMutation.isPending}
@@ -123,8 +135,8 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   ) : (
     <AbPopup
       title={t('homepage.rule.edit_rule')}
-      show
-      onShowChange={(v) => !v && onClose()}
+      open
+      onOpenChange={(v) => !v && onClose()}
       width="xl"
       className="shadow-2xl"
     >
@@ -135,7 +147,10 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
         <div className="flex flex-wrap items-center gap-2 sm:justify-between">
           <div className="flex gap-1">
-            <Button variant="ghost" onClick={() => setForceCollectDialog(true)}>
+            <Button
+              variant="ghost"
+              onClick={() => setOpenForceCollectDialog(true)}
+            >
               {t('homepage.rule.force_collect')}
             </Button>
 
@@ -149,7 +164,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
             <Button
               variant="ghost"
-              onClick={() => showDeleteFileDialog('disable')}
+              onClick={() => openDeleteFileDialog('disable')}
             >
               {t('homepage.rule.disable')}
             </Button>
@@ -157,7 +172,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
             <Button
               variant="ghost"
               className="text-destructive"
-              onClick={() => showDeleteFileDialog('delete')}
+              onClick={() => openDeleteFileDialog('delete')}
             >
               {t('homepage.rule.delete')}
             </Button>
@@ -177,8 +192,8 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
       </div>
 
       <AbConfirm
-        show={deleteFileDialog.show}
-        onShowChange={(v) => setDeleteFileDialog((s) => ({ ...s, show: v }))}
+        open={deleteFileDialog.open}
+        onOpenChange={(v) => setDeleteFileDialog((s) => ({ ...s, open: v }))}
         title={
           deleteFileDialog.type === 'disable'
             ? t('homepage.rule.disable_hit')
@@ -200,8 +215,8 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
       </AbConfirm>
 
       <AbConfirm
-        show={forceCollectDialog}
-        onShowChange={setForceCollectDialog}
+        open={openForceCollectDialog}
+        onOpenChange={setOpenForceCollectDialog}
         title={t('homepage.rule.force_collect')}
         width="sm"
         confirmLoading={collectMutation.isPending}

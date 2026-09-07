@@ -34,7 +34,7 @@ export function RSSMobile({
   refreshSelected,
 }: RSSLayoutProps) {
   const { t } = useTranslation();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
   const allChecked =
     rss.length > 0 && rss.every((item) => selectedRSS.includes(item.id));
@@ -114,7 +114,7 @@ export function RSSMobile({
               <DropdownMenuItem
                 className="gap-1.5"
                 variant="destructive"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => setOpenDeleteConfirm(true)}
               >
                 <Trash />
                 {t('rss.delete')}
@@ -177,12 +177,12 @@ export function RSSMobile({
       {renderBulkActions()}
 
       <AbConfirm
-        show={showDeleteConfirm}
-        onShowChange={setShowDeleteConfirm}
+        open={openDeleteConfirm}
+        onOpenChange={setOpenDeleteConfirm}
         title={t('rss.delete')}
         confirmType="warn"
         onConfirm={() => {
-          setShowDeleteConfirm(false);
+          setOpenDeleteConfirm(false);
           deleteSelected();
         }}
       >

@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { AbPopup, type AbPopupWidth } from '@/components/common/ab-popup';
 
 interface AbConfirmProps {
-  show: boolean;
-  onShowChange: (show: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   title: string;
   width?: AbPopupWidth;
   confirmType?: 'brand' | 'warn';
@@ -17,8 +17,8 @@ interface AbConfirmProps {
 }
 
 export function AbConfirm({
-  show,
-  onShowChange,
+  open,
+  onOpenChange,
   title,
   width = 'md',
   confirmType = 'brand',
@@ -33,8 +33,8 @@ export function AbConfirm({
   return (
     <AbPopup
       title={title}
-      show={show}
-      onShowChange={onShowChange}
+      open={open}
+      onOpenChange={onOpenChange}
       titleCss="text-base"
       width={width}
       className="p-3"
@@ -55,7 +55,7 @@ export function AbConfirm({
           <Button
             variant="outline"
             className="min-w-16"
-            onClick={() => onShowChange(false)}
+            onClick={() => onOpenChange(false)}
           >
             {cancelText ?? t('homepage.rule.cancel_btn')}
           </Button>

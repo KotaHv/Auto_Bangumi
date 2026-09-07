@@ -40,7 +40,7 @@ export function RSSDesktop({
   refreshSelected,
 }: RSSLayoutProps) {
   const { t } = useTranslation();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const hasSelection = selectedRSS.length > 0;
 
   const allChecked =
@@ -100,7 +100,7 @@ export function RSSDesktop({
             variant="ghost"
 
             className="text-destructive"
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => setOpenDeleteConfirm(true)}
           >
             {t('rss.delete')}
           </Button>
@@ -248,12 +248,12 @@ export function RSSDesktop({
       </div>
 
       <AbConfirm
-        show={showDeleteConfirm}
-        onShowChange={setShowDeleteConfirm}
+        open={openDeleteConfirm}
+        onOpenChange={setOpenDeleteConfirm}
         title={t('rss.delete')}
         confirmType="warn"
         onConfirm={() => {
-          setShowDeleteConfirm(false);
+          setOpenDeleteConfirm(false);
           deleteSelected();
         }}
       >

@@ -175,8 +175,8 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
       ? (param as string)
       : 'normal';
   });
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
+  const [openLeaveConfirm, setOpenLeaveConfirm] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const { tabOffsetRef } = useTabOffset();
@@ -262,7 +262,7 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   }
 
   function cancelChanges() {
-    setShowCancelConfirm(false);
+    setOpenCancelConfirm(false);
     setSaveError(null);
     setDraftConfig(undefined);
     setDraftUseApiKey(undefined);
@@ -371,18 +371,18 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
 
   useEffect(() => {
     if (blocker.state === 'blocked') {
-      setShowLeaveConfirm(true);
+      setOpenLeaveConfirm(true);
     }
   }, [blocker.state]);
 
   function confirmLeave() {
-    setShowLeaveConfirm(false);
+    setOpenLeaveConfirm(false);
     blocker.proceed?.();
   }
 
-  function handleLeaveShowChange(show: boolean) {
-    setShowLeaveConfirm(show);
-    if (!show && blocker.state === 'blocked') {
+  function handleLeaveOpenChange(open: boolean) {
+    setOpenLeaveConfirm(open);
+    if (!open && blocker.state === 'blocked') {
       blocker.reset();
     }
   }
@@ -560,7 +560,7 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
       <Button
         variant="outline"
         className="h-9 min-w-20 sm:min-w-24"
-        onClick={() => setShowCancelConfirm(true)}
+        onClick={() => setOpenCancelConfirm(true)}
         disabled={!configChanged || saveMutation.isPending}
       >
         {t('config.cancel')}
@@ -608,16 +608,16 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         <ConfigPageLayout {...layoutProps} />
       </ConfigDraftContext.Provider>
       <AbConfirm
-        show={showLeaveConfirm}
-        onShowChange={handleLeaveShowChange}
+        open={openLeaveConfirm}
+        onOpenChange={handleLeaveOpenChange}
         title={t('config.cancel_confirm.title')}
         onConfirm={confirmLeave}
       >
         {t('config.cancel_confirm.message')}
       </AbConfirm>
       <AbConfirm
-        show={showCancelConfirm}
-        onShowChange={setShowCancelConfirm}
+        open={openCancelConfirm}
+        onOpenChange={setOpenCancelConfirm}
         title={t('config.cancel_confirm.title')}
         onConfirm={cancelChanges}
       >

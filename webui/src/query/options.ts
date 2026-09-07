@@ -6,10 +6,7 @@ import { apiProgram } from '@/api/program';
 import { apiRSS } from '@/api/rss';
 import { apiSearch } from '@/api/search';
 import type { SearchResult } from '@/types/bangumi';
-
-function sortByIdDesc<T extends { id: number }>(items: T[]) {
-  return [...items].sort((a, b) => b.id - a.id);
-}
+import { sortBangumiActiveFirst, sortRssActiveFirst } from '@/utils/sort';
 
 export const bangumiKeys = {
   all: ['bangumi'] as const,
@@ -19,13 +16,8 @@ export const bangumiKeys = {
 export function bangumiListOptions() {
   return queryOptions({
     queryKey: bangumiKeys.list(),
-    queryFn: async ({ signal }) => {
-      const items = await apiBangumi.getAll(signal);
-      return [
-        ...sortByIdDesc(items.filter((item) => !item.deleted)),
-        ...sortByIdDesc(items.filter((item) => item.deleted)),
-      ];
-    },
+    queryFn: ({ signal }) => apiBangumi.getAll(signal),
+    select: sortBangumiActiveFirst,
     meta: { requiresAuth: true },
   });
 }
@@ -38,13 +30,8 @@ export const rssKeys = {
 export function rssListOptions() {
   return queryOptions({
     queryKey: rssKeys.list(),
-    queryFn: async ({ signal }) => {
-      const items = await apiRSS.get(signal);
-      return [
-        ...sortByIdDesc(items.filter((item) => item.enabled)),
-        ...sortByIdDesc(items.filter((item) => !item.enabled)),
-      ];
-    },
+    queryFn: ({ signal }) => apiRSS.get(signal),
+    select: sortRssActiveFirst,
     meta: { requiresAuth: true },
   });
 }

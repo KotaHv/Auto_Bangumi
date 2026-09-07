@@ -25,15 +25,15 @@ const PARSER_TYPE = [
 ];
 
 interface AbAddRssProps {
-  show: boolean;
-  onShowChange: (show: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   rule: BangumiRule;
   onRuleChange: (rule: BangumiRule) => void;
 }
 
 export function AbAddRss({
-  show,
-  onShowChange,
+  open,
+  onOpenChange,
   rule,
   onRuleChange,
 }: AbAddRssProps) {
@@ -47,7 +47,7 @@ export function AbAddRss({
     onSuccess: async (data) => {
       message.success(returnUserLangMsg(data));
       await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
-      onShowChange(false);
+      onOpenChange(false);
     },
   });
   const analysisMutation = useMutation({
@@ -62,7 +62,7 @@ export function AbAddRss({
     onSuccess: async (data) => {
       message.success(returnUserLangMsg(data));
       await queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
-      onShowChange(false);
+      onOpenChange(false);
     },
   });
   const subscribeMutation = useMutation({
@@ -74,12 +74,12 @@ export function AbAddRss({
         queryClient.invalidateQueries({ queryKey: bangumiKeys.list() }),
         queryClient.invalidateQueries({ queryKey: rssKeys.list() }),
       ]);
-      onShowChange(false);
+      onOpenChange(false);
     },
   });
 
   useEffect(() => {
-    if (!show) {
+    if (!open) {
       setRss(rssTemplate);
       window.setTimeout(() => {
         setWindowState((s) => ({ ...s, next: false }));
@@ -87,7 +87,7 @@ export function AbAddRss({
     } else if (rule.official_title !== '') {
       setWindowState((s) => ({ ...s, next: true, rule: true }));
     }
-  }, [show]);
+  }, [open]);
 
   function addRss() {
     if (rss.url === '') {
@@ -114,8 +114,8 @@ export function AbAddRss({
   return (
     <AbPopup
       title={t('topbar.add.title')}
-      show={show}
-      onShowChange={onShowChange}
+      open={open}
+      onOpenChange={onOpenChange}
       width="xl"
       className="shadow-2xl"
     >

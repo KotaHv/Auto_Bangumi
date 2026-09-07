@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { usePlayerStore, type MediaPlayerType } from '@/store/player';
 
 interface AbPlayerSettingsProps {
-  show: boolean;
-  onShowChange: (show: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function AbPlayerSettings({
-  show,
-  onShowChange,
+  open,
+  onOpenChange,
 }: AbPlayerSettingsProps) {
   const { t } = useTranslation();
 
@@ -26,24 +26,24 @@ export function AbPlayerSettings({
   const [draftUrl, setDraftUrl] = useState(url);
 
   useEffect(() => {
-    if (show) {
+    if (open) {
       setDraftType(type);
       setDraftUrl(url);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show]);
+  }, [open]);
 
   function apply() {
     setType(draftType);
     setUrl(draftUrl);
-    onShowChange(false);
+    onOpenChange(false);
   }
 
   return (
     <AbPopup
       title={t('player.settings_title')}
-      show={show}
-      onShowChange={onShowChange}
+      open={open}
+      onOpenChange={onOpenChange}
       width="lg"
     >
       <div className="flex flex-col gap-4">

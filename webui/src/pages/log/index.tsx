@@ -19,7 +19,7 @@ export default function LogPage() {
   const [lineLimit, setLineLimit] = useState<LogLineLimit>(100);
   const [filterLevel, setFilterLevel] = useState<LogLevelFilter>('ALL');
   const [pollingActive, setPollingActive] = useState(true);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [openResetConfirm, setOpenResetConfirm] = useState(false);
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const logQuery = useQuery({
     ...logOptions(lineLimit),
@@ -114,7 +114,7 @@ export default function LogPage() {
     togglePolling: () => setPollingActive((active) => !active),
     logContainerRef,
     getLog,
-    onReset: () => setShowResetConfirm(true),
+    onReset: () => setOpenResetConfirm(true),
     copy,
   };
 
@@ -122,14 +122,14 @@ export default function LogPage() {
     <>
       {isDesktop ? <LogDesktop {...props} /> : <LogMobile {...props} />}
       <AbConfirm
-        show={showResetConfirm}
-        onShowChange={setShowResetConfirm}
+        open={openResetConfirm}
+        onOpenChange={setOpenResetConfirm}
         title={t('log.reset')}
         confirmType="warn"
         confirmLoading={resetMutation.isPending}
         onConfirm={async () => {
           await resetMutation.mutateAsync().catch(() => undefined);
-          setShowResetConfirm(false);
+          setOpenResetConfirm(false);
         }}
       >
         {t('log.reset_confirm')}

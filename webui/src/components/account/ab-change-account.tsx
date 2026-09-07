@@ -10,11 +10,11 @@ import { AbPopup } from '@/components/common/ab-popup';
 import { Field, FieldLabel } from '@/components/ui/field';
 
 interface AbChangeAccountProps {
-  show: boolean;
-  onShowChange: (show: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function AbChangeAccount({ show, onShowChange }: AbChangeAccountProps) {
+export function AbChangeAccount({ open, onOpenChange }: AbChangeAccountProps) {
   const { t } = useTranslation();
 
   const [user, setUser] = useState({ username: '', password: '' });
@@ -54,8 +54,8 @@ export function AbChangeAccount({ show, onShowChange }: AbChangeAccountProps) {
   return (
     <AbPopup
       title={t('topbar.profile.pop_title')}
-      show={show}
-      onShowChange={onShowChange}
+      open={open}
+      onOpenChange={onOpenChange}
       width="lg"
     >
       <div className="flex flex-col gap-4">

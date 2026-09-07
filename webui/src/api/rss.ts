@@ -6,7 +6,7 @@ import type { ApiSuccess } from '@/types/api';
 export const apiRSS = {
   async get(signal?: AbortSignal) {
     const { data } = await axios.get<RSS[]>('api/v1/rss', { signal });
-    return data!;
+    return data;
   },
 
   async add(rss: RSS) {

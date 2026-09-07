@@ -75,11 +75,11 @@ export function AbTopbar() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
 
-  const [showAccount, setShowAccount] = useState(false);
-  const [showPlayerSettings, setShowPlayerSettings] = useState(false);
-  const [showAddRSS, setShowAddRSS] = useState(false);
+  const [openAccount, setOpenAccount] = useState(false);
+  const [openPlayerSettings, setOpenPlayerSettings] = useState(false);
+  const [openAddRSS, setOpenAddRSS] = useState(false);
   const [searchRule, setSearchRule] = useState<BangumiRule>(ruleTemplate);
-  const [showSearch, setShowSearch] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
 
   const queryClient = useQueryClient();
   const programMutation = useMutation({
@@ -137,15 +137,15 @@ export function AbTopbar() {
   ];
 
   function addSearchResult(bangumi: BangumiRule) {
-    setShowAddRSS(true);
+    setOpenAddRSS(true);
     setSearchRule(bangumi);
   }
 
   useEffect(() => {
-    if (!showAddRSS) {
+    if (!openAddRSS) {
       window.setTimeout(() => setSearchRule(ruleTemplate), 300);
     }
-  }, [showAddRSS]);
+  }, [openAddRSS]);
 
   return (
     <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">
@@ -168,7 +168,7 @@ export function AbTopbar() {
             className="md:hidden"
             aria-label="search"
             title="search"
-            onClick={() => setShowSearch(true)}
+            onClick={() => setOpenSearch(true)}
           >
             <Search />
           </Button>
@@ -178,7 +178,7 @@ export function AbTopbar() {
             size="icon"
             aria-label="add rss"
             title="add rss"
-            onClick={() => setShowAddRSS(true)}
+            onClick={() => setOpenAddRSS(true)}
           >
             <CirclePlus />
           </Button>
@@ -217,12 +217,12 @@ export function AbTopbar() {
                 </DropdownMenuItem>
               ))}
 
-              <DropdownMenuItem onClick={() => setShowPlayerSettings(true)}>
+              <DropdownMenuItem onClick={() => setOpenPlayerSettings(true)}>
                 <MonitorPlay />
                 {t('player.settings_title')}
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => setShowAccount(true)}>
+              <DropdownMenuItem onClick={() => setOpenAccount(true)}>
                 <UserRound />
                 {t('topbar.profile.title')}
               </DropdownMenuItem>
@@ -231,21 +231,21 @@ export function AbTopbar() {
         </div>
       </div>
 
-      <AbChangeAccount show={showAccount} onShowChange={setShowAccount} />
+      <AbChangeAccount open={openAccount} onOpenChange={setOpenAccount} />
 
       <AbPlayerSettings
-        show={showPlayerSettings}
-        onShowChange={setShowPlayerSettings}
+        open={openPlayerSettings}
+        onOpenChange={setOpenPlayerSettings}
       />
 
       <AbAddRss
-        show={showAddRSS}
-        onShowChange={setShowAddRSS}
+        open={openAddRSS}
+        onOpenChange={setOpenAddRSS}
         rule={searchRule}
         onRuleChange={setSearchRule}
       />
 
-      <Sheet open={showSearch} onOpenChange={setShowSearch}>
+      <Sheet open={openSearch} onOpenChange={setOpenSearch}>
         <SheetContent
           side="top"
           showCloseButton={false}
