@@ -3,7 +3,7 @@ import { Copy } from 'lucide-react';
 import { FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { AbExcludeField } from './ab-exclude-field';
+import { AbExcludeField } from './exclude-field';
 import type { AbRuleLayoutProps } from './types';
 
 export function AbRuleMobile({

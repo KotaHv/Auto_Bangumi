@@ -3,10 +3,10 @@ import { Copy } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { AbExcludeField } from './ab-exclude-field';
+import { AbExcludeField } from './exclude-field';
 import type { AbRuleLayoutProps } from './types';
 
-export function AbRulePc({
+export function AbRuleDesktop({
   rule,
   patch,
   patchNumber,
@@ -69,7 +69,7 @@ export function AbRulePc({
           </div>
 
           <AbExcludeField
-            layout="pc"
+            layout="desktop"
             value={rule.filter}
             onChange={(value) => patch('filter', value)}
           />

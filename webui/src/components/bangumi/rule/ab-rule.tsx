@@ -3,8 +3,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { BangumiRule } from '@/types/bangumi';
 import { message } from '@/lib/message';
 import { copyText } from '@/lib/clipboard';
-import { AbRuleMobile } from './ab-rule-mobile';
-import { AbRulePc } from './ab-rule-pc';
+import { AbRuleMobile } from './rule-mobile';
+import { AbRuleDesktop } from './rule-desktop';
 
 interface AbRuleProps {
   rule: BangumiRule;
@@ -42,6 +42,6 @@ export function AbRule({ rule, onChange }: AbRuleProps) {
   return isMobile ? (
     <AbRuleMobile {...layoutProps} />
   ) : (
-    <AbRulePc {...layoutProps} />
+    <AbRuleDesktop {...layoutProps} />
   );
 }

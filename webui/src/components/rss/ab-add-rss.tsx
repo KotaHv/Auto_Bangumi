@@ -14,7 +14,7 @@ import { AbSelect } from '@/components/common/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { AbPopup } from '@/components/common/ab-popup';
 import { Input } from '@/components/ui/input';
-import { AbRule } from '@/components/rule/ab-rule';
+import { AbRule } from '@/components/bangumi/rule/ab-rule';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Separator } from '@/components/ui/separator';
 

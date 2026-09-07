@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AbBangumiCard } from '@/components/bangumi/ab-bangumi-card';
-import { AbEditRule } from '@/components/rule/ab-edit-rule';
+import { AbEditRule } from '@/components/bangumi/rule/ab-edit-rule';
 import { bangumiListOptions } from '@/query/options';
 
 export default function BangumiPage() {

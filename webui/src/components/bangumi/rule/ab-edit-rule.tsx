@@ -9,7 +9,7 @@ import { message } from '@/lib/message';
 import { returnUserLangMsg } from '@/i18n';
 import { AbConfirm } from '@/components/common/ab-confirm';
 import { AbPopup } from '@/components/common/ab-popup';
-import { AbRule } from '@/components/rule/ab-rule';
+import { AbRule } from '@/components/bangumi/rule/ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import type { BangumiRule } from '@/types/bangumi';

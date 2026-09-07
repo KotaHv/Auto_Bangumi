@@ -6,7 +6,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 interface AbExcludeFieldProps {
   value: BangumiRule['filter'];
   onChange: (value: BangumiRule['filter']) => void;
-  layout: 'mobile' | 'pc';
+  layout: 'mobile' | 'desktop';
 }
 
 export function AbExcludeField({
