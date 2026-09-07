@@ -17,15 +17,8 @@
     "noImplicitAny": false,
     "paths": {
       "~/*": ["./*"],
-      "@/*": ["./src/*"],
-      "#/*": ["./types/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.d.ts",
-    "src/**/*.json",
-    "types/*.ts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "src/**/*.json"]
 }

@@ -5,7 +5,7 @@ import { apiLog } from '@/api/log';
 import { apiProgram } from '@/api/program';
 import { apiRSS } from '@/api/rss';
 import { apiSearch } from '@/api/search';
-import type { SearchResult } from '#/bangumi';
+import type { SearchResult } from '@/types/bangumi';
 
 function sortByIdDesc<T extends { id: number }>(items: T[]) {
   return [...items].sort((a, b) => b.id - a.id);

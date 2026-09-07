@@ -9,8 +9,8 @@ import {
   type ConfigFieldError,
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
-import type { ExperimentalOpenAI } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { ExperimentalOpenAI } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 interface ConfigOpenAIFieldsProps {
   openAI: ExperimentalOpenAI;

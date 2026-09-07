@@ -1,6 +1,6 @@
 import Axios from 'axios';
 import type { AxiosError, AxiosResponse } from 'axios';
-import type { ApiError, ApiSuccess } from '#/api';
+import type { ApiError, ApiSuccess } from '@/types/api';
 import { message } from '@/lib/message';
 import { i18n, returnUserLangText } from '@/i18n';
 import { handleUnauthorized } from '@/query/client';

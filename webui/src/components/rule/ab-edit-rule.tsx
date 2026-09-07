@@ -12,7 +12,7 @@ import { AbPopup } from '@/components/common/ab-popup';
 import { AbRule } from '@/components/rule/ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 
 interface AbEditRuleProps {
   rule: BangumiRule;

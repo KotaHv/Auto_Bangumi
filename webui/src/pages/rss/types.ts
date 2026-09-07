@@ -1,4 +1,4 @@
-import type { RSS } from '#/rss';
+import type { RSS } from '@/types/rss';
 
 export interface RSSLayoutProps {
   rss: RSS[];

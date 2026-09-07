@@ -1,5 +1,5 @@
 import { axios } from '@/utils/axios';
-import type { ApiSuccess } from '#/api';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiProgram = {
   async restart() {

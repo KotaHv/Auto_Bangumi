@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 import { AbDynamicTags } from '@/components/common/ab-dynamic-tags';
 import { Field, FieldLabel } from '@/components/ui/field';
 

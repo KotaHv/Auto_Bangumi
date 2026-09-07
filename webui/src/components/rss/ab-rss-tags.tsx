@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { RSS } from '#/rss';
+import type { RSS } from '@/types/rss';
 
 interface AbRssTagsProps {
   rss: RSS;

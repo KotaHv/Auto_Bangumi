@@ -1,7 +1,7 @@
 import { axios } from '@/utils/axios';
 import { Observable } from 'rxjs';
 
-import type { BangumiAPI, BangumiRule } from '#/bangumi';
+import type { BangumiAPI, BangumiRule } from '@/types/bangumi';
 
 export const apiSearch = {
   get(keyword: string, site = 'mikan'): Observable<BangumiRule> {

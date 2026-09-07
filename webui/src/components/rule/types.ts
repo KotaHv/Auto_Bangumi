@@ -1,4 +1,4 @@
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 
 export interface AbRuleLayoutProps {
   rule: BangumiRule;

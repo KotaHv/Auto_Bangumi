@@ -1,6 +1,6 @@
 import { axios } from '@/utils/axios';
-import type { LoginSuccess, Update } from '#/auth';
-import type { ApiSuccess } from '#/api';
+import type { LoginSuccess, Update } from '@/types/auth';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiAuth = {
   async login(username: string, password: string) {

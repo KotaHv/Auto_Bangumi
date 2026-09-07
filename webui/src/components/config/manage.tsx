@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import type { ConfigFieldItem } from './types';
-import type { BangumiManage } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { BangumiManage } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 const RENAME_METHODS = [
   { value: 'normal', label: 'normal' },

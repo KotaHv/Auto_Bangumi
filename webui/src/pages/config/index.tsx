@@ -30,8 +30,9 @@ import { getConfigErrors } from '@/lib/config-validation';
 import { ConfigPageLayout } from './layout';
 import { ConfigLoadingView } from './loading';
 import { ConfigSections } from './sections';
-import { ConfigDraftContext, type ConfigSection } from './types';
-import type { Config } from '#/config';
+import { ConfigDraftContext } from '@/contexts/config-draft';
+import type { ConfigSection } from './types';
+import type { Config } from '@/types/config';
 
 function hasConfigChanges(
   config: Config,

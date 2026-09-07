@@ -1,7 +1,7 @@
 import { axios } from '@/utils/axios';
-import type { BangumiAPI, BangumiRule } from '#/bangumi';
-import type { RSS } from '#/rss';
-import type { ApiSuccess } from '#/api';
+import type { BangumiAPI, BangumiRule } from '@/types/bangumi';
+import type { RSS } from '@/types/rss';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiDownload = {
   async analysis(rss_item: RSS) {

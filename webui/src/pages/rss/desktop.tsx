@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { RSS } from '#/rss';
+import type { RSS } from '@/types/rss';
 import type { RSSLayoutProps } from './types';
 import { cn } from '@/lib/utils';
 import { AbRssLink } from '@/components/rss/ab-rss-link';

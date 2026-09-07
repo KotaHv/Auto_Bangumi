@@ -7,8 +7,8 @@ import {
   getGroupErrors,
   type ConfigFieldError,
 } from '@/lib/config-validation';
-import type { Log, Program } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { Log, Program } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 interface ConfigNormalFieldsProps {
   program: Program;

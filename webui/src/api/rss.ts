@@ -1,7 +1,7 @@
 import { axios } from '@/utils/axios';
-import type { RSS } from '#/rss';
-import type { Torrent } from '#/torrent';
-import type { ApiSuccess } from '#/api';
+import type { RSS } from '@/types/rss';
+import type { Torrent } from '@/types/torrent';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiRSS = {
   async get(signal?: AbortSignal) {

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 import { message } from '@/lib/message';
 import { copyText } from '@/lib/clipboard';
 import { AbRuleMobile } from './ab-rule-mobile';

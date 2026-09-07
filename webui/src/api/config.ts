@@ -1,6 +1,6 @@
 import { axios } from '@/utils/axios';
-import type { Config } from '#/config';
-import type { ApiSuccess } from '#/api';
+import type { Config } from '@/types/config';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiConfig = {
   async getConfig(signal?: AbortSignal) {

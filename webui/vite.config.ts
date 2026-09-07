@@ -66,7 +66,6 @@ export default defineConfig(({ mode }) => ({
     alias: {
       '~': import.meta.dirname,
       '@': resolve(import.meta.dirname, 'src'),
-      '#': resolve(import.meta.dirname, 'types'),
     },
   },
   server: {

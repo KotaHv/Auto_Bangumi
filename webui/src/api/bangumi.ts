@@ -1,7 +1,7 @@
 import { axios } from '@/utils/axios';
 import { omit } from 'radash';
-import type { BangumiAPI, BangumiRule } from '#/bangumi';
-import type { ApiSuccess } from '#/api';
+import type { BangumiAPI, BangumiRule } from '@/types/bangumi';
+import type { ApiSuccess } from '@/types/api';
 
 export const apiBangumi = {
   async getAll(signal?: AbortSignal) {

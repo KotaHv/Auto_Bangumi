@@ -9,8 +9,8 @@ import {
 } from '@/lib/config-validation';
 import type { AbSelectOption } from '@/components/common/ab-select';
 import type { ConfigFieldItem } from './types';
-import type { Proxy } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { Proxy } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 const PROXY_TYPES: AbSelectOption[] = [
   { value: 'http', label: 'HTTP' },

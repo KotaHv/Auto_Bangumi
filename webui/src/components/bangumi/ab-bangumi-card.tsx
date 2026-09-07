@@ -1,6 +1,6 @@
 import { ImageOff, Pencil, Plus } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';

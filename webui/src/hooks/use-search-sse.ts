@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiSearch } from '@/api/search';
 import { emptySearchResultsOptions, searchKeys } from '@/query/options';
-import type { SearchResult } from '#/bangumi';
+import type { SearchResult } from '@/types/bangumi';
 
 export function useSearchSSE(keyword: string, provider: string, trigger = 0) {
   const queryClient = useQueryClient();

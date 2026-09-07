@@ -1,4 +1,4 @@
-import type { Config } from '#/config';
+import type { Config } from '@/types/config';
 
 // These values are only used to keep the loading view structurally complete.
 // They must never be used as the editor's saved or draft configuration.

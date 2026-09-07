@@ -17,8 +17,8 @@ import {
   UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { BangumiRule } from '#/bangumi';
-import { ruleTemplate } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
+import { ruleTemplate } from '@/constants/bangumi';
 import { useTheme } from '@/hooks/use-theme';
 import { AbSearchBar } from '@/components/search/ab-search-bar';
 import { AbAddRss } from '@/components/rss/ab-add-rss';

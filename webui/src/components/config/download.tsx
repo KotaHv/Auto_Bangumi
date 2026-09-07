@@ -8,8 +8,8 @@ import {
   type ConfigFieldError,
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
-import type { Downloader } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { Downloader } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 interface ConfigDownloadFieldsProps {
   downloader: Downloader;

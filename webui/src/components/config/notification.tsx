@@ -8,8 +8,8 @@ import {
   type ConfigFieldError,
 } from '@/lib/config-validation';
 import type { ConfigFieldItem } from './types';
-import type { Notification } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { Notification } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 const NOTIFICATION_TYPES = [
   { value: 'telegram', label: 'telegram' },

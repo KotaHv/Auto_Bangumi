@@ -6,7 +6,7 @@ import { Popover, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { searchProviderOptions } from '@/query/options';
 import { useSearchSSE } from '@/hooks/use-search-sse';
-import type { BangumiRule } from '#/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
 
 interface AbSearchBarProps {
   onAddBangumi: (bangumiRule: BangumiRule) => void;

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ConfigField } from '@/components/config/field';
 import { Separator } from '@/components/ui/separator';
 import type { ConfigFieldItem } from './types';
-import type { RssParser } from '#/config';
-import { useConfigDraft } from '@/pages/config/types';
+import type { RssParser } from '@/types/config';
+import { useConfigDraft } from '@/contexts/config-draft';
 
 const LANGS = [
   { value: 'zh', label: 'zh' },
