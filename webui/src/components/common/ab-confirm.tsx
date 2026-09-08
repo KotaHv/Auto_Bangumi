@@ -1,7 +1,24 @@
-import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AbPopup, type AbPopupWidth } from '@/components/common/ab-popup';
+import type { AbPopupWidth } from '@/components/common/ab-popup';
+import { cn } from '@/lib/utils';
+
+const WIDTH_CLASS: Record<AbPopupWidth, string> = {
+  sm: 'w-[280px]',
+  md: 'w-[300px]',
+  lg: 'w-[365px]',
+  xl: 'w-[520px]',
+};
 
 interface AbConfirmProps {
   open: boolean;
@@ -33,37 +50,34 @@ export function AbConfirm({
   const { t } = useTranslation();
 
   return (
-    <AbPopup
-      title={title}
+    <AlertDialog
       open={open}
       onOpenChange={onOpenChange}
       onOpenChangeComplete={onOpenChangeComplete}
-      titleCss="text-base"
-      width={width}
-      className="p-3"
     >
-      <div className="-mt-1 flex flex-col gap-3">
-        {children}
+      <AlertDialogContent
+        className={cn(WIDTH_CLASS[width], 'max-w-[92vw]')}
+        initialFocus={false}
+      >
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{children}</AlertDialogDescription>
+        </AlertDialogHeader>
 
-        <div className="flex items-center justify-center gap-2">
-          <Button
+        <AlertDialogFooter>
+          <AlertDialogCancel className="min-w-16">
+            {cancelText ?? t('homepage.rule.cancel_btn')}
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant={confirmType === 'warn' ? 'destructive-solid' : 'brand'}
             className="min-w-16"
             loading={confirmLoading}
             onClick={onConfirm}
           >
             {confirmText ?? t('homepage.rule.confirm_btn')}
-          </Button>
-
-          <Button
-            variant="outline"
-            className="min-w-16"
-            onClick={() => onOpenChange(false)}
-          >
-            {cancelText ?? t('homepage.rule.cancel_btn')}
-          </Button>
-        </div>
-      </div>
-    </AbPopup>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

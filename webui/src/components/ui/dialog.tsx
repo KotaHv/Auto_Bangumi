@@ -49,22 +49,13 @@ function DialogContent({
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            onOverlayClick?.();
-          }
-        }}
-      />
+      <DialogOverlay />
       {onOverlayClick && (
         <div
           aria-hidden
+          data-slot="dialog-pointer-events-blocker"
           className="fixed inset-0 z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              onOverlayClick?.();
-            }
-          }}
+          onClick={onOverlayClick}
         />
       )}
       <DialogPrimitive.Popup
