@@ -1,48 +1,11 @@
-import { useState } from 'react';
 import { useLocation } from 'react-router';
-import { useTranslation } from 'react-i18next';
-import {
-  EllipsisVertical,
-  MonitorPlay,
-  Moon,
-  Pause,
-  Play,
-  Power,
-  RefreshCw,
-  RotateCw,
-  Search,
-  Sun,
-  SunMoon,
-  UserRound,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { useTheme } from '@/hooks/use-theme';
-import { AbSearchBar } from '@/components/search/ab-search-bar';
 import { AbAddRss } from '@/components/rss/ab-add-rss';
-import { AbChangeAccount } from '@/components/account/ab-change-account';
-import { AbPlayerSettings } from '@/components/player/ab-player-settings';
-import { LanguageIcon } from '@/components/icons/language-icon';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { AbSearchBar } from '@/components/search/ab-search-bar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { changeLocale } from '@/i18n';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiBangumi } from '@/api/bangumi';
-import { apiProgram } from '@/api/program';
-import { message } from '@/lib/message';
-import { returnUserLangMsg } from '@/i18n';
-import { bangumiKeys, programKeys } from '@/query/options';
+import { AbMobileSearch } from './ab-mobile-search';
+import { AbTopbarMenu } from './ab-topbar-menu';
+import { LanguageToggle } from './language-toggle';
+import { ThemeToggle } from './theme-toggle';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/bangumi': 'Bangumi List',
@@ -52,84 +15,8 @@ const ROUTE_TITLES: Record<string, string> = {
   '/config': 'Config',
 };
 
-function ThemeToggle() {
-  const { mode, cycle } = useTheme();
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="toggle theme"
-      title="toggle theme"
-      onClick={cycle}
-    >
-      {mode === 'light' ? <Sun /> : mode === 'dark' ? <Moon /> : <SunMoon />}
-    </Button>
-  );
-}
-
 export function AbTopbar() {
-  const { t, i18n } = useTranslation();
   const location = useLocation();
-
-  const [openAccount, setOpenAccount] = useState(false);
-  const [openPlayerSettings, setOpenPlayerSettings] = useState(false);
-  const [openSearch, setOpenSearch] = useState(false);
-
-  const queryClient = useQueryClient();
-  const programMutation = useMutation({
-    mutationFn: (action: 'start' | 'stop' | 'restart' | 'shutdown') =>
-      apiProgram[action](),
-    onSuccess: async (data) => {
-      message.success(returnUserLangMsg(data));
-      await queryClient.invalidateQueries({ queryKey: programKeys.status() });
-    },
-  });
-  const refreshPosterMutation = useMutation({
-    mutationFn: apiBangumi.refreshPoster,
-    onSuccess: async (data) => {
-      message.success(returnUserLangMsg(data));
-      await queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
-    },
-  });
-
-  const controlItems: {
-    id: number;
-    icon: LucideIcon;
-    label: string;
-    handle?: () => unknown;
-  }[] = [
-    {
-      id: 1,
-      icon: Play,
-      label: t('topbar.start'),
-      handle: () => programMutation.mutate('start'),
-    },
-    {
-      id: 2,
-      icon: Pause,
-      label: t('topbar.pause'),
-      handle: () => programMutation.mutate('stop'),
-    },
-    {
-      id: 3,
-      icon: RotateCw,
-      label: t('topbar.restart'),
-      handle: () => programMutation.mutate('restart'),
-    },
-    {
-      id: 4,
-      icon: Power,
-      label: t('topbar.shutdown'),
-      handle: () => programMutation.mutate('shutdown'),
-    },
-    {
-      id: 5,
-      icon: RefreshCw,
-      label: t('topbar.refresh_poster'),
-      handle: () => refreshPosterMutation.mutate(),
-    },
-  ];
 
   return (
     <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">
@@ -143,88 +30,13 @@ export function AbTopbar() {
         <AbSearchBar className="hidden md:block" />
 
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            aria-label="search"
-            title="search"
-            onClick={() => setOpenSearch(true)}
-          >
-            <Search />
-          </Button>
-
+          <AbMobileSearch />
           <AbAddRss />
-
           <ThemeToggle />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="change language"
-            title="change language"
-            onClick={changeLocale}
-          >
-            <LanguageIcon language={i18n.language} />
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="menu"
-                  title="menu"
-                />
-              }
-            >
-              <EllipsisVertical />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" sideOffset={16} className="w-max">
-              {controlItems.map((item) => (
-                <DropdownMenuItem key={item.id} onClick={() => item.handle?.()}>
-                  <item.icon />
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-
-              <DropdownMenuItem onClick={() => setOpenPlayerSettings(true)}>
-                <MonitorPlay />
-                {t('player.settings_title')}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => setOpenAccount(true)}>
-                <UserRound />
-                {t('topbar.profile.title')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <LanguageToggle />
+          <AbTopbarMenu />
         </div>
       </div>
-
-      <AbChangeAccount open={openAccount} onOpenChange={setOpenAccount} />
-
-      <AbPlayerSettings
-        open={openPlayerSettings}
-        onOpenChange={setOpenPlayerSettings}
-      />
-
-      <Sheet open={openSearch} onOpenChange={setOpenSearch}>
-        <SheetContent
-          side="top"
-          showCloseButton={false}
-          className="rounded-b-2xl px-4 pt-5 pb-6"
-        >
-          <SheetHeader className="sr-only">
-            <SheetTitle>搜索</SheetTitle>
-          </SheetHeader>
-          <div className="flex w-full justify-center">
-            <AbSearchBar />
-          </div>
-        </SheetContent>
-      </Sheet>
     </header>
   );
 }
