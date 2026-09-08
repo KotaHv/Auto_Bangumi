@@ -6,6 +6,7 @@ import { AbPopup, type AbPopupWidth } from '@/components/common/ab-popup';
 interface AbConfirmProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onOpenChangeComplete?: (open: boolean) => void;
   title: string;
   width?: AbPopupWidth;
   confirmType?: 'brand' | 'warn';
@@ -19,6 +20,7 @@ interface AbConfirmProps {
 export function AbConfirm({
   open,
   onOpenChange,
+  onOpenChangeComplete,
   title,
   width = 'md',
   confirmType = 'brand',
@@ -35,6 +37,7 @@ export function AbConfirm({
       title={title}
       open={open}
       onOpenChange={onOpenChange}
+      onOpenChangeComplete={onOpenChangeComplete}
       titleCss="text-base"
       width={width}
       className="p-3"

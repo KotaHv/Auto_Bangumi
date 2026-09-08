@@ -22,6 +22,7 @@ interface AbEditRuleProps {
 export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(true);
   const [draftRule, setDraftRule] = useState(() => rule);
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
@@ -52,21 +53,21 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, { rule }) => {
       message.success(returnUserLangMsg(data));
       updateBangumiListItem(rule.id, () => rule);
-      onClose();
+      setOpen(false);
     },
   });
   const renameMutation = useMutation({
     mutationFn: apiBangumi.rename,
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
-      onClose();
+      setOpen(false);
     },
   });
   const collectMutation = useMutation({
     mutationFn: apiDownload.forceCollect,
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
-      onClose();
+      setOpen(false);
     },
   });
   const enableMutation = useMutation({
@@ -74,7 +75,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, id) => {
       message.success(returnUserLangMsg(data));
       updateBangumiListItem(id, (item) => ({ ...item, deleted: false }));
-      onClose();
+      setOpen(false);
     },
   });
   const disableMutation = useMutation({
@@ -83,7 +84,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
       updateBangumiListItem(id, (item) => ({ ...item, deleted: true }));
-      onClose();
+      setOpen(false);
     },
   });
   const deleteMutation = useMutation({
@@ -92,7 +93,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
       updateBangumiListItem(id, () => null);
-      onClose();
+      setOpen(false);
     },
   });
 
@@ -123,8 +124,9 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
   return draftRule.deleted ? (
     <AbConfirm
-      open
-      onOpenChange={(v) => !v && onClose()}
+      open={open}
+      onOpenChange={setOpen}
+      onOpenChangeComplete={(v) => !v && onClose()}
       title={t('homepage.rule.enable_rule')}
       width="sm"
       confirmLoading={enableMutation.isPending}
@@ -135,60 +137,59 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   ) : (
     <AbPopup
       title={t('homepage.rule.edit_rule')}
-      open
-      onOpenChange={(v) => !v && onClose()}
+      open={open}
+      onOpenChange={setOpen}
+      onOpenChangeComplete={(v) => !v && onClose()}
       width="xl"
       className="shadow-2xl"
     >
-      <div>
-        <AbRule rule={draftRule} onChange={setDraftRule} />
+      <AbRule rule={draftRule} onChange={setDraftRule} />
 
-        <Separator className="my-4" />
+      <Separator />
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-between">
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              onClick={() => setOpenForceCollectDialog(true)}
-            >
-              {t('homepage.rule.force_collect')}
-            </Button>
-
-            <Button
-              variant="ghost"
-              loading={renameMutation.isPending}
-              onClick={rename}
-            >
-              {t('homepage.rule.rename')}
-            </Button>
-
-            <Button
-              variant="ghost"
-              onClick={() => openDeleteFileDialog('disable')}
-            >
-              {t('homepage.rule.disable')}
-            </Button>
-
-            <Button
-              variant="ghost"
-              className="text-destructive"
-              onClick={() => openDeleteFileDialog('delete')}
-            >
-              {t('homepage.rule.delete')}
-            </Button>
-          </div>
+      <div className="flex flex-wrap items-center gap-2 sm:justify-between">
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            onClick={() => setOpenForceCollectDialog(true)}
+          >
+            {t('homepage.rule.force_collect')}
+          </Button>
 
           <Button
-            variant="brand"
-            className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
-            loading={updateMutation.isPending}
-            onClick={() =>
-              updateMutation.mutate({ id: draftRule.id, rule: draftRule })
-            }
+            variant="ghost"
+            loading={renameMutation.isPending}
+            onClick={rename}
           >
-            {t('homepage.rule.apply')}
+            {t('homepage.rule.rename')}
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => openDeleteFileDialog('disable')}
+          >
+            {t('homepage.rule.disable')}
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="text-destructive"
+            onClick={() => openDeleteFileDialog('delete')}
+          >
+            {t('homepage.rule.delete')}
           </Button>
         </div>
+
+        <Button
+          variant="brand"
+          className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
+          loading={updateMutation.isPending}
+          onClick={() =>
+            updateMutation.mutate({ id: draftRule.id, rule: draftRule })
+          }
+        >
+          {t('homepage.rule.apply')}
+        </Button>
       </div>
 
       <AbConfirm
