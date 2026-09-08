@@ -41,23 +41,13 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  onOverlayClick,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
-  onOverlayClick?: () => void;
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
-      {onOverlayClick && (
-        <div
-          aria-hidden
-          data-slot="dialog-pointer-events-blocker"
-          className="fixed inset-0 z-50"
-          onClick={onOverlayClick}
-        />
-      )}
+      <DialogOverlay forceRender />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

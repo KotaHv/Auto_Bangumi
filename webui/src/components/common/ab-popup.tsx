@@ -50,7 +50,6 @@ export function AbPopup({
         className={cn(WIDTH_CLASS[width], 'max-w-[92vw]', className)}
         showCloseButton={false}
         initialFocus={false}
-        onOverlayClick={() => maskClick && onOpenChange(false)}
       >
         <DialogHeader>
           <DialogTitle className={titleCss}>{title}</DialogTitle>

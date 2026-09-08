@@ -45,12 +45,7 @@ function AlertDialogContent({
 }) {
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
-      <div
-        aria-hidden
-        data-slot="alert-dialog-pointer-events-blocker"
-        className="fixed inset-0 z-50"
-      />
+      <AlertDialogOverlay forceRender />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         data-size={size}
