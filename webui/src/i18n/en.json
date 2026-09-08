@@ -202,6 +202,7 @@
   "topbar": {
     "add": {
       "aggregate": "Aggregate RSS",
+      "back": "Back",
       "button": "Add",
       "collect": "Collect",
       "name": "Name",

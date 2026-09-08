@@ -1,6 +1,6 @@
 import type { RSS } from '@/types/rss';
 
-export const rssTemplate: RSS = {
+export const initialRss: RSS = {
   id: 0,
   name: '',
   url: '',

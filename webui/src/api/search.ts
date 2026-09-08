@@ -1,11 +1,12 @@
 import { axios } from '@/utils/axios';
 import { Observable } from 'rxjs';
 
-import type { BangumiAPI, BangumiRule } from '@/types/bangumi';
+import type { BangumiRule } from '@/types/bangumi';
+import type { SearchResult, SearchResultResponse } from '@/types/search';
 
 export const apiSearch = {
-  get(keyword: string, site = 'mikan'): Observable<BangumiRule> {
-    const bangumiInfo$ = new Observable<BangumiRule>((observer) => {
+  get(keyword: string, site = 'mikan'): Observable<SearchResult> {
+    const bangumiInfo$ = new Observable<SearchResult>((observer) => {
       const eventSource = new EventSource(
         `api/v1/search/bangumi?site=${site}&keywords=${encodeURIComponent(
           keyword,
@@ -15,12 +16,12 @@ export const apiSearch = {
 
       eventSource.onmessage = (ev) => {
         try {
-          const apiData: BangumiAPI = JSON.parse(ev.data);
-          const data: BangumiRule = {
-            ...apiData,
-            filter: apiData.filter.split(','),
+          const apiData: SearchResultResponse = JSON.parse(ev.data);
+          const bangumi: BangumiRule = {
+            ...apiData.bangumi,
+            filter: apiData.bangumi.filter.split(','),
           };
-          observer.next(data);
+          observer.next({ bangumi, rss: apiData.rss });
         } catch (error) {
           console.error(
             '[/search/bangumi] Parse Error |',

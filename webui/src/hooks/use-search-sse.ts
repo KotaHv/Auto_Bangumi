@@ -10,7 +10,7 @@ import {
   timer,
 } from 'rxjs';
 import { apiSearch } from '@/api/search';
-import type { BangumiRule, SearchResult } from '@/types/bangumi';
+import type { OrderedSearchResult, SearchResult } from '@/types/search';
 
 type SearchMode = 'auto' | 'immediate';
 
@@ -26,7 +26,7 @@ export function useSearchSSE() {
     requestsRef.current = new Subject<SearchRequest>();
   }
 
-  const [bangumiList, setBangumiList] = useState<SearchResult[]>([]);
+  const [bangumiList, setBangumiList] = useState<OrderedSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchProvider, setSearchProvider] = useState('');
@@ -54,7 +54,7 @@ export function useSearchSSE() {
               setSearchProvider(provider);
               setLoading(true);
               return apiSearch.get(keyword, provider).pipe(
-                tap((value: BangumiRule) => {
+                tap((value: SearchResult) => {
                   setBangumiList((current) => [
                     ...current,
                     { order: current.length + 1, value },

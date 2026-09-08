@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,8 +17,6 @@ import {
   UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { BangumiRule } from '@/types/bangumi';
-import { ruleTemplate } from '@/constants/bangumi';
 import { useTheme } from '@/hooks/use-theme';
 import { AbSearchBar } from '@/components/search/ab-search-bar';
 import { AbAddRss } from '@/components/rss/ab-add-rss';
@@ -78,7 +76,6 @@ export function AbTopbar() {
   const [openAccount, setOpenAccount] = useState(false);
   const [openPlayerSettings, setOpenPlayerSettings] = useState(false);
   const [openAddRSS, setOpenAddRSS] = useState(false);
-  const [searchRule, setSearchRule] = useState<BangumiRule>(ruleTemplate);
   const [openSearch, setOpenSearch] = useState(false);
 
   const queryClient = useQueryClient();
@@ -136,17 +133,6 @@ export function AbTopbar() {
     },
   ];
 
-  function addSearchResult(bangumi: BangumiRule) {
-    setOpenAddRSS(true);
-    setSearchRule(bangumi);
-  }
-
-  useEffect(() => {
-    if (!openAddRSS) {
-      window.setTimeout(() => setSearchRule(ruleTemplate), 300);
-    }
-  }, [openAddRSS]);
-
   return (
     <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger size="icon" className="-ml-1 md:hidden" />
@@ -156,10 +142,7 @@ export function AbTopbar() {
       </div>
 
       <div className="ml-auto flex min-w-0 items-center gap-3">
-        <AbSearchBar
-          onAddBangumi={addSearchResult}
-          className="hidden md:block"
-        />
+        <AbSearchBar className="hidden md:block" />
 
         <div className="flex items-center gap-1.5">
           <Button
@@ -238,12 +221,7 @@ export function AbTopbar() {
         onOpenChange={setOpenPlayerSettings}
       />
 
-      <AbAddRss
-        open={openAddRSS}
-        onOpenChange={setOpenAddRSS}
-        rule={searchRule}
-        onRuleChange={setSearchRule}
-      />
+      <AbAddRss open={openAddRSS} onOpenChange={setOpenAddRSS} />
 
       <Sheet open={openSearch} onOpenChange={setOpenSearch}>
         <SheetContent
@@ -255,7 +233,7 @@ export function AbTopbar() {
             <SheetTitle>搜索</SheetTitle>
           </SheetHeader>
           <div className="flex w-full justify-center">
-            <AbSearchBar onAddBangumi={addSearchResult} />
+            <AbSearchBar />
           </div>
         </SheetContent>
       </Sheet>

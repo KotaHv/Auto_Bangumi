@@ -27,9 +27,4 @@ export interface BangumiAPI extends Omit<BangumiRule, 'filter'> {
   filter: string;
 }
 
-export interface SearchResult {
-  order: number;
-  value: BangumiRule;
-}
-
 export type BangumiUpdate = Omit<BangumiAPI, 'id'>;

@@ -20,6 +20,7 @@ interface AbPopupProps {
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onOpenChangeComplete?: (open: boolean) => void;
   maskClick?: boolean;
   width?: AbPopupWidth;
   className?: string;
@@ -31,6 +32,7 @@ export function AbPopup({
   title,
   open,
   onOpenChange,
+  onOpenChangeComplete,
   maskClick = true,
   width = 'md',
   className = '',
@@ -41,6 +43,7 @@ export function AbPopup({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
+      onOpenChangeComplete={onOpenChangeComplete}
       disablePointerDismissal={!maskClick}
     >
       <DialogContent

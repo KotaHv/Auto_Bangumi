@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 
-from module.models import Bangumi, RSSItem, Torrent
+from module.models import Bangumi, RSSItem, SearchResult, Torrent
 from module.network import RequestContent
 from module.rss import RSSAnalyser
 
@@ -36,11 +36,11 @@ class SearchTorrent(RequestContent, RSSAnalyser):
                 break
             bangumi = await self.torrent_to_data(torrent=torrent, rss=rss_item)
             if bangumi:
-                special_link = self.special_url(bangumi, site).url
-                if special_link not in exist_list:
-                    bangumi.rss_link = special_link
-                    exist_list.append(special_link)
-                    yield bangumi.model_dump_json()
+                rss = self.special_url(bangumi, site)
+                if rss.url not in exist_list:
+                    bangumi.rss_link = rss.url
+                    exist_list.append(rss.url)
+                    yield SearchResult(bangumi=bangumi, rss=rss).model_dump_json()
 
     @staticmethod
     def special_url(data: Bangumi, site: str) -> RSSItem:

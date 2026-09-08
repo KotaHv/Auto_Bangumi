@@ -202,6 +202,7 @@
   "topbar": {
     "add": {
       "aggregate": "聚合 RSS",
+      "back": "返回",
       "button": "添加",
       "collect": "收集",
       "name": "名称",
