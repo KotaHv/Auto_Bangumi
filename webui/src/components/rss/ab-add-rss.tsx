@@ -1,33 +1,34 @@
+import { CirclePlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiDownload } from '@/api/download';
 import { apiRSS } from '@/api/rss';
 import { message } from '@/lib/message';
-import { rssKeys } from '@/query/options';
+import { rssKeys, bangumiKeys } from '@/query/options';
 import { returnUserLangMsg } from '@/i18n';
 import { initialRss } from '@/constants/rss';
 import type { RSS } from '@/types/rss';
 import { AbPopup } from '@/components/common/ab-popup';
 import { AbBangumiReview } from '@/components/bangumi/ab-bangumi-review';
+import { Button } from '@/components/ui/button';
 import { AbAddRssForm } from './ab-add-rss-form';
 
-interface AbAddRssProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export function AbAddRss({ open, onOpenChange }: AbAddRssProps) {
+export function AbAddRss() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
+  const [open, setOpen] = useState(false);
   const [rss, setRss] = useState<RSS>(initialRss);
   const addMutation = useMutation({
     mutationFn: apiRSS.add,
     onSuccess: async (data) => {
       message.success(returnUserLangMsg(data));
-      await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
-      onOpenChange(false);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: bangumiKeys.list() }),
+        queryClient.invalidateQueries({ queryKey: rssKeys.list() }),
+      ]);
+      setOpen(false);
     },
   });
   const analysisMutation = useMutation({
@@ -50,13 +51,23 @@ export function AbAddRss({ open, onOpenChange }: AbAddRssProps) {
 
   return (
     <AbPopup
+      trigger={
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="add rss"
+          title="add rss"
+        >
+          <CirclePlus />
+        </Button>
+      }
       title={
         analysisMutation.data
           ? t('homepage.rule.edit_rule')
           : t('topbar.add.title')
       }
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={setOpen}
       onOpenChangeComplete={(open) => {
         if (open) return;
 
@@ -72,7 +83,7 @@ export function AbAddRss({ open, onOpenChange }: AbAddRssProps) {
           rule={analysisMutation.data}
           rss={rss}
           onBack={() => analysisMutation.reset()}
-          onComplete={() => onOpenChange(false)}
+          onComplete={() => setOpen(false)}
         />
       ) : (
         <AbAddRssForm

@@ -15,7 +15,7 @@ export function AbRuleMobile({
   const { t } = useTranslation();
 
   return (
-    <div>
+    <>
       <div className="flex flex-col gap-3">
         <div className="border-border/70 focus-within:border-brand flex min-w-0 items-end border-b">
           <Input
@@ -83,7 +83,7 @@ export function AbRuleMobile({
         </div>
       </div>
 
-      <Separator className="my-3" />
+      <Separator />
 
       <div className="text-muted-foreground flex flex-col gap-1 text-sm">
         <div className="flex items-center gap-2">
@@ -117,6 +117,6 @@ export function AbRuleMobile({
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -2,10 +2,11 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTrigger,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 export type AbPopupWidth = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -17,6 +18,7 @@ const WIDTH_CLASS: Record<AbPopupWidth, string> = {
 };
 
 interface AbPopupProps {
+  trigger?: ReactElement;
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,6 +31,7 @@ interface AbPopupProps {
 }
 
 export function AbPopup({
+  trigger,
   title,
   open,
   onOpenChange,
@@ -46,6 +49,8 @@ export function AbPopup({
       onOpenChangeComplete={onOpenChangeComplete}
       disablePointerDismissal={!maskClick}
     >
+      {trigger && <DialogTrigger render={trigger} />}
+
       <DialogContent
         className={cn(WIDTH_CLASS[width], 'max-w-[92vw]', className)}
         showCloseButton={false}

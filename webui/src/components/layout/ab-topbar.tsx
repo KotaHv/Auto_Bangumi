@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  CirclePlus,
   EllipsisVertical,
   MonitorPlay,
   Moon,
@@ -75,7 +74,6 @@ export function AbTopbar() {
 
   const [openAccount, setOpenAccount] = useState(false);
   const [openPlayerSettings, setOpenPlayerSettings] = useState(false);
-  const [openAddRSS, setOpenAddRSS] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
 
   const queryClient = useQueryClient();
@@ -156,15 +154,7 @@ export function AbTopbar() {
             <Search />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="add rss"
-            title="add rss"
-            onClick={() => setOpenAddRSS(true)}
-          >
-            <CirclePlus />
-          </Button>
+          <AbAddRss />
 
           <ThemeToggle />
 
@@ -220,8 +210,6 @@ export function AbTopbar() {
         open={openPlayerSettings}
         onOpenChange={setOpenPlayerSettings}
       />
-
-      <AbAddRss open={openAddRSS} onOpenChange={setOpenAddRSS} />
 
       <Sheet open={openSearch} onOpenChange={setOpenSearch}>
         <SheetContent

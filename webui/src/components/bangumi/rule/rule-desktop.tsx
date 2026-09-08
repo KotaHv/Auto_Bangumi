@@ -76,7 +76,7 @@ export function AbRuleDesktop({
         </div>
       </div>
 
-      <Separator className="my-4" />
+      <Separator />
 
       <div className="text-muted-foreground space-y-1 text-sm">
         <div className="flex items-center gap-2">
