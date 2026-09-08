@@ -53,7 +53,7 @@ export function ConfigNormalFields({
   ];
 
   return (
-    <div>
+    <>
       {items.map((item, index) => (
         <Fragment key={item.configKey}>
           {index > 0 && <Separator className="my-2" />}
@@ -86,7 +86,7 @@ export function ConfigNormalFields({
         value={log.debug_enable}
         onChange={(v) => onLogChange?.({ debug_enable: v })}
       />
-    </div>
+    </>
   );
 }
 

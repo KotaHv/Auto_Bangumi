@@ -58,7 +58,7 @@ export function ConfigOpenAIFields({
   ];
 
   return (
-    <div>
+    <>
       <Alert className="border-amber-200/70 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300">
         <AlertTitle>{t('config.experimental_openai_set.warning')}</AlertTitle>
       </Alert>
@@ -88,7 +88,7 @@ export function ConfigOpenAIFields({
           />
         </Fragment>
       ))}
-    </div>
+    </>
   );
 }
 

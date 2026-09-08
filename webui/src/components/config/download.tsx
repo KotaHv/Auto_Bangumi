@@ -81,7 +81,7 @@ export function ConfigDownloadFields({
   }
 
   return (
-    <div>
+    <>
       <ConfigField
         label={t('config.downloader_set.use_api_key')}
         type="switch"
@@ -117,7 +117,7 @@ export function ConfigDownloadFields({
             />
           </Fragment>
         ))}
-    </div>
+    </>
   );
 }
 
