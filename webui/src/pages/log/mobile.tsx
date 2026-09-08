@@ -1,4 +1,5 @@
 import {
+  Bug,
   CircleAlert,
   Clipboard,
   FileText,
@@ -118,6 +119,72 @@ export function LogMobile({
 
   return (
     <div className="mx-4 flex h-full min-h-0 flex-col">
+      <AbFloatingBar position="top" className="w-full shadow-none">
+        <CardContent className="divide-border/60 grid w-full grid-cols-4 gap-0 divide-x">
+          <div
+            className="text-brand flex min-w-0 items-center justify-center gap-1.5 px-2 first:pl-0"
+            aria-label={`${t('log.total')}: ${loaded ? log.length : '-'}`}
+            title={t('log.total')}
+          >
+            <FileText className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loaded ? log.length : '-'}
+            </span>
+            <span
+              className={cn(
+                'size-1 shrink-0 rounded-full',
+                pollingActive
+                  ? 'animate-pulse bg-emerald-500'
+                  : 'bg-muted-foreground/50',
+              )}
+              title={
+                pollingActive ? t('log.auto_refresh') : t('log.refresh_stopped')
+              }
+            />
+          </div>
+
+          <div
+            className="text-destructive flex min-w-0 items-center justify-center gap-1.5 px-2"
+            aria-label={`${t('log.errors')}: ${loaded ? errorCount : '-'}`}
+            title={t('log.errors')}
+          >
+            <TriangleAlert className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loaded ? errorCount : '-'}
+            </span>
+          </div>
+
+          <div
+            className="flex min-w-0 items-center justify-center gap-1.5 px-2 text-amber-600 dark:text-amber-400"
+            aria-label={`${t('log.warnings')}: ${loaded ? warningCount : '-'}`}
+            title={t('log.warnings')}
+          >
+            <CircleAlert className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loaded ? warningCount : '-'}
+            </span>
+          </div>
+
+          <div
+            className="text-muted-foreground flex min-w-0 items-center justify-center gap-1.5 px-2 last:pr-0"
+            aria-label={`${t('log.debug')}: ${loaded ? (debugEnable ? t('log.enabled') : t('log.disabled')) : '-'}`}
+            title={t('log.debug')}
+          >
+            <Bug className="size-3.5 shrink-0" />
+            <span
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                loaded
+                  ? debugEnable
+                    ? 'bg-emerald-500'
+                    : 'bg-muted-foreground/50'
+                  : 'bg-muted-foreground/30',
+              )}
+            />
+          </div>
+        </CardContent>
+      </AbFloatingBar>
+
       <div className="relative my-3 min-h-0 flex-1">
         <div
           ref={(element) => {
