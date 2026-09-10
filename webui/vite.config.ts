@@ -1,53 +1,14 @@
 import { resolve } from 'node:path';
-import UnoCSS from 'unocss/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import AutoImport from 'unplugin-auto-import/vite';
-import Components from 'unplugin-vue-components/vite';
-import VueRouter from 'unplugin-vue-router/vite';
-import { VueRouterAutoImports } from 'unplugin-vue-router';
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import VueJsx from '@vitejs/plugin-vue-jsx';
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: './',
   plugins: [
-    VueJsx(),
-    VueRouter({
-      dts: 'types/dts/router-type.d.ts',
-    }),
-    vue({
-      script: {
-        defineModel: true,
-      },
-    }),
-    UnoCSS(),
-    AutoImport({
-      imports: [
-        'vue',
-        'vitest',
-        'pinia',
-        '@vueuse/core',
-        VueRouterAutoImports,
-        'vue-i18n',
-      ],
-      dts: 'types/dts/auto-imports.d.ts',
-      dirs: ['src/api', 'src/store', 'src/hooks', 'src/utils'],
-    }),
-    Components({
-      dts: 'types/dts/components.d.ts',
-      dirs: [
-        'src/components',
-        'src/components/basic',
-        'src/components/layout',
-        'src/components/setting',
-      ],
-    }),
-    VueI18nPlugin({
-      include: resolve(__dirname, './src/i18n/**'),
-    }),
+    react(),
+    tailwindcss(),
     VitePWA({
       injectRegister: false,
       registerType: 'autoUpdate',
@@ -85,24 +46,26 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: '@import "./src/style/mixin.scss";',
+  build: {
+    cssCodeSplit: false,
+    rolldownOptions: {
+      output: {
+        minify:
+          mode === 'production'
+            ? {
+                compress: {
+                  dropConsole: true,
+                  dropDebugger: true,
+                },
+              }
+            : undefined,
       },
     },
   },
-  esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
-  },
-  build: {
-    cssCodeSplit: false,
-  },
   resolve: {
     alias: {
-      '~': resolve(__dirname, './'),
-      '@': resolve(__dirname, 'src'),
-      '#': resolve(__dirname, 'types'),
+      '~': import.meta.dirname,
+      '@': resolve(import.meta.dirname, 'src'),
     },
   },
   server: {

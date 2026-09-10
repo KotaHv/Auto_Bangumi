@@ -1,0 +1,235 @@
+{
+  "config": {
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "cancel_confirm": {
+      "message": "Are you sure you want to discard the unsaved changes?",
+      "title": "Discard Changes"
+    },
+    "downloader_set": {
+      "api_key": "API Key",
+      "host": "Host",
+      "password": "Password",
+      "path": "Download Path",
+      "ssl": "SSL",
+      "title": "qBittorrent Setting",
+      "use_api_key": "Login with API Key",
+      "username": "Username"
+    },
+    "experimental_openai_set": {
+      "base_url": "OpenAI API Base URL",
+      "api_key": "OpenAI API Key",
+      "enable": "Enable OpenAI",
+      "model": "OpenAI Model",
+      "title": "Experimental Setting",
+      "warning": "Warning: Experimental feature is not yet stable. Please use with caution."
+    },
+    "manage_set": {
+      "delete_bad_torrent": "Delete Bad Torrent",
+      "enable": "Enable",
+      "eps": "EPS complete",
+      "group_tag": "Add Group Tag",
+      "method": "Rename Method",
+      "title": "Manage Setting",
+      "retain_latest_media_version": "Retain Latest Version"
+    },
+    "normal_set": {
+      "debug": "Debug",
+      "rename_interval": "Interval Time of Rename",
+      "rss_interval": "Interval Time of Rss",
+      "title": "Normal Setting",
+      "web_port": "WebUI Port"
+    },
+    "notification_set": {
+      "chat_id": "Chat ID",
+      "enable": "Enable",
+      "title": "Notification Setting",
+      "token": "Token",
+      "type": "Type"
+    },
+    "parser_set": {
+      "enable": "Enable",
+      "exclude": "Exclude",
+      "language": "Language",
+      "title": "Parser Setting"
+    },
+    "proxy_set": {
+      "enable": "Enable",
+      "host": "Host",
+      "password": "Password",
+      "port": "Port",
+      "title": "Proxy Setting",
+      "type": "Proxy Type",
+      "username": "Username"
+    },
+    "unsaved": "Unsaved changes",
+    "invalid": "Some fields are invalid. Fix them before applying.",
+    "navigation_title": "Configuration",
+    "loading": "Loading configuration...",
+    "load_failed_title": "Unable to load configuration",
+    "load_failed": "The configuration could not be loaded from the server.",
+    "retry": "Retry",
+    "save_success": "Configuration saved",
+    "save_failed": "Failed to save configuration. Your changes are still unsaved."
+  },
+  "downloader": {
+    "hit": "Please set up the downloader"
+  },
+  "homepage": {
+    "rule": {
+      "apply": "Apply",
+      "delete": "Delete",
+      "delete_hit": "Delete this rule?",
+      "disable": "Disable",
+      "disable_hit": "Disable this rule?",
+      "delete_file": "Also delete local files",
+      "edit_rule": "Edit Rule",
+      "enable": "Enable",
+      "enable_hit": "Do you want to enable this rule?",
+      "enable_rule": "Enable Rule",
+      "exclude": "Exclude",
+      "confirm_btn": "Confirm",
+      "cancel_btn": "Cancel",
+      "official_title": "Official Title",
+      "group": "Sub Group",
+      "offset": "Offset",
+      "season": "Season",
+      "year": "Year",
+      "force_collect": "Force Collect",
+      "force_collect_hit": "Are you sure you want to force collect?",
+      "force_collect_title": "Collect",
+      "rename": "Rename",
+      "rss_link": "RSS"
+    }
+  },
+  "log": {
+    "auto_refresh": "Auto refresh",
+    "copy": "Copy",
+    "debug": "Debug mode",
+    "disabled": "Disabled",
+    "empty": "No logs yet",
+    "enabled": "Enabled",
+    "errors": "Errors",
+    "level": "Level",
+    "levels": {
+      "all": "ALL"
+    },
+    "lines": {
+      "all": "All",
+      "label": "Lines"
+    },
+    "loading": "Loading logs",
+    "message": "Message",
+    "module": "Module",
+    "no_matching": "No matching logs",
+    "reset": "Reset",
+    "refresh_stopped": "Refresh stopped",
+    "reset_confirm": "Are you sure you want to clear the logs?",
+    "start_refresh": "Start refresh",
+    "stop_refresh": "Stop refresh",
+    "time": "Time",
+    "total": "Loaded logs",
+    "update_now": "Update Now",
+    "warnings": "Warnings"
+  },
+  "login": {
+    "hide_password": "Hide password",
+    "login_btn": "Login",
+    "password": "Password",
+    "password_placeholder": "Enter password",
+    "show_password": "Show password",
+    "username": "Username",
+    "username_placeholder": "Enter username"
+  },
+  "notify": {
+    "api_key_format_error": "Invalid qBittorrent API Key. Expected 32 characters: 'qbt_' followed by 28 alphanumeric characters.",
+    "copy_failed": "Your browser does not support Clipboard API!",
+    "copy_success": "Copy Success!",
+    "login_failed": "Login Failed!",
+    "login_success": "Login Success!",
+    "password_length_error": "Password must be at least 8 characters long!",
+    "please_enter": "Please enter {field}!",
+    "please_update": "Please Update AutoBangumi!",
+    "rss_link": "RSS",
+    "session_expired": "Your login session has expired. Please log in again.",
+    "update_failed": "Update Failed!",
+    "update_success": "Update Success!",
+    "invalid_port": "Port must be an integer between 1 and 65535.",
+    "positive_integer": "Must be a positive integer."
+  },
+  "player": {
+    "apply_btn": "Save",
+    "desc": "Choose a playback mode and enter its address.",
+    "edit_hint": "You can edit it anytime from the ⋮ menu → Player settings.",
+    "jump_hint": "Playback opens in an external player.",
+    "settings_title": "Player settings",
+    "title": "No media player yet",
+    "url_placeholder": "Media player URL"
+  },
+  "rss": {
+    "aggregate": "Aggregate",
+    "delete": "Delete",
+    "delete_hit": "Delete the selected RSS feeds?",
+    "disable": "Disable",
+    "enable": "Enable",
+    "enabled_count": "Enabled",
+    "disabled_count": "Disabled",
+    "empty": "No RSS feeds yet",
+    "name": "Name",
+    "more": "More",
+    "select_all": "Select all",
+    "selected_count": "{count} selected",
+    "selected": "Selected",
+    "selectbox": "Select",
+    "refresh": "Refresh",
+    "status": "Status",
+    "tags": "Tags",
+    "total": "Total",
+    "title": "RSS Item",
+    "url": "Url"
+  },
+  "sidebar": {
+    "calendar": "Calendar",
+    "config": "Config",
+    "downloader": "Downloader",
+    "homepage": "HomePage",
+    "log": "Log",
+    "logout": "Logout",
+    "player": "Player",
+    "rss": "RSS Manager",
+    "title": "Menu"
+  },
+  "topbar": {
+    "add": {
+      "aggregate": "Aggregate RSS",
+      "back": "Back",
+      "button": "Add",
+      "collect": "Collect",
+      "name": "Name",
+      "parser": "Parser",
+      "placeholder_link": "Please enter the RSS link",
+      "placeholder_name": "Optional",
+      "rss_link": "RSS",
+      "subscribe": "Subscribe",
+      "title": "Add RSS"
+    },
+    "pause": "Pause",
+    "profile": {
+      "password": "Password",
+      "pop_title": "Change Account",
+      "title": "Profile",
+      "update_btn": "Update",
+      "username": "Username"
+    },
+    "refresh_poster": "Refresh Poster",
+    "reset_rule": "Reset Rule",
+    "restart": "Restart",
+    "search": {
+      "placeholder": "Type to search"
+    },
+    "shutdown": "Shutdown",
+    "start": "Start",
+    "status_running": "Running",
+    "status_stopped": "Stopped"
+  }
+}

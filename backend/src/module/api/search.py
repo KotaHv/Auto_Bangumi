@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sse_starlette.sse import EventSourceResponse
 
-from module.models import Bangumi
+from module.models import SearchResult
 from module.searcher import SEARCH_CONFIG, SearchTorrent
 from module.security.api import get_current_user
 
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 
 @router.get(
-    "/bangumi", response_model=list[Bangumi], dependencies=[Depends(get_current_user)]
+    "/bangumi", response_model=list[SearchResult], dependencies=[Depends(get_current_user)]
 )
 async def search_torrents(site: str = "mikan", keywords: str | None = Query(None)):
     """

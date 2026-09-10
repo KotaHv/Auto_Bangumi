@@ -1,0 +1,235 @@
+{
+  "config": {
+    "apply": "应用",
+    "cancel": "取消",
+    "cancel_confirm": {
+      "message": "确定要放弃当前未保存的修改吗？",
+      "title": "放弃修改"
+    },
+    "downloader_set": {
+      "api_key": "API Key",
+      "host": "下载器地址",
+      "password": "密码",
+      "path": "下载地址",
+      "ssl": "SSL",
+      "title": "qBittorrent 设置",
+      "use_api_key": "使用 API Key 登录",
+      "username": "用户名"
+    },
+    "experimental_openai_set": {
+      "base_url": "OpenAI API Base URL",
+      "api_key": "OpenAI API Key",
+      "enable": "启用 OpenAI",
+      "model": "OpenAI 模型",
+      "title": "实验功能设置",
+      "warning": "警告：实验功能尚未稳定，请谨慎使用"
+    },
+    "manage_set": {
+      "delete_bad_torrent": "删除坏种",
+      "enable": "启用",
+      "eps": "番剧补全",
+      "group_tag": "添加组标签",
+      "method": "重命名方式",
+      "title": "番剧管理设置",
+      "retain_latest_media_version": "仅保留最新版本"
+    },
+    "normal_set": {
+      "debug": "调试",
+      "rename_interval": "重命名间隔",
+      "rss_interval": "RSS 间隔",
+      "title": "常规设置",
+      "web_port": "网页端口"
+    },
+    "notification_set": {
+      "chat_id": "Chat ID",
+      "enable": "启用",
+      "title": "通知设置",
+      "token": "Token",
+      "type": "类型"
+    },
+    "parser_set": {
+      "enable": "启用",
+      "exclude": "排除",
+      "language": "语言",
+      "title": "解析设置"
+    },
+    "proxy_set": {
+      "enable": "启用",
+      "host": "地址",
+      "password": "密码",
+      "port": "端口",
+      "title": "代理设置",
+      "type": "类型",
+      "username": "用户名"
+    },
+    "unsaved": "有未保存的修改",
+    "invalid": "部分字段无效，请修正后再应用。",
+    "navigation_title": "配置",
+    "loading": "配置加载中...",
+    "load_failed_title": "配置加载失败",
+    "load_failed": "无法从服务器加载配置。",
+    "retry": "重试",
+    "save_success": "配置已保存",
+    "save_failed": "配置保存失败，修改仍未保存。"
+  },
+  "downloader": {
+    "hit": "请设置下载器"
+  },
+  "homepage": {
+    "rule": {
+      "apply": "应用",
+      "delete": "删除",
+      "delete_hit": "删除该规则？",
+      "disable": "禁用",
+      "disable_hit": "禁用该规则？",
+      "delete_file": "同时删除本地文件",
+      "edit_rule": "编辑规则",
+      "enable": "启用",
+      "enable_hit": "确定启用该规则？",
+      "enable_rule": "启用规则",
+      "exclude": "排除",
+      "confirm_btn": "确认",
+      "cancel_btn": "取消",
+      "official_title": "官方名称",
+      "group": "字幕组",
+      "offset": "剧集偏移",
+      "season": "季度",
+      "year": "年份",
+      "force_collect": "强制收集",
+      "force_collect_hit": "确定要强制收集吗？",
+      "force_collect_title": "收集",
+      "rename": "重命名",
+      "rss_link": "RSS"
+    }
+  },
+  "log": {
+    "auto_refresh": "自动刷新",
+    "copy": "复制",
+    "debug": "调试模式",
+    "disabled": "已关闭",
+    "empty": "暂无日志",
+    "enabled": "已开启",
+    "errors": "错误数量",
+    "level": "级别",
+    "levels": {
+      "all": "全部"
+    },
+    "lines": {
+      "all": "全部",
+      "label": "行数"
+    },
+    "loading": "正在加载日志",
+    "message": "消息",
+    "module": "模块",
+    "no_matching": "没有匹配的日志",
+    "reset": "重置",
+    "refresh_stopped": "已停止刷新",
+    "reset_confirm": "确定要清空日志吗？",
+    "start_refresh": "开始刷新",
+    "stop_refresh": "停止刷新",
+    "time": "时间",
+    "total": "已加载日志",
+    "update_now": "立即更新",
+    "warnings": "警告数量"
+  },
+  "login": {
+    "hide_password": "隐藏密码",
+    "login_btn": "登录",
+    "password": "密码",
+    "password_placeholder": "请输入密码",
+    "show_password": "显示密码",
+    "username": "用户名",
+    "username_placeholder": "请输入用户名"
+  },
+  "notify": {
+    "api_key_format_error": "qBittorrent API Key 格式不正确，应为 32 位字符：以 'qbt_' 开头，后跟 28 位字母数字字符。",
+    "copy_failed": "您的浏览器不支持剪贴板操作!",
+    "copy_success": "复制成功!",
+    "login_failed": "登录失败!",
+    "login_success": "登录成功!",
+    "password_length_error": "密码长度必须至少为8个字符!",
+    "please_enter": "请输入{field}!",
+    "please_update": "请更新AutoBangumi!",
+    "rss_link": "RSS",
+    "session_expired": "登录凭据已失效，请重新登录。",
+    "update_failed": "更新失败!",
+    "update_success": "更新成功!",
+    "invalid_port": "端口必须为 1–65535 之间的整数。",
+    "positive_integer": "必须为正整数。"
+  },
+  "player": {
+    "apply_btn": "保存",
+    "desc": "选择播放方式并填写地址",
+    "edit_hint": "之后可随时通过右上角 ⋮ → 播放器设置 修改",
+    "jump_hint": "播放时将使用外部播放器打开",
+    "settings_title": "播放器设置",
+    "title": "尚未设置媒体播放器",
+    "url_placeholder": "媒体播放器地址"
+  },
+  "rss": {
+    "aggregate": "聚合",
+    "delete": "删除",
+    "delete_hit": "确定删除选中的 RSS 条目吗？",
+    "disable": "禁用",
+    "enable": "启用",
+    "enabled_count": "已启用",
+    "disabled_count": "已禁用",
+    "empty": "暂无 RSS 条目",
+    "name": "名称",
+    "more": "更多",
+    "select_all": "全选",
+    "selected_count": "已选择 {count} 项",
+    "selected": "已选择",
+    "selectbox": "选择",
+    "refresh": "刷新",
+    "status": "状态",
+    "tags": "标签",
+    "total": "全部",
+    "title": "RSS 条目",
+    "url": "链接"
+  },
+  "sidebar": {
+    "calendar": "番剧日历",
+    "config": "设置",
+    "downloader": "下载器",
+    "homepage": "主页",
+    "log": "日志",
+    "logout": "退出",
+    "player": "播放器",
+    "rss": "RSS 管理",
+    "title": "菜单"
+  },
+  "topbar": {
+    "add": {
+      "aggregate": "聚合 RSS",
+      "back": "返回",
+      "button": "添加",
+      "collect": "收集",
+      "name": "名称",
+      "parser": "解析器",
+      "placeholder_link": "请输入 RSS 链接",
+      "placeholder_name": "可选",
+      "rss_link": "RSS",
+      "subscribe": "订阅",
+      "title": "添加 RSS"
+    },
+    "pause": "暂停",
+    "profile": {
+      "password": "密码",
+      "pop_title": "修改账户",
+      "title": "账户设置",
+      "update_btn": "更新",
+      "username": "用户名"
+    },
+    "refresh_poster": "刷新海报",
+    "reset_rule": "重置规则",
+    "restart": "重启",
+    "search": {
+      "placeholder": "输入关键字搜索"
+    },
+    "shutdown": "关闭",
+    "start": "启动",
+    "status_running": "运行中",
+    "status_stopped": "已停止"
+  }
+}

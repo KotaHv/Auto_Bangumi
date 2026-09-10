@@ -5,12 +5,17 @@ on:
     tags:
       - "*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to build"
+        required: true
+        type: string
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
@@ -30,57 +35,61 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 26
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - uses: oven-sh/setup-bun@v2
+        name: Install bun
         with:
-          version: 9
-          run_install: false
+          bun-version: 1.4.0
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
+      - uses: actions/cache@v6
+        name: Setup bun cache
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('webui/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: cd webui && pnpm install
+        run: cd webui && bun install --frozen-lockfile
 
       - name: Build test
         run: |
-          cd webui && pnpm test:build
+          cd webui && bun run build
 
   version-info:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Get latest tag
-        id: get-latest-tag
-        uses: actions-ecosystem/action-get-latest-tag@v1
       - name: Set version
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [ -z "${{ steps.get-latest-tag.outputs.tag }}" ]; then
-            echo "No tags found. Exiting."
-            exit 1
+          if [ "$EVENT_NAME" = "push" ]; then
+            version="$REF_NAME"
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
           else
-            echo "Tag found: ${{ steps.get-latest-tag.outputs.tag }}"
-            echo "version=${{ steps.get-latest-tag.outputs.tag }}" >> $GITHUB_OUTPUT
+            echo "Unsupported workflow event: $EVENT_NAME"
+            exit 1
           fi
+
+          if [ -z "$version" ]; then
+            echo "Version is required."
+            exit 1
+          fi
+
+          echo "Using version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -89,38 +98,32 @@ jobs:
     needs: [test, webui-test, version-info]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 26
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - uses: oven-sh/setup-bun@v2
+        name: Install bun
         with:
-          version: 9
-          run_install: false
+          bun-version: 1.4.0
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
+      - uses: actions/cache@v6
+        name: Setup bun cache
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('webui/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: cd webui && pnpm install
+        run: cd webui && bun install --frozen-lockfile
 
       - name: Build
         run: |
-          cd webui && pnpm build
+          cd webui && bun run build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -133,7 +136,7 @@ jobs:
     needs: [build-webui, version-info]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Create Version info via tag
         working-directory: ./backend/src
@@ -141,15 +144,15 @@ jobs:
           echo "VERSION='${{ needs.version-info.outputs.version }}'" >> module/__version__.py
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v4
 
       - name: Docker metadata (dev)
         id: meta-dev
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
@@ -160,7 +163,7 @@ jobs:
 
       - name: Docker metadata (release)
         id: meta-release
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
@@ -170,7 +173,7 @@ jobs:
         if: contains(needs.version-info.outputs.version, 'dev') == false
 
       - name: Login to ghcr.io
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -183,7 +186,7 @@ jobs:
           path: backend/src/dist
 
       - name: Build and push (dev)
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v7
         with:
           context: .
           builder: ${{ steps.buildx.output.name }}
@@ -196,7 +199,7 @@ jobs:
         if: contains(needs.version-info.outputs.version, 'dev')
 
       - name: Build and push (release)
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v7
         with:
           context: .
           builder: ${{ steps.buildx.output.name }}
