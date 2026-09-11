@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 from sqlmodel.pool import StaticPool
 
 from module.database.combine import Database
@@ -35,8 +36,9 @@ async def test_bangumi_database():
         save_path="downloads/无职转生，到了异世界就拿出真本事/Season 1",
         deleted=False,
     )
+    async with engine.begin() as connection:
+        await connection.run_sync(SQLModel.metadata.create_all)
     async with Database(engine) as db:
-        await db.create_table()
         # insert
         await db.bangumi.add(test_data)
         assert await db.bangumi.search_id(1) == test_data

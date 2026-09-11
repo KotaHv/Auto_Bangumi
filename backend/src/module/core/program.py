@@ -3,11 +3,12 @@ import asyncio
 from loguru import logger
 
 from module.conf import VERSION, settings
+from module.database.alembic import upgrade_database
 from module.models import ResponseModel
 from module.update import (
-    cache_image,
-    first_run,
-    torrent_migration,
+    ensure_default_user,
+    ensure_poster_cache,
+    ensure_torrent_hashes,
 )
 
 from .sub_thread import RenameThread, RSSThread
@@ -33,18 +34,13 @@ class Program(RenameThread, RSSThread):
 
     async def startup(self):
         self.__start_info()
-        if not self.database:
-            await first_run()
-            logger.info("[Core] No db file exists, create database file.")
+        await upgrade_database()
+        first_run = await ensure_default_user()
+        await ensure_torrent_hashes()
+        await ensure_poster_cache()
+        if first_run:
+            logger.info("[Core] Default user initialized.")
             return {"status": "First run detected."}
-        if not self.img_cache:
-            logger.info("[Core] No image cache exists, create image cache.")
-            await cache_image()
-        if not await self.check_torrent_hash():
-            logger.info(
-                "[Core] The hash field of the torrent table does not exist or its value is empty, get torrent hash."
-            )
-            await torrent_migration()
         await self.start()
 
     async def start(self):

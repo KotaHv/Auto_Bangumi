@@ -1,9 +1,9 @@
-from .cross_version import cache_image
-from .data_migration import torrent_migration
-from .startup import first_run
+from .poster_cache import ensure_poster_cache
+from .startup import ensure_default_user
+from .torrent_hash import ensure_torrent_hashes
 
 __all__ = [
-    "cache_image",
-    "torrent_migration",
-    "first_run",
+    "ensure_default_user",
+    "ensure_poster_cache",
+    "ensure_torrent_hashes",
 ]

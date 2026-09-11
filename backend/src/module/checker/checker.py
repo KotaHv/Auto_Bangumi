@@ -1,12 +1,8 @@
 from pathlib import Path
 
-from sqlalchemy import text
-from sqlmodel import select
-
 from module.conf import settings
-from module.database import Database
 from module.downloader import DownloadClient
-from module.models import Config, Torrent
+from module.models import Config
 
 
 class Checker:
@@ -49,30 +45,3 @@ class Checker:
                 return client.authed
         except Exception:
             return False
-
-    @staticmethod
-    def check_img_cache() -> bool:
-        img_path = Path("data/posters")
-        if img_path.exists():
-            return True
-        else:
-            img_path.mkdir()
-            return False
-
-    @staticmethod
-    async def check_torrent_hash() -> bool:
-        async with Database() as db:
-            columns = (
-                (
-                    # sqlmodel exec() overloads don't accept TextClause, but it works at runtime
-                    await db.exec(text("PRAGMA table_info(torrent)"))  # type: ignore[reportCallIssue, reportArgumentType]
-                )
-                .mappings()
-                .all()
-            )
-            if not any(column["name"] == "hash" for column in columns):
-                return False
-            torrents = (await db.exec(select(Torrent))).all()
-            return not any(
-                torrent.hash is None and torrent.bangumi_id for torrent in torrents
-            )

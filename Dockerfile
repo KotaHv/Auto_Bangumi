@@ -17,7 +17,8 @@ ENV LANG="C.UTF-8" \
     UV_LINK_MODE=copy \
     UV_NO_DEV=1 \
     UV_TOOL_BIN_DIR=/usr/local/bin \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    AUTOBANGUMI_ALEMBIC_DATABASE_URL=sqlite:////app/data/data.db
 
 WORKDIR /app
 
@@ -27,6 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
 COPY backend/pyproject.toml backend/uv.lock ./
+COPY backend/alembic ./alembic
 COPY --chmod=755 backend/src/. ./
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 

@@ -17,10 +17,6 @@ class Database(AsyncSession):
         self.bangumi = BangumiDatabase(self)
         self.user = UserDatabase(self)
 
-    async def create_table(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
-
     async def drop_table(self):
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.drop_all)

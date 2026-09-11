@@ -1,5 +1,5 @@
 from loguru import logger
-from sqlmodel import and_, desc, select
+from sqlmodel import and_, col, desc, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import Torrent
@@ -104,3 +104,17 @@ class TorrentDatabase:
             logger.debug("[Database] Delete torrent name: {}.", torrent.name)
             await self.session.delete(torrent)
         await self.session.commit()
+
+    async def get_homepage_by_bangumi_id(self, bangumi_id: int) -> str | None:
+        return (
+            await self.session.exec(
+                select(Torrent.homepage)
+                .where(
+                    and_(
+                        Torrent.bangumi_id == bangumi_id,
+                        col(Torrent.homepage).isnot(None),
+                    )
+                )
+                .order_by(desc(Torrent.id))
+            )
+        ).first()

@@ -89,7 +89,7 @@ class UserDatabase:
         self.session.add(user)
         await self.session.commit()
 
-    async def add_default_user(self):
+    async def ensure_default_user(self) -> bool:
         # Check if user exists
         statement = select(User)
         try:
@@ -98,7 +98,7 @@ class UserDatabase:
             await self.merge_old_user()
             result = (await self.session.exec(statement)).all()
         if len(result) != 0:
-            return
+            return False
         # Add default user
         user = User(
             username="admin",
@@ -106,3 +106,4 @@ class UserDatabase:
         )
         self.session.add(user)
         await self.session.commit()
+        return True

@@ -1,9 +1,6 @@
-from module.conf import POSTERS_PATH
 from module.rss import RSSEngine
 
 
-async def first_run():
+async def ensure_default_user() -> bool:
     async with RSSEngine() as engine:
-        await engine.create_table()
-        await engine.user.add_default_user()
-    POSTERS_PATH.mkdir(parents=True, exist_ok=True)
+        return await engine.user.ensure_default_user()
