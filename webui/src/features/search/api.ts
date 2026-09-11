@@ -2,10 +2,7 @@ import { axios } from '@/lib/axios';
 import { Observable } from 'rxjs';
 
 import type { BangumiRule } from '@/features/bangumi/types';
-import type {
-  SearchResult,
-  SearchResultResponse,
-} from './types';
+import type { SearchResult, SearchResultResponse } from './types';
 
 export const apiSearch = {
   get(keyword: string, site = 'mikan'): Observable<SearchResult> {

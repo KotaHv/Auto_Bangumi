@@ -23,11 +23,7 @@ import {
 } from '@/components/ui/empty';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type {
-  LogLayoutProps,
-  LogLine,
-  LogLineLimit,
-} from '../types';
+import type { LogLayoutProps, LogLine, LogLineLimit } from '../types';
 
 function getTypeStyle(type: string) {
   switch (type) {

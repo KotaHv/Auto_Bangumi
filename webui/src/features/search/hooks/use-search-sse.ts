@@ -10,10 +10,7 @@ import {
   timer,
 } from 'rxjs';
 import { apiSearch } from '../api';
-import type {
-  OrderedSearchResult,
-  SearchResult,
-} from '../types';
+import type { OrderedSearchResult, SearchResult } from '../types';
 
 type SearchMode = 'auto' | 'immediate';
 

@@ -30,11 +30,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import type {
-  LogLayoutProps,
-  LogLevelFilter,
-  LogLineLimit,
-} from '../types';
+import type { LogLayoutProps, LogLevelFilter, LogLineLimit } from '../types';
 
 function getTypeStyle(type: string) {
   switch (type) {
