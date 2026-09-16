@@ -1,11 +1,7 @@
 import { Navigate, createHashRouter } from 'react-router';
 import LoginPage from '@/app/routes/login';
 import RootLayout from '@/app/layouts/root-layout';
-import {
-  RequireAuth,
-  RedirectIfLoggedIn,
-  RedirectPlayerIfJump,
-} from './guards';
+import { RedirectPlayerIfJump } from './guards';
 
 export const router = createHashRouter([
   {
@@ -14,24 +10,14 @@ export const router = createHashRouter([
     children: [
       {
         path: 'login',
-        element: (
-          <RedirectIfLoggedIn>
-            <LoginPage />
-          </RedirectIfLoggedIn>
-        ),
+        element: <LoginPage />,
       },
       {
         path: '',
         lazy: async () => {
           const { default: AppLayout } =
             await import('@/app/layouts/app-layout');
-          return {
-            Component: () => (
-              <RequireAuth>
-                <AppLayout />
-              </RequireAuth>
-            ),
-          };
+          return { Component: AppLayout };
         },
         children: [
           { index: true, element: <Navigate to="/bangumi" replace /> },

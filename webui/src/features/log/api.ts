@@ -11,7 +11,7 @@ export const apiLog = {
   },
 
   async clearLog() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/log/clear');
+    const { data } = await axios.delete<ApiSuccess>('api/v1/log');
     return data;
   },
 };

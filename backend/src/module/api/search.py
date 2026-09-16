@@ -3,13 +3,15 @@ from sse_starlette.sse import EventSourceResponse
 
 from module.models import SearchResult
 from module.searcher import SEARCH_CONFIG, SearchTorrent
-from module.security.api import get_current_user
+from module.security.session import require_session
 
-router = APIRouter(prefix="/search", tags=["search"])
+router = APIRouter(
+    prefix="/search", tags=["search"], dependencies=[Depends(require_session)]
+)
 
 
 @router.get(
-    "/bangumi", response_model=list[SearchResult], dependencies=[Depends(get_current_user)]
+    "/bangumi", response_model=list[SearchResult]
 )
 async def search_torrents(site: str = "mikan", keywords: str | None = Query(None)):
     """
@@ -28,7 +30,7 @@ async def search_torrents(site: str = "mikan", keywords: str | None = Query(None
 
 
 @router.get(
-    "/provider", response_model=list[str], dependencies=[Depends(get_current_user)]
+    "/provider", response_model=list[str]
 )
 async def search_provider():
     return list(SEARCH_CONFIG.keys())

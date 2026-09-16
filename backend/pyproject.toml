@@ -10,7 +10,6 @@ dependencies = [
     "lxml>=5.2.2",
     "openai[httpx2]>=1.37.0",
     "python-dotenv>=1.0.1",
-    "python-jose>=3.3.0",
     "qbittorrent-api>=2026.5.3",
     "bs4>=0.0.2",
     "semver>=3.0.2",

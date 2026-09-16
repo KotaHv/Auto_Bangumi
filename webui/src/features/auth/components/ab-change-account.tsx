@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { apiAuth } from '../api';
 import { message } from '@/lib/message';
+import { returnUserLangText } from '@/lib/i18n';
 import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/shared/ab-password';
 import { AbPopup } from '@/components/shared/ab-popup';
@@ -21,13 +22,10 @@ export function AbChangeAccount({ open, onOpenChange }: AbChangeAccountProps) {
   const updateMutation = useMutation({
     mutationFn: () => apiAuth.update(user.username, user.password),
     onSuccess: (data) => {
-      if (data.message.toLocaleLowerCase() === 'update success') {
-        setUser({ username: '', password: '' });
-        message.success(t('notify.update_success'));
-      } else {
-        setUser((s) => ({ ...s, password: '' }));
-        message.error(t('notify.update_failed'));
-      }
+      setUser({ username: '', password: '' });
+      message.success(
+        returnUserLangText({ en: data.msg_en, 'zh-CN': data.msg_zh }),
+      );
     },
   });
 

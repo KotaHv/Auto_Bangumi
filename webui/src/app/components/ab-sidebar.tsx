@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { FileClock, House, LogOut, Play, Rss, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -17,7 +17,6 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useSessionStore } from '@/stores/session';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiAuth } from '@/features/auth/api';
 import { message } from '@/lib/message';
@@ -36,14 +35,14 @@ interface SidebarItem {
 export function AbSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
-  const setLoggedIn = useSessionStore((s) => s.setLoggedIn);
+  const navigate = useNavigate();
   const { data: status } = useQuery(programStatusOptions());
   const logoutMutation = useMutation({
     mutationFn: apiAuth.logout,
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
-      setLoggedIn(false);
       removeProtectedQueries();
+      navigate('/login', { replace: true });
     },
   });
   const running = status?.status ?? false;

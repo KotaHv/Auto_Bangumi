@@ -14,3 +14,9 @@ class APIResponse(BaseModel):
     status: Annotated[bool, Field(examples=[True])]
     msg_en: Annotated[str, Field(examples=["Success"])]
     msg_zh: Annotated[str, Field(examples=["成功"])]
+
+
+class ProgramStatusResponse(BaseModel):
+    status: bool
+    version: str
+    first_run: bool

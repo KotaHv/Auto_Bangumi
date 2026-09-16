@@ -8,8 +8,8 @@ from loguru import logger
 
 from module.conf import VERSION
 from module.core import Program
-from module.models import APIResponse
-from module.security.api import get_current_user
+from module.models import APIResponse, ProgramStatusResponse
+from module.security.session import require_session
 
 from .response import u_response
 
@@ -23,11 +23,13 @@ async def lifespan(_router: APIRouter):
     await program.stop()
 
 
-router = APIRouter(tags=["program"], lifespan=lifespan)
+router = APIRouter(
+    tags=["program"], lifespan=lifespan, dependencies=[Depends(require_session)]
+)
 
 
-@router.get(
-    "/restart", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+@router.post(
+    "/restart", response_model=APIResponse
 )
 async def restart():
     try:
@@ -45,8 +47,8 @@ async def restart():
         ) from e
 
 
-@router.get(
-    "/start", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+@router.post(
+    "/start", response_model=APIResponse
 )
 async def start():
     try:
@@ -64,14 +66,14 @@ async def start():
         ) from e
 
 
-@router.get(
-    "/stop", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+@router.post(
+    "/stop", response_model=APIResponse
 )
 async def stop():
     return u_response(await program.stop())
 
 
-@router.get("/status", response_model=dict, dependencies=[Depends(get_current_user)])
+@router.get("/status", response_model=ProgramStatusResponse)
 async def program_status():
     if not program.is_running:
         return {
@@ -87,8 +89,8 @@ async def program_status():
         }
 
 
-@router.get(
-    "/shutdown", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+@router.post(
+    "/shutdown", response_model=APIResponse
 )
 async def shutdown_program():
     await program.stop()
@@ -108,7 +110,6 @@ async def shutdown_program():
     "/check/downloader",
     tags=["check"],
     response_model=bool,
-    dependencies=[Depends(get_current_user)],
 )
 async def check_downloader_status():
     return await program.check_downloader()

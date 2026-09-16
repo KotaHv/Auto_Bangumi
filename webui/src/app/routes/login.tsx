@@ -1,30 +1,36 @@
 import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/shared/ab-password';
 import { LoginGlow } from '@/features/auth/components/login-glow';
 import { apiAuth } from '@/features/auth/api';
-import { useSessionStore } from '@/stores/session';
 import { message } from '@/lib/message';
+import { returnUserLangText } from '@/lib/i18n';
 
 export default function LoginPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  const setLoggedIn = useSessionStore((s) => s.setLoggedIn);
   const [user, setUser] = useState({ username: '', password: '' });
 
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const loginMutation = useMutation({
     mutationFn: () => apiAuth.login(user.username, user.password),
-    onSuccess: () => {
-      setLoggedIn(true);
+    onSuccess: (data) => {
       setUser({ username: '', password: '' });
-      message.success(t('notify.login_success'));
+      message.success(
+        returnUserLangText({ en: data.msg_en, 'zh-CN': data.msg_zh }),
+      );
+      navigate('/bangumi', { replace: true });
     },
     onError: (error) => {
-      if ((error as { status?: number }).status === 404) {
+      const status = (error as { status?: number }).status;
+      if (status === 401) {
+        message.error(t('notify.login_failed'));
+      } else if (status === 404) {
         message.error(t('notify.please_update'));
       }
     },

@@ -66,8 +66,7 @@ export const apiBangumi = {
       ids = bangumiId;
     }
 
-    const { data } = await axios.delete<ApiSuccess>(url, {
-      data: ids,
+    const { data } = await axios.post<ApiSuccess>(url, ids, {
       params: {
         file,
       },
@@ -75,17 +74,19 @@ export const apiBangumi = {
     return data;
   },
   async enableRule(bangumiId: number) {
-    const { data } = await axios.get<ApiSuccess>(
+    const { data } = await axios.post<ApiSuccess>(
       `api/v1/bangumi/enable/${bangumiId}`,
     );
     return data;
   },
-  async resetAll() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/bangumi/reset/all');
+  async deleteAll() {
+    const { data } = await axios.delete<ApiSuccess>(
+      'api/v1/bangumi/delete/all',
+    );
     return data;
   },
   async refreshPoster() {
-    const { data } = await axios.get<ApiSuccess>(
+    const { data } = await axios.post<ApiSuccess>(
       'api/v1/bangumi/refresh/poster/all',
     );
     return data;

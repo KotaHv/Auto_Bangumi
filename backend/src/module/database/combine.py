@@ -4,6 +4,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .bangumi import BangumiDatabase
 from .engine import engine as e
 from .rss import RSSDatabase
+from .session import SessionDatabase
 from .torrent import TorrentDatabase
 from .user import UserDatabase
 
@@ -16,6 +17,7 @@ class Database(AsyncSession):
         self.torrent = TorrentDatabase(self)
         self.bangumi = BangumiDatabase(self)
         self.user = UserDatabase(self)
+        self.sessions = SessionDatabase(self)
 
     async def drop_table(self):
         async with self.engine.begin() as conn:

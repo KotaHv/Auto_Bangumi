@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
@@ -7,15 +5,17 @@ from module.downloader import DownloadClient
 from module.manager import SeasonCollector
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
 from module.rss import RSSAnalyser, RSSEngine
-from module.security.api import UNAUTHORIZED, get_current_user
+from module.security.session import require_session
 
 from .response import u_response
 
-router = APIRouter(prefix="/rss", tags=["rss"])
+router = APIRouter(
+    prefix="/rss", tags=["rss"], dependencies=[Depends(require_session)]
+)
 
 
 @router.get(
-    path="", response_model=list[RSSItem], dependencies=[Depends(get_current_user)]
+    path="", response_model=list[RSSItem]
 )
 async def get_rss():
     async with RSSEngine() as engine:
@@ -23,7 +23,7 @@ async def get_rss():
 
 
 @router.post(
-    path="/add", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+    path="/add", response_model=APIResponse
 )
 async def add_rss(rss: RSSItem):
     async with RSSEngine() as engine:
@@ -34,7 +34,6 @@ async def add_rss(rss: RSSItem):
 @router.post(
     path="/enable/many",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def enable_many_rss(
     rss_ids: list[int],
@@ -47,7 +46,6 @@ async def enable_many_rss(
 @router.delete(
     path="/delete/{rss_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def delete_rss(rss_id: int):
     async with RSSEngine() as engine:
@@ -69,7 +67,6 @@ async def delete_rss(rss_id: int):
 @router.post(
     path="/delete/many",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def delete_many_rss(
     rss_ids: list[int],
@@ -82,7 +79,6 @@ async def delete_many_rss(
 @router.patch(
     path="/disable/{rss_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def disable_rss(rss_id: int):
     async with RSSEngine() as engine:
@@ -107,7 +103,6 @@ async def disable_rss(rss_id: int):
 @router.post(
     path="/disable/many",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def disable_many_rss(rss_ids: list[int]):
     async with RSSEngine() as engine:
@@ -118,15 +113,11 @@ async def disable_many_rss(rss_ids: list[int]):
 @router.patch(
     path="/update/{rss_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def update_rss(
     rss_id: int,
     data: RSSUpdate,
-    current_user: Annotated[str, Depends(get_current_user)],
 ):
-    if not current_user:
-        raise UNAUTHORIZED
     async with RSSEngine() as engine:
         if await engine.rss.update(rss_id, data):
             return JSONResponse(
@@ -146,10 +137,9 @@ async def update_rss(
             )
 
 
-@router.get(
+@router.post(
     path="/refresh/all",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def refresh_all():
     async with RSSEngine() as engine, DownloadClient() as client:
@@ -163,10 +153,9 @@ async def refresh_all():
     )
 
 
-@router.get(
+@router.post(
     path="/refresh/{rss_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def refresh_rss(rss_id: int):
     async with RSSEngine() as engine, DownloadClient() as client:
@@ -183,7 +172,6 @@ async def refresh_rss(rss_id: int):
 @router.get(
     path="/torrent/{rss_id}",
     response_model=list[Torrent],
-    dependencies=[Depends(get_current_user)],
 )
 async def get_torrent(
     rss_id: int,
@@ -197,7 +185,7 @@ analyser = RSSAnalyser()
 
 
 @router.post(
-    "/analysis", response_model=Bangumi, dependencies=[Depends(get_current_user)]
+    "/analysis", response_model=Bangumi
 )
 async def analysis(rss: RSSItem):
     data = await analyser.link_to_data(rss)
@@ -208,7 +196,7 @@ async def analysis(rss: RSSItem):
 
 
 @router.post(
-    "/collect", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+    "/collect", response_model=APIResponse
 )
 async def download_collection(data: Bangumi):
     async with SeasonCollector() as collector:
@@ -217,7 +205,7 @@ async def download_collection(data: Bangumi):
 
 
 @router.post(
-    "/subscribe", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+    "/subscribe", response_model=APIResponse
 )
 async def subscribe(data: Bangumi, rss: RSSItem):
     async with SeasonCollector() as collector:
@@ -228,7 +216,6 @@ async def subscribe(data: Bangumi, rss: RSSItem):
 @router.post(
     "/force-collect",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def force_collect(data: Bangumi):
     async with SeasonCollector() as collector:

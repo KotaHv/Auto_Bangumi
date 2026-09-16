@@ -1,62 +1,38 @@
 import asyncio
 
-from fastapi import HTTPException
 from sqlalchemy import text
 from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.models import ResponseModel
 from module.models.user import User, UserUpdate
-from module.security.jwt import get_password_hash, verify_password
+from module.security.password import get_password_hash, verify_password
 
 
 class UserDatabase:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def auth_user(self, user: User):
-        statement = select(User).where(User.username == user.username)
-        result = (await self.session.exec(statement)).first()
-        if not user.password:
-            return ResponseModel(
-                status_code=401,
-                status=False,
-                msg_en="Incorrect password format",
-                msg_zh="密码格式不正确",
-            )
-        if not result:
-            return ResponseModel(
-                status_code=401,
-                status=False,
-                msg_en="User not found",
-                msg_zh="用户不存在",
-            )
-        if not await asyncio.to_thread(verify_password, user.password, result.password):
-            return ResponseModel(
-                status_code=401,
-                status=False,
-                msg_en="Incorrect password",
-                msg_zh="密码错误",
-            )
-        return ResponseModel(
-            status_code=200, status=True, msg_en="Login successfully", msg_zh="登录成功"
-        )
+    async def verify_credentials(self, username: str, password: str) -> User | None:
+        user = (
+            await self.session.exec(select(User).where(User.username == username))
+        ).first()
+        if user is None or not password:
+            return None
+        if not await asyncio.to_thread(verify_password, password, user.password):
+            return None
+        return user
 
-    async def update_user(self, username, update_user: UserUpdate):
-        # Update username and password
-        statement = select(User).where(User.username == username)
-        result = (await self.session.exec(statement)).first()
-        if not result:
-            raise HTTPException(status_code=404, detail="User not found")
+    async def update_user(self, update_user: UserUpdate) -> User:
+        user = (await self.session.exec(select(User))).first()
+        if user is None:
+            raise RuntimeError("Default user is missing")
         if update_user.username:
-            result.username = update_user.username
+            user.username = update_user.username
         if update_user.password:
-            result.password = await asyncio.to_thread(
+            user.password = await asyncio.to_thread(
                 get_password_hash, update_user.password
             )
-        self.session.add(result)
-        await self.session.commit()
-        return result
+        return user
 
     async def merge_old_user(self):
         # get old data

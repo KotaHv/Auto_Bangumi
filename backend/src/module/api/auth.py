@@ -1,79 +1,94 @@
-from datetime import timedelta
+import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse, Response
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, Response
 
+from module.database import Database
 from module.models import APIResponse
-from module.models.user import User, UserUpdate
-from module.security.api import (
-    active_user,
-    auth_user,
-    get_current_user,
-    update_user_info,
+from module.models.user import UserUpdate
+from module.security.session import (
+    SESSION_COOKIE,
+    SESSION_TIMEOUT,
+    clear_session,
+    delete_session,
+    generate_session_token,
+    hash_session_token,
+    require_session,
+    set_session,
 )
-from module.security.jwt import create_access_token
-
-from .response import u_response
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=dict)
+@router.post("/login", response_model=APIResponse)
 async def login(
+    request: Request,
     response: Response,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
 ):
-    user = User(username=form_data.username, password=form_data.password)
-    resp = await auth_user(user)
-    if resp.status:
-        token = create_access_token(
-            data={"sub": user.username}, expires_delta=timedelta(days=1)
+    async with Database() as db:
+        user = await db.user.verify_credentials(username, password)
+        if user is None:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "msg_en": "Incorrect username or password.",
+                    "msg_zh": "用户名或密码错误。",
+                },
+            )
+
+        raw_token = generate_session_token()
+        now = int(time.time())
+        token_hash = hash_session_token(raw_token)
+        await db.sessions.delete_expired(now)
+        await db.sessions.create(
+            token_hash=token_hash,
+            created_at=now,
+            expires_at=now + SESSION_TIMEOUT,
         )
-        response.set_cookie(key="token", value=token, httponly=True, max_age=86400)
-        return {"access_token": token, "token_type": "bearer"}
-    return u_response(resp)
+        await db.commit()
+    set_session(response, raw_token, request.url.scheme == "https")
+    return {
+        "status": True,
+        "msg_en": "Login successfully.",
+        "msg_zh": "登录成功。",
+    }
 
 
-@router.get(
-    "/refresh_token", response_model=dict, dependencies=[Depends(get_current_user)]
+@router.post("/logout", response_model=APIResponse)
+async def logout(
+    response: Response,
+    session_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+):
+    if session_token:
+        token_hash = hash_session_token(session_token)
+        async with Database() as db:
+            await db.sessions.delete_by_token_hash(token_hash)
+            await db.commit()
+    delete_session(response)
+    return {
+        "status": True,
+        "msg_en": "Logout successfully.",
+        "msg_zh": "登出成功。",
+    }
+
+
+@router.post(
+    "/update",
+    response_model=APIResponse,
+    dependencies=[Depends(require_session)],
 )
-async def refresh(response: Response):
-    token = create_access_token(
-        data={"sub": active_user[0]}, expires_delta=timedelta(days=1)
-    )
-    response.set_cookie(key="token", value=token, httponly=True, max_age=86400)
-    return {"access_token": token, "token_type": "bearer"}
-
-
-@router.get(
-    "/logout", response_model=APIResponse, dependencies=[Depends(get_current_user)]
-)
-async def logout(response: Response):
-    active_user.clear()
-    response.delete_cookie(key="token")
-    return JSONResponse(
-        status_code=200,
-        content={"msg_en": "Logout successfully.", "msg_zh": "登出成功。"},
-    )
-
-
-@router.post("/update", response_model=dict, dependencies=[Depends(get_current_user)])
-async def update_user(user_data: UserUpdate, response: Response):
-    old_user = active_user[0]
-    if await update_user_info(user_data, old_user):
-        token = create_access_token(
-            data={"sub": old_user}, expires_delta=timedelta(days=1)
-        )
-        response.set_cookie(
-            key="token",
-            value=token,
-            httponly=True,
-            max_age=86400,
-        )
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "message": "update success",
-        }
+async def update_user(request: Request, response: Response, user_data: UserUpdate):
+    async with Database() as db:
+        await db.user.update_user(user_data)
+        if user_data.password:
+            await db.sessions.delete_all()
+            delete_session(response)
+            clear_session(request)
+        await db.commit()
+    return {
+        "status": True,
+        "msg_en": "Account updated successfully.",
+        "msg_zh": "账户更新成功。",
+    }

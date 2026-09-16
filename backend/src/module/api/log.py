@@ -6,9 +6,11 @@ from fastapi.responses import JSONResponse
 
 from module.conf import LOG_PATH
 from module.models import APIResponse
-from module.security.api import get_current_user
+from module.security.session import require_session
 
-router = APIRouter(prefix="/log", tags=["log"])
+router = APIRouter(
+    prefix="/log", tags=["log"], dependencies=[Depends(require_session)]
+)
 
 
 def read_log(lines: int | None) -> bytes:
@@ -33,7 +35,7 @@ def read_log(lines: int | None) -> bytes:
     return b"".join(content.splitlines(keepends=True)[-lines:])
 
 
-@router.get("", response_model=str, dependencies=[Depends(get_current_user)])
+@router.get("", response_model=str)
 async def get_log(
     lines: Annotated[int, Query(ge=1)] | Literal["all"] = 100,
 ):
@@ -44,9 +46,7 @@ async def get_log(
         return Response("Log file not found", status_code=404)
 
 
-@router.get(
-    "/clear", response_model=APIResponse, dependencies=[Depends(get_current_user)]
-)
+@router.delete("", response_model=APIResponse)
 async def clear_log():
     if LOG_PATH.exists():
         await asyncio.to_thread(LOG_PATH.write_text, "")

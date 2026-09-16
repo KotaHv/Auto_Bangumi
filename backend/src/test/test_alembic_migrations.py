@@ -14,7 +14,7 @@ from module.database.alembic import (
 from module.update.startup import ensure_default_user
 
 ALEMBIC_CONFIG = Path(__file__).resolve().parents[2] / "pyproject.toml"
-CURRENT_REVISION = "0003_remove_rss_foreign_key"
+CURRENT_REVISION = "0004_add_session"
 
 
 def _async_url(path: Path) -> str:
@@ -53,7 +53,7 @@ async def _schema_info(async_engine):
                         for foreign_key in inspect(conn).get_foreign_keys(table)
                     },
                 }
-                for table in {"bangumi", "rssitem", "torrent", "user"}
+                for table in {"bangumi", "rssitem", "torrent", "user", "session"}
             }
         )
 
@@ -67,6 +67,11 @@ async def _assert_current_schema(async_engine):
         "id", "bangumi_id", "rss_id", "name", "url", "homepage", "downloaded", "hash"
     }
     assert schema["user"]["columns"] == {"id", "username", "password"}
+    assert schema["session"]["columns"] == {
+        "id", "token_hash", "created_at", "expires_at"
+    }
+    assert schema["session"]["primary_key"] == ("id",)
+    assert schema["session"]["foreign_keys"] == set()
     assert schema["user"]["primary_key"] == ("id",)
     assert schema["torrent"]["primary_key"] == ("id",)
     assert schema["torrent"]["foreign_keys"] == {

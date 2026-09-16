@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from module.api import v1
 from module.conf import VERSION, settings, setup_logger
+from module.middleware import enforce_same_origin, renew_session
 
 setup_logger(reset=True)
 
@@ -80,6 +81,9 @@ def create_app() -> FastAPI:
 
     for exc_type, msg_en, msg_zh in ERROR_MESSAGES:
         app.add_exception_handler(exc_type, _downloader_error_handler(msg_en, msg_zh))
+
+    app.middleware("http")(renew_session)
+    app.middleware("http")(enforce_same_origin)
 
     # mount routers
     app.include_router(v1, prefix="/api")

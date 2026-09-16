@@ -3,15 +3,17 @@ from fastapi.responses import JSONResponse
 
 from module.manager import Renamer, TorrentManager
 from module.models import APIResponse, Bangumi, BangumiUpdate
-from module.security.api import get_current_user
+from module.security.session import require_session
 
 from .response import u_response
 
-router = APIRouter(prefix="/bangumi", tags=["bangumi"])
+router = APIRouter(
+    prefix="/bangumi", tags=["bangumi"], dependencies=[Depends(require_session)]
+)
 
 
 @router.get(
-    "/get/all", response_model=list[Bangumi], dependencies=[Depends(get_current_user)]
+    "/get/all", response_model=list[Bangumi]
 )
 async def get_all_data():
     async with TorrentManager() as manager:
@@ -21,7 +23,6 @@ async def get_all_data():
 @router.get(
     "/get/{bangumi_id}",
     response_model=Bangumi,
-    dependencies=[Depends(get_current_user)],
 )
 async def get_data(bangumi_id: str):
     async with TorrentManager() as manager:
@@ -32,7 +33,6 @@ async def get_data(bangumi_id: str):
 @router.patch(
     "/update/{bangumi_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def update_rule(
     bangumi_id: int,
@@ -44,9 +44,24 @@ async def update_rule(
 
 
 @router.delete(
+    path="/delete/all",
+    response_model=APIResponse,
+)
+async def delete_all():
+    async with TorrentManager() as manager:
+        await manager.bangumi.delete_all()
+    return JSONResponse(
+        status_code=200,
+        content={
+            "msg_en": "Deleted all rules successfully.",
+            "msg_zh": "已删除所有规则。",
+        },
+    )
+
+
+@router.delete(
     path="/delete/{bangumi_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def delete_rule(bangumi_id: str, file: bool = False):
     async with TorrentManager() as manager:
@@ -57,7 +72,6 @@ async def delete_rule(bangumi_id: str, file: bool = False):
 @router.delete(
     path="/delete/many/",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def delete_many_rule(bangumi_id: list, file: bool = False):
     async with TorrentManager() as manager:
@@ -66,10 +80,9 @@ async def delete_many_rule(bangumi_id: list, file: bool = False):
     return u_response(resp)
 
 
-@router.delete(
+@router.post(
     path="/disable/{bangumi_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def disable_rule(bangumi_id: str, file: bool = False):
     async with TorrentManager() as manager:
@@ -77,10 +90,9 @@ async def disable_rule(bangumi_id: str, file: bool = False):
     return u_response(resp)
 
 
-@router.delete(
-    path="/disable/many/",
+@router.post(
+    path="/disable/many",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def disable_many_rule(bangumi_id: list, file: bool = False):
     async with TorrentManager() as manager:
@@ -89,10 +101,9 @@ async def disable_many_rule(bangumi_id: list, file: bool = False):
     return u_response(resp)
 
 
-@router.get(
+@router.post(
     path="/enable/{bangumi_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def enable_rule(bangumi_id: str):
     async with TorrentManager() as manager:
@@ -100,10 +111,9 @@ async def enable_rule(bangumi_id: str):
     return u_response(resp)
 
 
-@router.get(
+@router.post(
     path="/refresh/poster/all",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def refresh_all_poster():
     async with TorrentManager() as manager:
@@ -111,10 +121,9 @@ async def refresh_all_poster():
     return u_response(resp)
 
 
-@router.get(
+@router.post(
     path="/refresh/poster/{bangumi_id}",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def refresh_poster(bangumi_id: int):
     async with TorrentManager() as manager:
@@ -122,25 +131,9 @@ async def refresh_poster(bangumi_id: int):
     return u_response(resp)
 
 
-@router.get(
-    "/reset/all", response_model=APIResponse, dependencies=[Depends(get_current_user)]
-)
-async def reset_all():
-    async with TorrentManager() as manager:
-        await manager.bangumi.delete_all()
-        return JSONResponse(
-            status_code=200,
-            content={
-                "msg_en": "Reset all rules successfully.",
-                "msg_zh": "重置所有规则成功。",
-            },
-        )
-
-
 @router.post(
     "/rename",
     response_model=APIResponse,
-    dependencies=[Depends(get_current_user)],
 )
 async def rename(data: Bangumi):
     async with Renamer() as renamer:

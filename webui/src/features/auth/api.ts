@@ -1,5 +1,4 @@
 import { axios } from '@/lib/axios';
-import type { LoginSuccess, Update } from './types';
 import type { ApiSuccess } from '@/types/api';
 
 export const apiAuth = {
@@ -9,7 +8,7 @@ export const apiAuth = {
       password,
     });
 
-    const { data } = await axios.post<LoginSuccess>(
+    const { data } = await axios.post<ApiSuccess>(
       'api/v1/auth/login',
       formData,
       {
@@ -22,18 +21,13 @@ export const apiAuth = {
     return data;
   },
 
-  async refresh() {
-    const { data } = await axios.get<LoginSuccess>('api/v1/auth/refresh_token');
-    return data;
-  },
-
   async logout() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/auth/logout');
+    const { data } = await axios.post<ApiSuccess>('api/v1/auth/logout');
     return data;
   },
 
   async update(username: string, password: string) {
-    const { data } = await axios.post<Update>('api/v1/auth/update', {
+    const { data } = await axios.post<ApiSuccess>('api/v1/auth/update', {
       username,
       password,
     });

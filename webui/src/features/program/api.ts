@@ -3,15 +3,15 @@ import type { ApiSuccess } from '@/types/api';
 
 export const apiProgram = {
   async restart() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/restart');
+    const { data } = await axios.post<ApiSuccess>('api/v1/restart');
     return data;
   },
   async start() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/start');
+    const { data } = await axios.post<ApiSuccess>('api/v1/start');
     return data;
   },
   async stop() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/stop');
+    const { data } = await axios.post<ApiSuccess>('api/v1/stop');
     return data;
   },
   async status(signal?: AbortSignal) {
@@ -23,7 +23,7 @@ export const apiProgram = {
     return data!;
   },
   async shutdown() {
-    const { data } = await axios.get<ApiSuccess>('api/v1/shutdown');
+    const { data } = await axios.post<ApiSuccess>('api/v1/shutdown');
     return data;
   },
 };

@@ -6,18 +6,20 @@ from loguru import logger
 
 from module.conf import settings, setup_logger
 from module.models import APIResponse, Config
-from module.security.api import get_current_user
+from module.security.session import require_session
 
-router = APIRouter(prefix="/config", tags=["config"])
+router = APIRouter(
+    prefix="/config", tags=["config"], dependencies=[Depends(require_session)]
+)
 
 
-@router.get("/get", response_model=Config, dependencies=[Depends(get_current_user)])
+@router.get("/get", response_model=Config)
 async def get_config():
     return settings
 
 
 @router.patch(
-    "/update", response_model=APIResponse, dependencies=[Depends(get_current_user)]
+    "/update", response_model=APIResponse
 )
 async def update_config(config: Config):
     try:
