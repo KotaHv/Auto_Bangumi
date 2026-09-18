@@ -11,6 +11,7 @@ import { AbLoadError } from '@/components/shared/ab-load-error';
 import { RSSMobile } from '@/features/rss/components/mobile';
 import { RSSDesktop } from '@/features/rss/components/desktop';
 import type { RSSBulkAction, RSSLayoutProps } from '@/features/rss/types/page';
+import type { RSS } from '@/features/rss/types/rss';
 
 export default function RSSPage() {
   const { t } = useTranslation();
@@ -20,29 +21,51 @@ export default function RSSPage() {
   const queryClient = useQueryClient();
   const isDesktop = useIsDesktop();
 
+  function updateCachedRSSItems(ids: number[], update: (item: RSS) => RSS) {
+    const selectedIds = new Set(ids);
+    queryClient.setQueryData<RSS[]>(rssKeys.list(), (current) =>
+      current?.map((item) => (selectedIds.has(item.id) ? update(item) : item)),
+    );
+  }
+
+  function removeCachedRSSItems(ids: number[]) {
+    const selectedIds = new Set(ids);
+    queryClient.setQueryData<RSS[]>(rssKeys.list(), (current) =>
+      current?.filter((item) => !selectedIds.has(item.id)),
+    );
+  }
+
+  function recoverRSSListAfterMutationFailure() {
+    setSelectedRSS([]);
+    void queryClient.invalidateQueries({ queryKey: rssKeys.list() });
+  }
+
   const enableMutation = useMutation({
     mutationFn: apiRSS.enableMany,
-    onSuccess: async (data) => {
+    onSuccess: (data, ids) => {
       message.success(returnUserLangMsg(data));
       setSelectedRSS([]);
-      await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
+      updateCachedRSSItems(ids, (item) => ({ ...item, enabled: true }));
     },
+    onError: recoverRSSListAfterMutationFailure,
   });
   const disableMutation = useMutation({
     mutationFn: apiRSS.disableMany,
-    onSuccess: async (data) => {
+    onSuccess: (data, ids) => {
       message.success(returnUserLangMsg(data));
       setSelectedRSS([]);
-      await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
+      updateCachedRSSItems(ids, (item) => ({ ...item, enabled: false }));
     },
+    onError: recoverRSSListAfterMutationFailure,
   });
   const deleteMutation = useMutation({
     mutationFn: apiRSS.deleteMany,
-    onSuccess: async (data) => {
+    onSuccess: (data, ids) => {
       message.success(returnUserLangMsg(data));
       setSelectedRSS([]);
-      await queryClient.invalidateQueries({ queryKey: rssKeys.list() });
+      removeCachedRSSItems(ids);
     },
+    onError: recoverRSSListAfterMutationFailure,
   });
   const refreshMutation = useMutation({
     mutationFn: async (ids: number[]) => {

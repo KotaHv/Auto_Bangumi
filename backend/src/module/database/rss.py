@@ -1,5 +1,5 @@
 from loguru import logger
-from sqlmodel import delete, select, true
+from sqlmodel import col, delete, select, true, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import RSSItem, RSSUpdate
@@ -41,6 +41,42 @@ class RSSDatabase:
         await self.session.commit()
         await self.session.refresh(db_data)
         return True
+
+    async def set_enabled_many(self, rss_ids: list[int], enabled: bool) -> bool:
+        ids = set(rss_ids)
+        if not ids:
+            return True
+        try:
+            result = await self.session.exec(
+                update(RSSItem).where(col(RSSItem.id).in_(ids)).values(enabled=enabled)
+            )
+            if result.rowcount != len(ids):
+                await self.session.rollback()
+                return False
+            await self.session.commit()
+            return True
+        except Exception as e:
+            await self.session.rollback()
+            logger.error("Update RSS enabled state failed. Because: {}", e)
+            return False
+
+    async def delete_many(self, rss_ids: list[int]) -> bool:
+        ids = set(rss_ids)
+        if not ids:
+            return True
+        try:
+            result = await self.session.exec(
+                delete(RSSItem).where(col(RSSItem.id).in_(ids))
+            )
+            if result.rowcount != len(ids):
+                await self.session.rollback()
+                return False
+            await self.session.commit()
+            return True
+        except Exception as e:
+            await self.session.rollback()
+            logger.error("Delete RSS Items failed. Because: {}", e)
+            return False
 
     async def enable(self, _id: int):
         statement = select(RSSItem).where(RSSItem.id == _id)
@@ -85,14 +121,12 @@ class RSSDatabase:
         ).first()
 
     async def delete(self, _id: int) -> bool:
-        condition = delete(RSSItem).where(RSSItem.id == _id)  # type: ignore[arg-type]
-        try:
-            await self.session.exec(condition)
-            await self.session.commit()
-            return True
-        except Exception as e:
-            logger.error("Delete RSS Item failed. Because: {}", e)
+        condition = delete(RSSItem).where(col(RSSItem.id) == _id)
+        result = await self.session.exec(condition)
+        if result.rowcount != 1:
             return False
+        await self.session.commit()
+        return True
 
     async def delete_all(self):
         condition = delete(RSSItem)

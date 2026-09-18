@@ -63,8 +63,13 @@ class RSSEngine(Database):
             )
 
     async def disable_list(self, rss_id_list: list[int]):
-        for rss_id in rss_id_list:
-            await self.rss.disable(rss_id)
+        if not await self.rss.set_enabled_many(rss_id_list, enabled=False):
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="Disable RSS failed.",
+                msg_zh="禁用 RSS 失败。",
+            )
         return ResponseModel(
             status=True,
             status_code=200,
@@ -73,8 +78,13 @@ class RSSEngine(Database):
         )
 
     async def enable_list(self, rss_id_list: list[int]):
-        for rss_id in rss_id_list:
-            await self.rss.enable(rss_id)
+        if not await self.rss.set_enabled_many(rss_id_list, enabled=True):
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="Enable RSS failed.",
+                msg_zh="启用 RSS 失败。",
+            )
         return ResponseModel(
             status=True,
             status_code=200,
@@ -83,8 +93,13 @@ class RSSEngine(Database):
         )
 
     async def delete_list(self, rss_id_list: list[int]):
-        for rss_id in rss_id_list:
-            await self.rss.delete(rss_id)
+        if not await self.rss.delete_many(rss_id_list):
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="Delete RSS failed.",
+                msg_zh="删除 RSS 失败。",
+            )
         return ResponseModel(
             status=True,
             status_code=200,
