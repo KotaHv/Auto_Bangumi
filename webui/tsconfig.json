@@ -15,7 +15,6 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "types": ["bun", "node"],
-    "noImplicitAny": false,
     "paths": {
       "@/*": ["./src/*"]
     }
