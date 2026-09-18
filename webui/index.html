@@ -13,14 +13,29 @@
       (function () {
         try {
           var stored = localStorage.getItem('theme');
+          var mode =
+            stored === 'light' || stored === 'dark' || stored === 'auto'
+              ? stored
+              : 'auto';
           var dark =
-            stored === 'dark' ||
-            (!stored &&
+            mode === 'dark' ||
+            (mode === 'auto' &&
               window.matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.classList.toggle('dark', dark);
-        } catch (e) {}
+        } catch {}
       })();
     </script>
+    <style>
+      html {
+        background: #fafafa;
+        color-scheme: light;
+      }
+
+      html.dark {
+        background: #0a0a0d;
+        color-scheme: dark;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
