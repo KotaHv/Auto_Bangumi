@@ -17,7 +17,6 @@
     "types": ["bun", "node"],
     "noImplicitAny": false,
     "paths": {
-      "~/*": ["./*"],
       "@/*": ["./src/*"]
     }
   },
