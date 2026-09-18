@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { SearchStreamEvent } from '../src/features/search/types';
+import type {
+  SearchResultResponse,
+  SearchStreamEvent,
+} from '../src/features/search/types';
 
 class FakeEventSource {
   static instances: FakeEventSource[] = [];
@@ -76,7 +79,7 @@ const searchResultResponse = {
     parser: 'mikan',
     url: 'https://example.com/rss',
   },
-};
+} satisfies SearchResultResponse;
 
 function subscribe() {
   const events: SearchStreamEvent[] = [];
@@ -102,6 +105,15 @@ describe('apiSearch.get', () => {
       'result',
       'complete',
     ]);
+
+    const [result] = stream.events;
+    if (result?.type !== 'result') throw new Error('Expected a search result');
+    expect(result.result.bangumi.filter).toEqual(['1080p']);
+    expect(result.result.bangumi.id).toBeNull();
+    expect(result.result.bangumi.rule_name).toBeNull();
+    expect(result.result.bangumi.save_path).toBeNull();
+    expect(result.result.rss.id).toBeNull();
+    expect(result.result.rss.name).toBeNull();
     expect(stream.completed()).toBe(true);
     expect(stream.source.closed).toBe(true);
   });

@@ -1,14 +1,14 @@
 import type { BangumiAPI, BangumiRule } from '@/features/bangumi/types';
-import type { RSS } from '@/features/rss/types/rss';
+import type { RSSAPI } from '@/features/rss/types/rss';
 
 export interface SearchResultResponse {
   bangumi: BangumiAPI;
-  rss: RSS;
+  rss: RSSAPI;
 }
 
 export interface SearchResult {
   bangumi: BangumiRule;
-  rss: RSS;
+  rss: RSSAPI;
 }
 
 export type SearchFailureCode =

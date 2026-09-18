@@ -66,7 +66,7 @@ export function RSSDesktop({
         className="data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!"
         checked={selectedRSS.includes(rssItem.id)}
         onCheckedChange={(checked) => toggleRow(rssItem.id, checked)}
-        aria-label={`${t('rss.selectbox')} ${rssItem.name}`}
+        aria-label={`${t('rss.selectbox')} ${rssItem.name || '-'}`}
       />
     );
   }
@@ -221,7 +221,7 @@ export function RSSDesktop({
                             {renderSelectionCheckbox(item)}
                             <span
                               className="truncate font-medium"
-                              title={item.name}
+                              title={item.name ?? undefined}
                             >
                               {item.name || '-'}
                             </span>

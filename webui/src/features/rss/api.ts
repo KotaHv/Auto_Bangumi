@@ -1,6 +1,7 @@
 import { axios } from '@/lib/axios';
+import { toBangumiAPI, toBangumiRule } from '@/features/bangumi/mapper';
 import type { BangumiAPI, BangumiRule } from '@/features/bangumi/types';
-import type { RSS } from './types/rss';
+import type { RSS, RSSAPI, RSSDraft } from './types/rss';
 import type { Torrent } from './types/torrent';
 import type { ApiSuccess } from '@/types/api';
 
@@ -10,7 +11,7 @@ export const apiRSS = {
     return data;
   },
 
-  async add(rss: RSS) {
+  async add(rss: RSSDraft) {
     const { data } = await axios.post<ApiSuccess>('api/v1/rss/add', rss);
     return data;
   },
@@ -77,34 +78,24 @@ export const apiRSS = {
     const { data } = await axios.get<Torrent[]>(`api/v1/rss/torrent/${rss_id}`);
     return data!;
   },
-  async analysis(rss_item: RSS) {
+  async analysis(rss_item: RSSDraft) {
     const { data } = await axios.post<BangumiAPI>(
       'api/v1/rss/analysis',
       rss_item,
     );
 
-    const result: BangumiRule = {
-      ...data,
-      filter: data.filter.split(','),
-    };
-    return result;
+    return toBangumiRule(data);
   },
   async collection(bangumiData: BangumiRule) {
-    const postData: BangumiAPI = {
-      ...bangumiData,
-      filter: bangumiData.filter.join(','),
-    };
+    const postData = toBangumiAPI(bangumiData);
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/rss/collect',
       postData,
     );
     return data;
   },
-  async subscribe(bangumiData: BangumiRule, rss: RSS) {
-    const bangumi: BangumiAPI = {
-      ...bangumiData,
-      filter: bangumiData.filter.join(','),
-    };
+  async subscribe(bangumiData: BangumiRule, rss: RSSAPI) {
+    const bangumi = toBangumiAPI(bangumiData);
     const postData = {
       data: bangumi,
       rss,

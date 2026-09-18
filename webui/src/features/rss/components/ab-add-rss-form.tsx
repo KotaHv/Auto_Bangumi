@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import type { RSS } from '../types/rss';
+import type { RSSDraft } from '../types/rss';
 import { AbSelect } from '@/components/shared/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,9 @@ const PARSER_TYPE = [
 ];
 
 interface AbAddRssFormProps {
-  rss: RSS;
+  rss: RSSDraft;
   loading: boolean;
-  onChange: (patch: Partial<RSS>) => void;
+  onChange: (patch: Partial<RSSDraft>) => void;
   onSubmit: () => void;
 }
 

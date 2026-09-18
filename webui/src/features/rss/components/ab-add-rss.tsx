@@ -8,7 +8,7 @@ import { bangumiKeys } from '@/features/bangumi/queries';
 import { rssKeys } from '../queries';
 import { returnUserLangMsg } from '@/lib/i18n';
 import { initialRss } from '../constants';
-import type { RSS } from '../types/rss';
+import type { RSSDraft } from '../types/rss';
 import { AbPopup } from '@/components/shared/ab-popup';
 import { AbBangumiReview } from './ab-bangumi-review';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export function AbAddRss() {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
-  const [rss, setRss] = useState<RSS>(initialRss);
+  const [rss, setRss] = useState<RSSDraft>(initialRss);
   const addMutation = useMutation({
     mutationFn: apiRSS.add,
     onSuccess: async (data) => {

@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { axios } from '@/lib/axios';
-import type { BangumiRule } from '@/features/bangumi/types';
+import { toBangumiRule } from '@/features/bangumi/mapper';
 import type {
   SearchFailureCode,
   SearchResultResponse,
@@ -29,13 +29,12 @@ export const apiSearch = {
       eventSource.onmessage = (event) => {
         try {
           const apiData: SearchResultResponse = JSON.parse(event.data);
-          const bangumi: BangumiRule = {
-            ...apiData.bangumi,
-            filter: apiData.bangumi.filter.split(','),
-          };
           observer.next({
             type: 'result',
-            result: { bangumi, rss: apiData.rss },
+            result: {
+              bangumi: toBangumiRule(apiData.bangumi),
+              rss: apiData.rss,
+            },
           });
         } catch {
           fail('protocol');

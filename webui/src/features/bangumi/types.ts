@@ -1,30 +1,30 @@
 /**
- * @type `Bangumi` in backend/src/module/models/bangumi.py
+ * Wire response from `backend/src/module/models/bangumi.py`.
  */
-export interface BangumiRule {
+export interface BangumiAPI {
   added: boolean;
   deleted: boolean;
-  dpi: string;
+  dpi: string | null;
   eps_collect: boolean;
-  filter: string[];
-  group_name: string;
-  id: number;
+  filter: string;
+  group_name: string | null;
+  id: number | null;
   official_title: string;
   offset: number;
   poster_link: string | null;
   rss_link: string;
-  rule_name: string;
-  save_path: string;
+  rule_name: string | null;
+  save_path: string | null;
   season: number;
-  season_raw: string;
+  season_raw: string | null;
   source: string | null;
-  subtitle: string;
+  subtitle: string | null;
   title_raw: string;
   year: string | null;
 }
 
-export interface BangumiAPI extends Omit<BangumiRule, 'filter'> {
-  filter: string;
+export interface BangumiRule extends Omit<BangumiAPI, 'filter'> {
+  filter: string[];
 }
 
-export type BangumiUpdate = Omit<BangumiAPI, 'id'>;
+export type PersistedBangumiRule = BangumiRule & { id: number };

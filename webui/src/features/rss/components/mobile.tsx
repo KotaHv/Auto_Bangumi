@@ -156,7 +156,7 @@ export function RSSMobile({
                     className={cn(checkboxClassName, 'mt-0.5 shrink-0')}
                     checked={selectedRSS.includes(item.id)}
                     onCheckedChange={(checked) => toggleRow(item.id, checked)}
-                    aria-label={`${t('rss.selectbox')} ${item.name}`}
+                    aria-label={`${t('rss.selectbox')} ${item.name || '-'}`}
                   />
                 </div>
                 <div className="mt-3">

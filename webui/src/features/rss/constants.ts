@@ -1,7 +1,7 @@
-import type { RSS } from './types/rss';
+import type { RSSDraft } from './types/rss';
 
-export const initialRss: RSS = {
-  id: 0,
+export const initialRss: RSSDraft = {
+  id: null,
   name: '',
   url: '',
   aggregate: false,

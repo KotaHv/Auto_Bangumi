@@ -11,10 +11,10 @@ import { AbPopup } from '@/components/shared/ab-popup';
 import { AbRule } from './ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { BangumiRule } from '../../types';
+import type { BangumiRule, PersistedBangumiRule } from '../../types';
 
 interface AbEditRuleProps {
-  rule: BangumiRule;
+  rule: PersistedBangumiRule;
   onClose: () => void;
 }
 
@@ -22,7 +22,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(true);
-  const [draftRule, setDraftRule] = useState(() => rule);
+  const [draftRule, setDraftRule] = useState<BangumiRule>(() => rule);
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
     open: boolean;
@@ -32,26 +32,30 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
   const [openForceCollectDialog, setOpenForceCollectDialog] = useState(false);
 
-  function updateBangumiListItem(
+  function updateCachedBangumiItem(
     id: number,
-    updater: (item: BangumiRule) => BangumiRule | null,
+    update: (item: PersistedBangumiRule) => PersistedBangumiRule,
   ) {
-    queryClient.setQueryData<BangumiRule[]>(bangumiKeys.list(), (current) => {
-      if (!current) return current;
-      return current.flatMap((item) => {
-        if (item.id !== id) return [item];
-        const next = updater(item);
-        return next ? [next] : [];
-      });
-    });
+    queryClient.setQueryData<PersistedBangumiRule[]>(
+      bangumiKeys.list(),
+      (current) =>
+        current?.map((item) => (item.id === id ? update(item) : item)),
+    );
+  }
+
+  function removeCachedBangumiItem(id: number) {
+    queryClient.setQueryData<PersistedBangumiRule[]>(
+      bangumiKeys.list(),
+      (current) => current?.filter((item) => item.id !== id),
+    );
   }
 
   const updateMutation = useMutation({
     mutationFn: ({ id, rule }: { id: number; rule: BangumiRule }) =>
       apiBangumi.updateRule(id, rule),
-    onSuccess: (data, { rule }) => {
+    onSuccess: (data, { id, rule }) => {
       message.success(returnUserLangMsg(data));
-      updateBangumiListItem(rule.id, () => rule);
+      updateCachedBangumiItem(id, () => ({ ...rule, id }));
       setOpen(false);
     },
   });
@@ -73,7 +77,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     mutationFn: apiBangumi.enableRule,
     onSuccess: (data, id) => {
       message.success(returnUserLangMsg(data));
-      updateBangumiListItem(id, (item) => ({ ...item, deleted: false }));
+      updateCachedBangumiItem(id, (item) => ({ ...item, deleted: false }));
       setOpen(false);
     },
   });
@@ -82,7 +86,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
       apiBangumi.disableRule(id, file),
     onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
-      updateBangumiListItem(id, (item) => ({ ...item, deleted: true }));
+      updateCachedBangumiItem(id, (item) => ({ ...item, deleted: true }));
       setOpen(false);
     },
   });
@@ -91,7 +95,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
       apiBangumi.deleteRule(id, file),
     onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
-      updateBangumiListItem(id, () => null);
+      removeCachedBangumiItem(id);
       setOpen(false);
     },
   });
@@ -101,11 +105,11 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   }
 
   function enable() {
-    enableMutation.mutate(draftRule.id);
+    enableMutation.mutate(rule.id);
   }
 
   function deleteOrDisableRule() {
-    const variables = { id: draftRule.id, file: deleteFileDialog.deleteFile };
+    const variables = { id: rule.id, file: deleteFileDialog.deleteFile };
     if (deleteFileDialog.type === 'disable') {
       disableMutation.mutate(variables);
     } else {
@@ -184,7 +188,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
           className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
           loading={updateMutation.isPending}
           onClick={() =>
-            updateMutation.mutate({ id: draftRule.id, rule: draftRule })
+            updateMutation.mutate({ id: rule.id, rule: draftRule })
           }
         >
           {t('homepage.rule.apply')}

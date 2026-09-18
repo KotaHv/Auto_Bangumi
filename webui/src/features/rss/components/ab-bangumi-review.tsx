@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import type { BangumiRule } from '@/features/bangumi/types';
-import type { RSS } from '../types/rss';
+import type { RSSAPI } from '../types/rss';
 import { apiRSS } from '../api';
 import { message } from '@/lib/message';
 import { bangumiKeys } from '@/features/bangumi/queries';
@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface AbBangumiReviewProps {
   rule: BangumiRule;
-  rss: RSS;
+  rss: RSSAPI;
   onComplete: () => void;
   onBack?: () => void;
 }

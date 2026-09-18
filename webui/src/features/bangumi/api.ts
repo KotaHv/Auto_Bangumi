@@ -1,35 +1,28 @@
 import { axios } from '@/lib/axios';
 import { omit } from 'radash';
+import { toBangumiAPI, toBangumiRule } from './mapper';
 import type { BangumiAPI, BangumiRule } from './types';
 import type { ApiSuccess } from '@/types/api';
 
 export const apiBangumi = {
   async getAll(signal?: AbortSignal) {
-    const { data } = await axios.get<BangumiAPI[]>('api/v1/bangumi/get/all', {
-      signal,
-    });
-    const result: BangumiRule[] = data.map((bangumi) => ({
-      ...bangumi,
-      filter: bangumi.filter.split(','),
+    const { data } = await axios.get<Array<BangumiAPI & { id: number }>>(
+      'api/v1/bangumi/get/all',
+      { signal },
+    );
+    return data.map((bangumi) => ({
+      ...toBangumiRule(bangumi),
+      id: bangumi.id,
     }));
-    return result;
   },
   async getRule(bangumiId: number) {
-    const { data } = await axios.get<BangumiAPI>(
+    const { data } = await axios.get<BangumiAPI & { id: number }>(
       `api/v1/bangumi/get/${bangumiId}`,
     );
-    const result: BangumiRule = {
-      ...data,
-      filter: data.filter.split(','),
-    };
-    return result;
+    return { ...toBangumiRule(data), id: data.id };
   },
   async updateRule(bangumiId: number, bangumiRule: BangumiRule) {
-    const rule: BangumiAPI = {
-      ...bangumiRule,
-      filter: bangumiRule.filter.join(','),
-    };
-    const post = omit(rule, ['id']);
+    const post = omit(toBangumiAPI(bangumiRule), ['id']);
     const { data } = await axios.patch<ApiSuccess>(
       `api/v1/bangumi/update/${bangumiId}`,
       post,
@@ -92,10 +85,7 @@ export const apiBangumi = {
     return data;
   },
   async rename(bangumiData: BangumiRule) {
-    const postData: BangumiAPI = {
-      ...bangumiData,
-      filter: bangumiData.filter.join(','),
-    };
+    const postData = toBangumiAPI(bangumiData);
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/bangumi/rename',
       postData,
@@ -103,10 +93,7 @@ export const apiBangumi = {
     return data;
   },
   async forceCollect(bangumiData: BangumiRule) {
-    const postData: BangumiAPI = {
-      ...bangumiData,
-      filter: bangumiData.filter.join(','),
-    };
+    const postData = toBangumiAPI(bangumiData);
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/rss/force-collect',
       postData,
