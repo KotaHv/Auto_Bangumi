@@ -161,15 +161,6 @@
     "invalid_port": "Port must be an integer between 1 and 65535.",
     "positive_integer": "Must be a positive integer."
   },
-  "player": {
-    "apply_btn": "Save",
-    "desc": "Choose a playback mode and enter its address.",
-    "edit_hint": "You can edit it anytime from the ⋮ menu → Player settings.",
-    "jump_hint": "Playback opens in an external player.",
-    "settings_title": "Player settings",
-    "title": "No media player yet",
-    "url_placeholder": "Media player URL"
-  },
   "rss": {
     "aggregate": "Aggregate",
     "delete": "Delete",
@@ -199,7 +190,6 @@
     "homepage": "HomePage",
     "log": "Log",
     "logout": "Logout",
-    "player": "Player",
     "rss": "RSS Manager",
     "title": "Menu"
   },

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FileClock, House, LogOut, Play, Rss, Settings } from 'lucide-react';
+import { FileClock, House, LogOut, Rss, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AbBrand } from '@/app/components/ab-brand';
 import {
@@ -65,20 +65,13 @@ export function AbSidebar() {
     },
     {
       id: 3,
-      icon: Play,
-      label: t('sidebar.player'),
-      path: '/player',
-      hidden: false,
-    },
-    {
-      id: 4,
       icon: FileClock,
       label: t('sidebar.log'),
       path: '/log',
       hidden: false,
     },
     {
-      id: 5,
+      id: 4,
       icon: Settings,
       label: t('sidebar.config'),
       path: '/config',

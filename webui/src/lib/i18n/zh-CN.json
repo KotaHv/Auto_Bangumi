@@ -161,15 +161,6 @@
     "invalid_port": "端口必须为 1–65535 之间的整数。",
     "positive_integer": "必须为正整数。"
   },
-  "player": {
-    "apply_btn": "保存",
-    "desc": "选择播放方式并填写地址",
-    "edit_hint": "之后可随时通过右上角 ⋮ → 播放器设置 修改",
-    "jump_hint": "播放时将使用外部播放器打开",
-    "settings_title": "播放器设置",
-    "title": "尚未设置媒体播放器",
-    "url_placeholder": "媒体播放器地址"
-  },
   "rss": {
     "aggregate": "聚合",
     "delete": "删除",
@@ -199,7 +190,6 @@
     "homepage": "主页",
     "log": "日志",
     "logout": "退出",
-    "player": "播放器",
     "rss": "RSS 管理",
     "title": "菜单"
   },

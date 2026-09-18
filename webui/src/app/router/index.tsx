@@ -1,7 +1,6 @@
 import { Navigate, createHashRouter } from 'react-router';
 import LoginPage from '@/app/routes/login';
 import RootLayout from '@/app/layouts/root-layout';
-import { RedirectPlayerIfJump } from './guards';
 import { NotFoundPage } from './not-found-page';
 
 export const router = createHashRouter([
@@ -36,7 +35,6 @@ export const router = createHashRouter([
                 Component,
               })),
           },
-          { path: 'player', element: <RedirectPlayerIfJump /> },
           {
             path: 'log',
             lazy: () =>

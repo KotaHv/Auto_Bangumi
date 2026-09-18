@@ -10,7 +10,6 @@ import { ThemeToggle } from './theme-toggle';
 const ROUTE_TITLES: Record<string, string> = {
   '/bangumi': 'Bangumi List',
   '/rss': 'RSS',
-  '/player': 'Player',
   '/log': 'Log',
   '/config': 'Config',
 };
