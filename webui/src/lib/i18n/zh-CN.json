@@ -141,6 +141,10 @@
     "username": "用户名",
     "username_placeholder": "请输入用户名"
   },
+  "not_found": {
+    "title": "页面不存在",
+    "return_home": "返回首页"
+  },
   "notify": {
     "api_key_format_error": "qBittorrent API Key 格式不正确，应为 32 位字符：以 'qbt_' 开头，后跟 28 位字母数字字符。",
     "copy_failed": "您的浏览器不支持剪贴板操作!",

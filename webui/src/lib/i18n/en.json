@@ -141,6 +141,10 @@
     "username": "Username",
     "username_placeholder": "Enter username"
   },
+  "not_found": {
+    "title": "Page not found",
+    "return_home": "Return home"
+  },
   "notify": {
     "api_key_format_error": "Invalid qBittorrent API Key. Expected 32 characters: 'qbt_' followed by 28 alphanumeric characters.",
     "copy_failed": "Your browser does not support Clipboard API!",
