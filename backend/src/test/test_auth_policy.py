@@ -168,7 +168,7 @@ async def test_sse_auth_renews_cookie_on_final_response(tmp_path, monkeypatch):
         assert streamed.status_code == 200
         assert streamed.headers["content-type"].startswith("text/event-stream")
         assert "set-cookie" in streamed.headers
-        assert "Max-Age=3600" in streamed.headers["set-cookie"]
+        assert "Max-Age=604800" in streamed.headers["set-cookie"]
 
         rejected = await client.get(
             "/policy-stream",

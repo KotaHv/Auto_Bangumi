@@ -9,7 +9,7 @@ from starlette.responses import Response
 from module.database import Database
 
 SESSION_COOKIE = "session"
-SESSION_TIMEOUT = 3600
+SESSION_TIMEOUT = 7 * 24 * 60 * 60
 
 
 def generate_session_token() -> str:

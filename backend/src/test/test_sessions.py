@@ -106,7 +106,7 @@ async def test_login_sets_opaque_cookie_and_persists_idle_deadline(tmp_path, mon
     assert "session=" in cookie
     assert "HttpOnly" in cookie
     assert "SameSite=strict" in cookie
-    assert "Max-Age=3600" in cookie
+    assert "Max-Age=604800" in cookie
     assert "expires=" not in cookie.lower()
     assert "Secure" not in cookie
     raw_token = cookie.split("session=", 1)[1].split(";", 1)[0]
