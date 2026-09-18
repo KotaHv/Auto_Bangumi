@@ -18,7 +18,7 @@ export function AbTopbar() {
   const location = useLocation();
 
   return (
-    <header className="bg-background/80 sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">
+    <header className="bg-background/80 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger size="icon" className="-ml-1 md:hidden" />
 
       <div className="font-display flex shrink-0 items-center gap-2 text-base font-semibold tracking-wide">
