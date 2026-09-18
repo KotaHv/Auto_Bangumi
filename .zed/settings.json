@@ -1,11 +1,20 @@
 {
   "languages": {
+    "JavaScript": {
+      "language_servers": ["oxlint", "!eslint", "..."],
+    },
+    "TypeScript": {
+      "language_servers": ["oxlint", "!eslint", "..."],
+    },
+    "TSX": {
+      "language_servers": ["oxlint", "!eslint", "..."],
+    },
     "CSS": {
       "language_servers": [
         "tailwindcss-intellisense-css",
         "!vscode-css-language-server",
-        "..."
-      ]
-    }
-  }
+        "...",
+      ],
+    },
+  },
 }
