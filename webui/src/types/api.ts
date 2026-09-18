@@ -1,9 +1,3 @@
-export type AuthError = 'Not authenticated';
-
-export type LoginError = 'Password error' | 'User not found';
-
-export type ApiErrorMessage = AuthError | LoginError;
-
 /**
  * 401 Token 过期
  * 404 Not Found

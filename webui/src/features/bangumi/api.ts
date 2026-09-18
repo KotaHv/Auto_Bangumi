@@ -15,12 +15,6 @@ export const apiBangumi = {
       id: bangumi.id,
     }));
   },
-  async getRule(bangumiId: number) {
-    const { data } = await axios.get<BangumiAPI & { id: number }>(
-      `api/v1/bangumi/get/${bangumiId}`,
-    );
-    return { ...toBangumiRule(data), id: data.id };
-  },
   async updateRule(bangumiId: number, bangumiRule: BangumiRule) {
     const post = omit(toBangumiAPI(bangumiRule), ['id']);
     const { data } = await axios.patch<ApiSuccess>(
@@ -69,12 +63,6 @@ export const apiBangumi = {
   async enableRule(bangumiId: number) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/bangumi/enable/${bangumiId}`,
-    );
-    return data;
-  },
-  async deleteAll() {
-    const { data } = await axios.delete<ApiSuccess>(
-      'api/v1/bangumi/delete/all',
     );
     return data;
   },

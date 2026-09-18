@@ -1,9 +1,13 @@
 import { toast } from '@/components/ui/toast';
 
-export type MessageType = 'success' | 'error' | 'warning';
+type MessageType = 'success' | 'error' | 'warning';
+
+function show(text: string, type: MessageType) {
+  toast.add({ title: text, type });
+}
 
 export const message = {
-  success: (text: string) => toast.add({ title: text, type: 'success' }),
-  error: (text: string) => toast.add({ title: text, type: 'error' }),
-  warning: (text: string) => toast.add({ title: text, type: 'warning' }),
+  success: (text: string) => show(text, 'success'),
+  error: (text: string) => show(text, 'error'),
+  warning: (text: string) => show(text, 'warning'),
 };

@@ -2,7 +2,6 @@ import { axios } from '@/lib/axios';
 import { toBangumiAPI, toBangumiRule } from '@/features/bangumi/mapper';
 import type { BangumiAPI, BangumiRule } from '@/features/bangumi/types';
 import type { RSS, RSSAPI, RSSDraft } from './types/rss';
-import type { Torrent } from './types/torrent';
 import type { ApiSuccess } from '@/types/api';
 
 export const apiRSS = {
@@ -16,13 +15,6 @@ export const apiRSS = {
     return data;
   },
 
-  async delete(rss_id: number) {
-    const { data } = await axios.delete<ApiSuccess>(
-      `api/v1/rss/delete/${rss_id}`,
-    );
-    return data!;
-  },
-
   async deleteMany(rss_list: number[]) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/rss/delete/many`,
@@ -31,25 +23,10 @@ export const apiRSS = {
     return data!;
   },
 
-  async disable(rss_id: number) {
-    const { data } = await axios.patch<ApiSuccess>(
-      `api/v1/rss/disable/${rss_id}`,
-    );
-    return data!;
-  },
-
   async disableMany(rss_list: number[]) {
     const { data } = await axios.post<ApiSuccess>(
       `api/v1/rss/disable/many`,
       rss_list,
-    );
-    return data!;
-  },
-
-  async update(rss_id: number, rss: RSS) {
-    const { data } = await axios.patch<ApiSuccess>(
-      `api/v1/rss/update/${rss_id}`,
-      rss,
     );
     return data!;
   },
@@ -74,10 +51,6 @@ export const apiRSS = {
     return data!;
   },
 
-  async getTorrent(rss_id: number) {
-    const { data } = await axios.get<Torrent[]>(`api/v1/rss/torrent/${rss_id}`);
-    return data!;
-  },
   async analysis(rss_item: RSSDraft) {
     const { data } = await axios.post<BangumiAPI>(
       'api/v1/rss/analysis',
