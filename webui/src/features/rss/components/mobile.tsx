@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EllipsisVertical, Trash, RefreshCw, Ban } from 'lucide-react';
+import {
+  Ban,
+  CheckCircle2,
+  CircleOff,
+  EllipsisVertical,
+  RefreshCw,
+  Rss as RssIcon,
+  Trash,
+} from 'lucide-react';
 import { AbFloatingBar } from '@/components/shared/ab-floating-bar';
 import { AbConfirm } from '@/components/shared/ab-confirm';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,6 +48,8 @@ export function RSSMobile({
 
   const allChecked =
     rss.length > 0 && rss.every((item) => selectedRSS.includes(item.id));
+  const enabledCount = rss.filter((item) => item.enabled).length;
+  const disabledCount = rss.length - enabledCount;
 
   const checkboxClassName =
     'data-checked:border-brand! data-checked:bg-brand! focus-visible:border-brand! focus-visible:ring-brand/40! data-checked:text-white!';
@@ -129,7 +139,44 @@ export function RSSMobile({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col px-4">
+    <div className="mx-4 flex h-full min-h-0 flex-col">
+      <AbFloatingBar position="top" className="w-full shadow-none">
+        <CardContent className="divide-border/60 grid w-full grid-cols-3 gap-0 divide-x">
+          <div
+            className="text-brand flex min-w-0 items-center justify-center gap-1.5 px-2 first:pl-0"
+            aria-label={`${t('rss.total')}: ${loading ? '-' : rss.length}`}
+            title={t('rss.total')}
+          >
+            <RssIcon className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loading ? '-' : rss.length}
+            </span>
+          </div>
+
+          <div
+            className="flex min-w-0 items-center justify-center gap-1.5 px-2 text-emerald-600 dark:text-emerald-400"
+            aria-label={`${t('rss.enabled_count')}: ${loading ? '-' : enabledCount}`}
+            title={t('rss.enabled_count')}
+          >
+            <CheckCircle2 className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loading ? '-' : enabledCount}
+            </span>
+          </div>
+
+          <div
+            className="text-muted-foreground flex min-w-0 items-center justify-center gap-1.5 px-2 last:pr-0"
+            aria-label={`${t('rss.disabled_count')}: ${loading ? '-' : disabledCount}`}
+            title={t('rss.disabled_count')}
+          >
+            <CircleOff className="size-3.5 shrink-0" />
+            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
+              {loading ? '-' : disabledCount}
+            </span>
+          </div>
+        </CardContent>
+      </AbFloatingBar>
+
       <div className="no-scrollbar my-3 min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain">
         {loading ? (
           <Empty className="h-full min-h-0 border-0 p-6">

@@ -125,7 +125,7 @@ export function RSSDesktop({
                   {t('rss.total')}
                 </p>
                 <p className="font-display mt-0.5 text-xl font-semibold">
-                  {rss.length}
+                  {loading ? '-' : rss.length}
                 </p>
               </div>
             </CardContent>
@@ -141,7 +141,7 @@ export function RSSDesktop({
                   {t('rss.enabled_count')}
                 </p>
                 <p className="font-display mt-0.5 text-xl font-semibold">
-                  {rss.filter((item) => item.enabled).length}
+                  {loading ? '-' : rss.filter((item) => item.enabled).length}
                 </p>
               </div>
             </CardContent>
@@ -157,7 +157,7 @@ export function RSSDesktop({
                   {t('rss.disabled_count')}
                 </p>
                 <p className="font-display mt-0.5 text-xl font-semibold">
-                  {rss.filter((item) => !item.enabled).length}
+                  {loading ? '-' : rss.filter((item) => !item.enabled).length}
                 </p>
               </div>
             </CardContent>
