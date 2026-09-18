@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import type { RSSDraft } from '../types/rss';
@@ -27,13 +28,28 @@ export function AbAddRssForm({
   onSubmit,
 }: AbAddRssFormProps) {
   const { t } = useTranslation();
+  const formId = useId();
+  const fieldIds = {
+    url: `${formId}-url`,
+    name: `${formId}-name`,
+    aggregate: `${formId}-aggregate`,
+    parserLabel: `${formId}-parser-label`,
+  };
 
   return (
-    <>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
       <div className="space-y-4">
         <Field>
-          <FieldLabel>{t('topbar.add.rss_link')}</FieldLabel>
+          <FieldLabel htmlFor={fieldIds.url}>
+            {t('topbar.add.rss_link')}
+          </FieldLabel>
           <Input
+            id={fieldIds.url}
             variant="large"
             value={rss.url}
             onChange={(e) => onChange({ url: e.target.value })}
@@ -42,8 +58,11 @@ export function AbAddRssForm({
         </Field>
 
         <Field>
-          <FieldLabel>{t('topbar.add.name')}</FieldLabel>
+          <FieldLabel htmlFor={fieldIds.name}>
+            {t('topbar.add.name')}
+          </FieldLabel>
           <Input
+            id={fieldIds.name}
             variant="large"
             value={rss.name}
             onChange={(e) => onChange({ name: e.target.value })}
@@ -57,8 +76,11 @@ export function AbAddRssForm({
               orientation="horizontal"
               className="min-h-9 w-full items-center justify-between gap-3 sm:w-fit sm:justify-start sm:gap-2"
             >
-              <FieldLabel>{t('topbar.add.aggregate')}</FieldLabel>
+              <FieldLabel htmlFor={fieldIds.aggregate}>
+                {t('topbar.add.aggregate')}
+              </FieldLabel>
               <Switch
+                id={fieldIds.aggregate}
                 checked={rss.aggregate}
                 onCheckedChange={(aggregate) => onChange({ aggregate })}
                 size="lg"
@@ -71,8 +93,11 @@ export function AbAddRssForm({
               orientation="horizontal"
               className="min-h-9 items-center justify-between gap-2 sm:w-fit sm:justify-start"
             >
-              <FieldLabel>{t('topbar.add.parser')}</FieldLabel>
+              <FieldLabel id={fieldIds.parserLabel}>
+                {t('topbar.add.parser')}
+              </FieldLabel>
               <AbSelect
+                aria-labelledby={fieldIds.parserLabel}
                 value={rss.parser}
                 items={PARSER_TYPE}
                 triggerClassName="w-24 sm:w-24"
@@ -89,12 +114,12 @@ export function AbAddRssForm({
         <Button
           variant="brand"
           className="h-10 w-full sm:h-8 sm:w-auto sm:min-w-20"
+          type="submit"
           loading={loading}
-          onClick={onSubmit}
         >
           {t('topbar.add.button')}
         </Button>
       </div>
-    </>
+    </form>
   );
 }

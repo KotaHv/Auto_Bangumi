@@ -58,6 +58,12 @@ export function ConfigField<TType extends ConfigControlType>(
   const labelText = typeof label === 'function' ? label() : label;
   const isDynamicTags = type === 'dynamic-tags';
   const isSwitch = type === 'switch';
+  const controlId = fieldKey ? `config-field-${fieldKey}` : undefined;
+  const labelId =
+    controlId && (isDynamicTags || type === 'select')
+      ? `${controlId}-label`
+      : undefined;
+  const labelProps = labelId ? { id: labelId } : { htmlFor: controlId };
 
   let control: React.ReactNode = null;
 
@@ -65,6 +71,7 @@ export function ConfigField<TType extends ConfigControlType>(
     case 'switch':
       control = (
         <Switch
+          id={controlId}
           checked={!!value}
           onCheckedChange={(v) => onChange?.(v)}
           disabled={disabled}
@@ -76,6 +83,7 @@ export function ConfigField<TType extends ConfigControlType>(
     case 'select':
       control = (
         <AbSelect
+          aria-labelledby={labelId}
           value={value as string | null}
           items={prop?.items ?? []}
           triggerClassName="w-full sm:w-64"
@@ -89,6 +97,7 @@ export function ConfigField<TType extends ConfigControlType>(
       control =
         prop?.type === 'password' ? (
           <PasswordInput
+            id={controlId}
             value={(value as string | null) ?? ''}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={prop?.placeholder}
@@ -98,6 +107,7 @@ export function ConfigField<TType extends ConfigControlType>(
         ) : (
           <Input
             {...prop}
+            id={controlId}
             disabled={disabled}
             value={
               (value === 0 || value === '0') && prop?.placeholder
@@ -165,8 +175,10 @@ export function ConfigField<TType extends ConfigControlType>(
             'sm:gap-6',
           )}
           data-invalid={!!error || undefined}
+          aria-labelledby={isDynamicTags ? labelId : undefined}
         >
           <FieldLabel
+            {...labelProps}
             className={cn(
               'min-w-0 text-sm select-text sm:shrink-0 sm:text-sm',
               isDynamicTags
@@ -193,8 +205,12 @@ export function ConfigField<TType extends ConfigControlType>(
           </div>
         </Field>
       ) : (
-        <Field orientation="vertical" data-invalid={!!error || undefined}>
-          <FieldLabel>{labelText}</FieldLabel>
+        <Field
+          orientation="vertical"
+          data-invalid={!!error || undefined}
+          aria-labelledby={isDynamicTags ? labelId : undefined}
+        >
+          <FieldLabel {...labelProps}>{labelText}</FieldLabel>
           <div className="mt-1">{control}</div>
           {feedback}
         </Field>

@@ -21,7 +21,7 @@ export interface AbSelectProps<T extends string = string> {
   triggerClassName?: string;
   size?: 'sm' | 'default';
   disabled?: boolean;
-  id?: string;
+  'aria-labelledby'?: string;
   name?: string;
   required?: boolean;
 }
@@ -34,7 +34,7 @@ export function AbSelect<T extends string = string>({
   triggerClassName,
   size = 'default',
   disabled = false,
-  id,
+  'aria-labelledby': ariaLabelledBy,
   name,
   required = false,
 }: AbSelectProps<T>) {
@@ -43,14 +43,17 @@ export function AbSelect<T extends string = string>({
       items={items}
       value={value}
       disabled={disabled || items.length === 0}
-      id={id}
       name={name}
       required={required}
       onValueChange={(nextValue) => {
         if (nextValue !== null) onValueChange(nextValue);
       }}
     >
-      <SelectTrigger size={size} className={triggerClassName}>
+      <SelectTrigger
+        aria-labelledby={ariaLabelledBy}
+        size={size}
+        className={triggerClassName}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
 
