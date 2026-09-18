@@ -41,7 +41,7 @@ Object.defineProperty(globalThis, 'EventSource', {
 });
 Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
-  value: { getItem: () => null, setItem: () => undefined },
+  value: { getItem: () => 'en', setItem: () => undefined },
 });
 
 const { apiSearch } = await import('../src/features/search/api');

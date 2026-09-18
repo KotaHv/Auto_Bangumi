@@ -12,10 +12,20 @@ export type Languages = keyof typeof messages;
 
 export const LANG_KEY = 'lang';
 
+function isSupportedLanguage(value: string | null): value is Languages {
+  return value === 'en' || value === 'zh-CN';
+}
+
+function classifyLanguage(language: string): Languages {
+  const normalized = language.toLowerCase();
+  return normalized === 'zh' || normalized.startsWith('zh-') ? 'zh-CN' : 'en';
+}
+
 function initialLang(): Languages {
-  const stored = localStorage.getItem(LANG_KEY) as Languages | null;
-  if (stored && stored in messages) return stored;
-  return navigator.language as Languages;
+  const stored = localStorage.getItem(LANG_KEY);
+  return isSupportedLanguage(stored)
+    ? stored
+    : classifyLanguage(navigator.language);
 }
 
 export const i18n = i18next.createInstance();
@@ -35,12 +45,12 @@ i18n.use(initReactI18next).init({
 });
 
 export function changeLocale() {
-  const lang = (i18n.language === 'zh-CN' ? 'en' : 'zh-CN') as Languages;
+  const lang = classifyLanguage(i18n.language) === 'zh-CN' ? 'en' : 'zh-CN';
   localStorage.setItem(LANG_KEY, lang);
   i18n.changeLanguage(lang);
 }
 export function returnUserLangText(texts: Record<Languages, string>) {
-  return texts[(i18n.language as Languages) ?? 'en'];
+  return texts[classifyLanguage(i18n.language)];
 }
 
 export function returnUserLangMsg(res: { msg_en: string; msg_zh: string }) {
