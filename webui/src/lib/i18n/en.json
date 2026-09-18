@@ -174,6 +174,7 @@
     "delete": "Delete",
     "delete_hit": "Delete the selected RSS feeds?",
     "disable": "Disable",
+    "disable_hit": "Disable the selected RSS feeds?",
     "enable": "Enable",
     "enabled_count": "Enabled",
     "disabled_count": "Disabled",

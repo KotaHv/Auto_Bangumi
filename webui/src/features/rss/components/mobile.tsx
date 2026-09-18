@@ -36,6 +36,8 @@ import { AbRssTags } from './ab-rss-tags';
 export function RSSMobile({
   rss,
   loading,
+  actionPending,
+  pendingAction,
   selectedRSS,
   setSelectedRSS,
   enableSelected,
@@ -45,6 +47,8 @@ export function RSSMobile({
 }: RSSLayoutProps) {
   const { t } = useTranslation();
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [openDisableConfirm, setOpenDisableConfirm] = useState(false);
+  const [openBulkActions, setOpenBulkActions] = useState(false);
 
   const allChecked =
     rss.length > 0 && rss.every((item) => selectedRSS.includes(item.id));
@@ -90,18 +94,22 @@ export function RSSMobile({
           <Button
             variant="brand"
             className="px-3"
-            disabled={selectedRSS.length === 0}
+            disabled={selectedRSS.length === 0 || actionPending}
+            loading={pendingAction === 'enable'}
             onClick={enableSelected}
           >
             {t('rss.enable')}
           </Button>
-          <DropdownMenu>
+          <DropdownMenu
+            open={openBulkActions}
+            onOpenChange={setOpenBulkActions}
+          >
             <DropdownMenuTrigger
               render={
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={selectedRSS.length === 0}
+                  disabled={selectedRSS.length === 0 || actionPending}
                   aria-label={t('rss.more')}
                   title={t('rss.more')}
                 />
@@ -114,11 +122,23 @@ export function RSSMobile({
               sideOffset={18}
               className="w-auto min-w-28"
             >
-              <DropdownMenuItem className="gap-1.5" onClick={refreshSelected}>
-                <RefreshCw />
+              <DropdownMenuItem
+                className="gap-1.5"
+                closeOnClick={false}
+                disabled={actionPending}
+                onClick={async () => {
+                  await refreshSelected();
+                  setOpenBulkActions(false);
+                }}
+              >
+                {pendingAction === 'refresh' ? <Spinner /> : <RefreshCw />}
                 {t('rss.refresh')}
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-1.5" onClick={disableSelected}>
+              <DropdownMenuItem
+                className="gap-1.5"
+                disabled={actionPending}
+                onClick={() => setOpenDisableConfirm(true)}
+              >
                 <Ban />
                 {t('rss.disable')}
               </DropdownMenuItem>
@@ -126,6 +146,7 @@ export function RSSMobile({
               <DropdownMenuItem
                 className="gap-1.5"
                 variant="destructive"
+                disabled={actionPending}
                 onClick={() => setOpenDeleteConfirm(true)}
               >
                 <Trash />
@@ -235,13 +256,28 @@ export function RSSMobile({
       {renderBulkActions()}
 
       <AbConfirm
+        open={openDisableConfirm}
+        onOpenChange={setOpenDisableConfirm}
+        title={t('rss.disable')}
+        confirmType="warn"
+        confirmLoading={pendingAction === 'disable'}
+        onConfirm={async () => {
+          await disableSelected();
+          setOpenDisableConfirm(false);
+        }}
+      >
+        {t('rss.disable_hit')}
+      </AbConfirm>
+
+      <AbConfirm
         open={openDeleteConfirm}
         onOpenChange={setOpenDeleteConfirm}
         title={t('rss.delete')}
         confirmType="warn"
-        onConfirm={() => {
+        confirmLoading={pendingAction === 'delete'}
+        onConfirm={async () => {
+          await deleteSelected();
           setOpenDeleteConfirm(false);
-          deleteSelected();
         }}
       >
         {t('rss.delete_hit')}

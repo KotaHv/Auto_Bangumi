@@ -34,6 +34,8 @@ import { AbRssTags } from './ab-rss-tags';
 export function RSSDesktop({
   rss,
   loading,
+  actionPending,
+  pendingAction,
   selectedRSS,
   setSelectedRSS,
   enableSelected,
@@ -43,6 +45,7 @@ export function RSSDesktop({
 }: RSSLayoutProps) {
   const { t } = useTranslation();
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [openDisableConfirm, setOpenDisableConfirm] = useState(false);
   const hasSelection = selectedRSS.length > 0;
 
   const allChecked =
@@ -86,22 +89,32 @@ export function RSSDesktop({
         <div className="flex flex-wrap items-center justify-end gap-1">
           <Button
             variant="brand"
-
             className="min-w-20"
+            disabled={actionPending}
+            loading={pendingAction === 'enable'}
             onClick={enableSelected}
           >
             {t('rss.enable')}
           </Button>
-          <Button variant="ghost" onClick={refreshSelected}>
+          <Button
+            variant="ghost"
+            disabled={actionPending}
+            loading={pendingAction === 'refresh'}
+            onClick={refreshSelected}
+          >
             {t('rss.refresh')}
           </Button>
-          <Button variant="ghost" onClick={disableSelected}>
+          <Button
+            variant="ghost"
+            disabled={actionPending}
+            onClick={() => setOpenDisableConfirm(true)}
+          >
             {t('rss.disable')}
           </Button>
           <Button
             variant="ghost"
-
             className="text-destructive"
+            disabled={actionPending}
             onClick={() => setOpenDeleteConfirm(true)}
           >
             {t('rss.delete')}
@@ -259,13 +272,28 @@ export function RSSDesktop({
       </div>
 
       <AbConfirm
+        open={openDisableConfirm}
+        onOpenChange={setOpenDisableConfirm}
+        title={t('rss.disable')}
+        confirmType="warn"
+        confirmLoading={pendingAction === 'disable'}
+        onConfirm={async () => {
+          await disableSelected();
+          setOpenDisableConfirm(false);
+        }}
+      >
+        {t('rss.disable_hit')}
+      </AbConfirm>
+
+      <AbConfirm
         open={openDeleteConfirm}
         onOpenChange={setOpenDeleteConfirm}
         title={t('rss.delete')}
         confirmType="warn"
-        onConfirm={() => {
+        confirmLoading={pendingAction === 'delete'}
+        onConfirm={async () => {
+          await deleteSelected();
           setOpenDeleteConfirm(false);
-          deleteSelected();
         }}
       >
         {t('rss.delete_hit')}

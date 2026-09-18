@@ -10,7 +10,7 @@ import { useIsDesktop } from '@/hooks/use-desktop';
 import { AbLoadError } from '@/components/shared/ab-load-error';
 import { RSSMobile } from '@/features/rss/components/mobile';
 import { RSSDesktop } from '@/features/rss/components/desktop';
-import type { RSSLayoutProps } from '@/features/rss/types/page';
+import type { RSSBulkAction, RSSLayoutProps } from '@/features/rss/types/page';
 
 export default function RSSPage() {
   const { t } = useTranslation();
@@ -74,6 +74,17 @@ export default function RSSPage() {
     await refreshMutation.mutateAsync(selectedRSS).catch(() => undefined);
   };
 
+  const pendingAction: RSSBulkAction | null = enableMutation.isPending
+    ? 'enable'
+    : disableMutation.isPending
+      ? 'disable'
+      : deleteMutation.isPending
+        ? 'delete'
+        : refreshMutation.isPending
+          ? 'refresh'
+          : null;
+  const actionPending = pendingAction !== null;
+
   if (rssQuery.isLoadingError) {
     return (
       <AbLoadError
@@ -87,6 +98,8 @@ export default function RSSPage() {
   const props: RSSLayoutProps = {
     rss: rss ?? [],
     loading: rssQuery.isPending,
+    actionPending,
+    pendingAction,
     selectedRSS,
     setSelectedRSS,
     enableSelected,
