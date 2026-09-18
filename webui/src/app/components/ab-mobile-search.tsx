@@ -29,7 +29,7 @@ export function AbMobileSearch() {
         <SheetContent
           side="top"
           showCloseButton={false}
-          className="rounded-b-2xl px-4 pt-5 pb-6"
+          className="rounded-b-2xl px-4 py-6"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>搜索</SheetTitle>

@@ -70,7 +70,10 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     proxy: {
-      '^/api/.*': 'http://127.0.0.1:7892',
+      '^/api/.*': {
+        target: 'http://127.0.0.1:7892',
+        changeOrigin: false,
+      },
       '^/posters/.*': 'http://127.0.0.1:7892',
     },
   },

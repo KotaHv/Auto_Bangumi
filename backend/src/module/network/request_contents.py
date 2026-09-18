@@ -13,6 +13,10 @@ from .request_url import RequestURL
 from .site import rss_parser
 
 
+class UpstreamUnavailableError(Exception):
+    pass
+
+
 class RequestContent(RequestURL):
     async def get_torrents(
         self,
@@ -21,8 +25,17 @@ class RequestContent(RequestURL):
         limit: int | None = None,
         retry: int = 3,
     ) -> list[Torrent]:
-        soup = await self.get_xml(_url, retry)
-        if soup is not None:
+        try:
+            soup = await self.get_xml(_url, retry)
+        except xml.etree.ElementTree.ParseError:
+            logger.warning("[Network] Failed to parse torrents: {}", _url)
+            return []
+
+        if soup is None:
+            logger.warning("[Network] Failed to get torrents: {}", _url)
+            return []
+
+        try:
             torrent_titles, torrent_urls, torrent_homepage = rss_parser(soup)
             torrents: list[Torrent] = []
             if _filter is None:
@@ -34,12 +47,11 @@ class RequestContent(RequestURL):
                     torrents.append(
                         Torrent(name=_title, url=torrent_url, homepage=homepage)
                     )
-                if isinstance(limit, int):
-                    if len(torrents) >= limit:
-                        break
+                if isinstance(limit, int) and len(torrents) >= limit:
+                    break
             return torrents
-        else:
-            logger.warning("[Network] Failed to get torrents: {}", _url)
+        except (AttributeError, TypeError, ValueError, re.error):
+            logger.warning("[Network] Invalid torrent feed: {}", _url)
             return []
 
     async def get_xml(

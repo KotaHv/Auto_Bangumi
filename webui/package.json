@@ -6,6 +6,7 @@
   "scripts": {
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
+    "test": "bun test test",
     "lint": "oxlint src",
     "build": "vite build",
     "dev": "vite",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/bun": "^1.4.2",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",

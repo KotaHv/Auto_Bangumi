@@ -28,14 +28,7 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
   const [provider, setProvider] = useState('mikan');
 
   const { data: providers = [] } = useQuery(searchProviderOptions());
-  const { bangumiList, loading, searchKeyword, searchProvider, search } =
-    useSearchSSE();
-
-  const resultsOpen =
-    open &&
-    inputValue === searchKeyword &&
-    provider === searchProvider &&
-    bangumiList.length > 0;
+  const { state, search, cancel } = useSearchSSE();
 
   useEffect(() => {
     if (!open) return;
@@ -54,17 +47,19 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
 
   function handleClear() {
     setInputValue('');
-    search('', provider, 'immediate');
+    cancel();
     setOpen(false);
   }
 
   function handleSearch() {
-    if (!inputValue) {
+    const keyword = inputValue.trim();
+    if (!keyword) {
       handleClear();
       return;
     }
 
-    search(inputValue, provider, 'immediate');
+    setInputValue(keyword);
+    search(keyword, provider);
     setOpen(true);
   }
 
@@ -87,37 +82,44 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
         <AbSearch
           providers={providers}
           provider={provider}
-          loading={loading}
+          loading={state.status === 'loading'}
           inputValue={inputValue}
           onInputChange={(value) => {
+            cancel();
             setInputValue(value);
-            search(value, provider, 'auto');
-            setOpen(Boolean(value));
+            setOpen(false);
           }}
           onInputFocus={() => setOpen(true)}
           onClear={handleClear}
           onSearch={handleSearch}
           onSelectProvider={(value) => {
+            cancel();
             setProvider(value);
-
-            if (!inputValue) {
-              setOpen(false);
-              return;
-            }
-
-            search(inputValue, value, 'immediate');
-            setOpen(true);
+            setOpen(false);
           }}
         />
 
-        {resultsOpen && (
-          <div className="absolute top-full left-0 z-50 mt-8 flex flex-col gap-2 overflow-y-auto overscroll-contain md:mt-5">
-            {bangumiList.map((bangumi) => (
+        {open && (
+          <div className="absolute top-full left-0 z-50 mt-8 flex max-h-[calc(100dvh-6rem-12px-env(safe-area-inset-bottom))] w-full flex-col gap-3 overflow-y-auto overscroll-contain md:mt-5 md:max-h-[min(24rem,calc(100dvh-4.5rem-env(safe-area-inset-bottom)))]">
+            {state.status === 'complete' && state.results.length === 0 && (
+              <div className="bg-popover text-muted-foreground rounded-md px-4 py-3 text-sm shadow-md">
+                {t('topbar.search.empty')}
+              </div>
+            )}
+            {state.status === 'failed' && (
+              <div
+                className="bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm shadow-md"
+                role="alert"
+              >
+                {t(`topbar.search.errors.${state.error}`)}
+              </div>
+            )}
+            {state.results.map((result: SearchResult) => (
               <AbBangumiCard
-                key={bangumi.order}
-                bangumi={bangumi.value.bangumi}
+                key={result.rss.url}
+                bangumi={result.bangumi}
                 type="search"
-                onClick={() => handleSelect(bangumi.value)}
+                onClick={() => handleSelect(result)}
               />
             ))}
           </div>

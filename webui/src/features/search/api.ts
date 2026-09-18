@@ -1,52 +1,66 @@
-import { axios } from '@/lib/axios';
 import { Observable } from 'rxjs';
 
+import { axios } from '@/lib/axios';
 import type { BangumiRule } from '@/features/bangumi/types';
-import type { SearchResult, SearchResultResponse } from './types';
+import type {
+  SearchFailureCode,
+  SearchResultResponse,
+  SearchStreamEvent,
+} from './types';
 
 export const apiSearch = {
-  get(keyword: string, site = 'mikan'): Observable<SearchResult> {
-    const bangumiInfo$ = new Observable<SearchResult>((observer) => {
+  get(keyword: string, site = 'mikan'): Observable<SearchStreamEvent> {
+    return new Observable<SearchStreamEvent>((observer) => {
       const eventSource = new EventSource(
         `api/v1/search/bangumi?site=${site}&keywords=${encodeURIComponent(
           keyword,
         )}`,
         { withCredentials: true },
       );
+      function finish(event: SearchStreamEvent) {
+        observer.next(event);
+        observer.complete();
+      }
 
-      eventSource.onmessage = (ev) => {
+      function fail(code: SearchFailureCode) {
+        finish({ type: 'failure', code });
+      }
+
+      eventSource.onmessage = (event) => {
         try {
-          const apiData: SearchResultResponse = JSON.parse(ev.data);
+          const apiData: SearchResultResponse = JSON.parse(event.data);
           const bangumi: BangumiRule = {
             ...apiData.bangumi,
             filter: apiData.bangumi.filter.split(','),
           };
-          observer.next({ bangumi, rss: apiData.rss });
+          observer.next({
+            type: 'result',
+            result: { bangumi, rss: apiData.rss },
+          });
         } catch {
-          console.error(
-            '[/search/bangumi] Parse Error |',
-            { keyword },
-            'response:',
-            ev.data,
-          );
+          fail('protocol');
         }
       };
 
-      // The backend closes this finite SSE stream when the search finishes.
-      // EventSource reports that closure through `onerror`, so treat it as
-      // completion rather than a transport error. This also means genuine
-      // connection failures cannot currently be distinguished from normal completion.
-      eventSource.onerror = () => {
-        eventSource.close();
-        observer.complete();
-      };
+      eventSource.addEventListener('complete', () => {
+        finish({ type: 'complete' });
+      });
 
-      return () => {
-        eventSource.close();
-      };
+      eventSource.addEventListener('failure', (event) => {
+        try {
+          const { code } = JSON.parse((event as MessageEvent<string>).data) as {
+            code: SearchFailureCode;
+          };
+          finish({ type: 'failure', code });
+        } catch {
+          fail('protocol');
+        }
+      });
+
+      eventSource.onerror = () => fail('transport');
+
+      return () => eventSource.close();
     });
-
-    return bangumiInfo$;
   },
 
   async getProvider(signal?: AbortSignal) {

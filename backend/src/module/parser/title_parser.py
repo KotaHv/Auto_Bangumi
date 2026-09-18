@@ -91,13 +91,8 @@ class TitleParser:
                 "en": episode.title_en,
                 "jp": episode.title_jp,
             }
-            title_raw = episode.title_en or episode.title_zh or ""
-            official_title = title_raw
-            for key in (language, "zh", "en", "jp"):
-                candidate = titles[key]
-                if candidate:
-                    official_title = candidate
-                    break
+            title_raw = episode.title_en or episode.title_zh or episode.title_jp or ""
+            official_title = titles.get(language) or title_raw
             _season = episode.season
             logger.debug("RAW:{} >> {}", raw, title_raw)
             return Bangumi(

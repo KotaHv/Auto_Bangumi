@@ -1,89 +1,69 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  catchError,
-  EMPTY,
-  finalize,
-  of,
-  Subject,
-  switchMap,
-  tap,
-  timer,
-} from 'rxjs';
+import type { Subscription } from 'rxjs';
+
 import { apiSearch } from '../api';
-import type { OrderedSearchResult, SearchResult } from '../types';
-
-type SearchMode = 'auto' | 'immediate';
-
-type SearchRequest = {
-  keyword: string;
-  provider: string;
-  mode: SearchMode;
-};
+import type { SearchState, SearchStreamEvent } from '../types';
 
 export function useSearchSSE() {
-  const requestsRef = useRef<Subject<SearchRequest> | null>(null);
-  if (!requestsRef.current) {
-    requestsRef.current = new Subject<SearchRequest>();
-  }
-
-  const [bangumiList, setBangumiList] = useState<OrderedSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchProvider, setSearchProvider] = useState('');
+  const subscriptionRef = useRef<Subscription | null>(null);
+  const [state, setState] = useState<SearchState>({
+    status: 'idle',
+    results: [],
+  });
 
   useEffect(() => {
-    const requests$ = requestsRef.current;
-    if (!requests$) return;
-
-    const subscription = requests$
-      .pipe(
-        switchMap(({ keyword, provider, mode }) => {
-          if (!keyword) {
-            setBangumiList([]);
-            setSearchKeyword('');
-            setSearchProvider('');
-            setLoading(false);
-            return EMPTY;
-          }
-
-          const start$ = mode === 'auto' ? timer(600) : of(0);
-          return start$.pipe(
-            switchMap(() => {
-              setBangumiList([]);
-              setSearchKeyword(keyword);
-              setSearchProvider(provider);
-              setLoading(true);
-              return apiSearch.get(keyword, provider).pipe(
-                tap((value: SearchResult) => {
-                  setBangumiList((current) => [
-                    ...current,
-                    { order: current.length + 1, value },
-                  ]);
-                }),
-                catchError(() => EMPTY),
-                finalize(() => setLoading(false)),
-              );
-            }),
-          );
-        }),
-      )
-      .subscribe();
-
-    return () => subscription.unsubscribe();
+    return () => subscriptionRef.current?.unsubscribe();
   }, []);
 
-  const search = useCallback(
-    (keyword: string, provider: string, mode: SearchMode) => {
-      requestsRef.current?.next({ keyword, provider, mode });
-    },
-    [],
-  );
+  const search = useCallback((keyword: string, provider: string) => {
+    subscriptionRef.current?.unsubscribe();
+    setState({ status: 'loading', results: [] });
+
+    subscriptionRef.current = apiSearch.get(keyword, provider).subscribe({
+      next: (event) => {
+        setState((current) => transitionSearchState(current, event));
+        if (event.type !== 'result') {
+          subscriptionRef.current = null;
+        }
+      },
+      error: () => {
+        setState((current) =>
+          transitionSearchState(current, {
+            type: 'failure',
+            code: 'transport',
+          }),
+        );
+        subscriptionRef.current = null;
+      },
+    });
+  }, []);
+
+  const cancel = useCallback(() => {
+    subscriptionRef.current?.unsubscribe();
+    subscriptionRef.current = null;
+    setState({ status: 'idle', results: [] });
+  }, []);
+
+  return { state, search, cancel };
+}
+
+function transitionSearchState(
+  state: SearchState,
+  event: SearchStreamEvent,
+): SearchState {
+  if (state.status !== 'loading') return state;
+
+  if (event.type === 'result') {
+    return { ...state, results: [...state.results, event.result] };
+  }
+
+  if (event.type === 'complete') {
+    return { status: 'complete', results: state.results };
+  }
 
   return {
-    bangumiList,
-    loading,
-    searchKeyword,
-    searchProvider,
-    search,
+    status: 'failed',
+    results: state.results,
+    error: event.code,
   };
 }

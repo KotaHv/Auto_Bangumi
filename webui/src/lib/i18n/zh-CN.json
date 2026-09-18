@@ -225,7 +225,15 @@
     "reset_rule": "重置规则",
     "restart": "重启",
     "search": {
-      "placeholder": "输入关键字搜索"
+      "placeholder": "输入关键字搜索",
+      "empty": "没有匹配的结果。",
+      "errors": {
+        "invalid_provider": "该搜索来源不可用。",
+        "upstream_unavailable": "无法连接到搜索来源。",
+        "internal_error": "搜索失败，请稍后重试。",
+        "transport": "搜索连接已中断。",
+        "protocol": "搜索服务返回了无效响应。"
+      }
     },
     "shutdown": "关闭",
     "start": "启动",

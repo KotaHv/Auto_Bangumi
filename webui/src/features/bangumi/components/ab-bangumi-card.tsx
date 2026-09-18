@@ -31,12 +31,12 @@ export function AbBangumiCard({
 
     return (
       <Card
-        variant="ring"
-        className="group/search bg-card hover:ring-foreground/20 w-[90vw] cursor-pointer shadow-sm transition-all duration-200 [--card-spacing:0px] hover:-translate-y-px hover:shadow-md md:w-90"
+        variant="border"
+        className="group/search bg-card w-full shrink-0 cursor-pointer shadow-sm transition-all duration-200 [--card-spacing:0px] hover:-translate-y-px hover:shadow-md"
         onClick={onClick}
       >
         <div className="grid grid-cols-[auto_minmax(0,2fr)_minmax(0,3fr)_auto] items-center gap-2 md:gap-3">
-          <div className="bg-muted/40 aspect-3/4 w-16 overflow-hidden md:w-20">
+          <div className="bg-muted/40 aspect-3/4 w-20 overflow-hidden">
             {bangumi.poster_link ? (
               <img
                 src={bangumi.poster_link}

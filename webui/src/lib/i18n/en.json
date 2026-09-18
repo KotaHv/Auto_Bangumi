@@ -225,7 +225,15 @@
     "reset_rule": "Reset Rule",
     "restart": "Restart",
     "search": {
-      "placeholder": "Type to search"
+      "placeholder": "Type to search",
+      "empty": "No matching results.",
+      "errors": {
+        "invalid_provider": "This search provider is unavailable.",
+        "upstream_unavailable": "The search provider could not be reached.",
+        "internal_error": "Search failed. Try again later.",
+        "transport": "The search connection was interrupted.",
+        "protocol": "The search service returned an invalid response."
+      }
     },
     "shutdown": "Shutdown",
     "start": "Start",
