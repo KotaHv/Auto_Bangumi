@@ -30,6 +30,7 @@ export function AbPlayerSettings({
       setDraftType(type);
       setDraftUrl(url);
     }
+    // Only sync on open; store changes while editing must not overwrite the draft.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 

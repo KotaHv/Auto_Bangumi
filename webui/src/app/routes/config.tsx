@@ -420,6 +420,7 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
       scrollToSection(key);
     }
     initialUrlSyncRef.current = true;
+    // scrollToSection is recreated each render; adding it can repeat URL-driven scrolling.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -514,8 +515,7 @@ function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
       }
       programmaticRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tabOffsetRef]);
 
   const content = (
     <ConfigSections
