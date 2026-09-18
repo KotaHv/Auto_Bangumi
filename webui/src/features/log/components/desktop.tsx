@@ -166,8 +166,8 @@ export function LogDesktop({
           </Card>
         </div>
         <div className="min-h-0 flex-1">
-          <Card className="flex max-h-full w-full flex-col overflow-hidden rounded-2xl [--card-spacing:0px]">
-            <CardContent className="relative min-h-0 overflow-hidden px-4 py-2 **:data-[slot=table-container]:overflow-visible">
+          <Card className="flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl [--card-spacing:0px]">
+            <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-2 **:data-[slot=table-container]:overflow-visible">
               {!loaded ? (
                 <div className="min-h-48" />
               ) : visibleLog.length === 0 ? (
@@ -189,7 +189,7 @@ export function LogDesktop({
                   ref={(element) => {
                     logContainerRef.current = element;
                   }}
-                  className="ab-log-scrollbar max-h-full min-h-0 overflow-auto overscroll-contain"
+                  className="ab-log-scrollbar min-h-0 flex-1 overflow-auto overscroll-contain"
                 >
                   <Table className="w-full table-fixed">
                     <TableHeader className="bg-card sticky top-0 z-10">
