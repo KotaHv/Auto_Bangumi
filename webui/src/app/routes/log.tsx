@@ -9,6 +9,7 @@ import { returnUserLangMsg } from '@/lib/i18n';
 import { copyText } from '@/lib/clipboard';
 import { useIsDesktop } from '@/hooks/use-desktop';
 import { AbConfirm } from '@/components/shared/ab-confirm';
+import { AbLoadError } from '@/components/shared/ab-load-error';
 import { LogMobile } from '@/features/log/components/mobile';
 import { LogDesktop } from '@/features/log/components/desktop';
 import { parseLog } from '@/features/log/parse-log';
@@ -99,7 +100,7 @@ export default function LogPage() {
   const props = {
     log: formatLog,
     visibleLog,
-    loaded: logQuery.isFetched,
+    loaded: logQuery.data !== undefined,
     loading:
       logQuery.isPending || manualRefreshing
         ? ('visible' as const)
@@ -118,6 +119,16 @@ export default function LogPage() {
     onReset: () => setOpenResetConfirm(true),
     copy,
   };
+
+  if (logQuery.isLoadingError) {
+    return (
+      <AbLoadError
+        title={t('log.load_failed')}
+        retryLabel={t('log.retry')}
+        onRetry={() => void logQuery.refetch()}
+      />
+    );
+  }
 
   return (
     <>

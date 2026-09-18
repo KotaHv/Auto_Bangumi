@@ -200,7 +200,7 @@ export function LogMobile({
           {!loaded ? (
             <div className="min-h-48" />
           ) : visibleLog.length === 0 ? (
-            <Empty className="min-h-64 border-0 p-6">
+            <Empty className="h-full min-h-0 border-0 p-6">
               <EmptyHeader>
                 <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
                   <FileText />

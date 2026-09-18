@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRSS } from '@/features/rss/api';
 import { bangumiKeys } from '@/features/bangumi/queries';
@@ -6,12 +7,15 @@ import { rssKeys, rssListOptions } from '@/features/rss/queries';
 import { message } from '@/lib/message';
 import { returnUserLangMsg } from '@/lib/i18n';
 import { useIsDesktop } from '@/hooks/use-desktop';
+import { AbLoadError } from '@/components/shared/ab-load-error';
 import { RSSMobile } from '@/features/rss/components/mobile';
 import { RSSDesktop } from '@/features/rss/components/desktop';
 import type { RSSLayoutProps } from '@/features/rss/types/page';
 
 export default function RSSPage() {
-  const { data: rss = [] } = useQuery(rssListOptions());
+  const { t } = useTranslation();
+  const rssQuery = useQuery(rssListOptions());
+  const rss = rssQuery.data;
   const [selectedRSS, setSelectedRSS] = useState<number[]>([]);
   const queryClient = useQueryClient();
   const isDesktop = useIsDesktop();
@@ -42,7 +46,8 @@ export default function RSSPage() {
   });
   const refreshMutation = useMutation({
     mutationFn: async (ids: number[]) => {
-      const allSelected = rss.length > 0 && ids.length === rss.length;
+      const allSelected =
+        rss !== undefined && rss.length > 0 && ids.length === rss.length;
       if (allSelected) return apiRSS.refreshAll();
       await Promise.all(ids.map((id) => apiRSS.refresh(id)));
       return { msg_en: '', msg_zh: '' };
@@ -69,8 +74,19 @@ export default function RSSPage() {
     await refreshMutation.mutateAsync(selectedRSS).catch(() => undefined);
   };
 
+  if (rssQuery.isLoadingError) {
+    return (
+      <AbLoadError
+        title={t('rss.load_failed')}
+        retryLabel={t('rss.retry')}
+        onRetry={() => void rssQuery.refetch()}
+      />
+    );
+  }
+
   const props: RSSLayoutProps = {
-    rss,
+    rss: rss ?? [],
+    loading: rssQuery.isPending,
     selectedRSS,
     setSelectedRSS,
     enableSelected,

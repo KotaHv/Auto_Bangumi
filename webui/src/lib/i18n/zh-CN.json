@@ -72,6 +72,12 @@
     "save_success": "配置已保存",
     "save_failed": "配置保存失败，修改仍未保存。"
   },
+  "bangumi": {
+    "empty": "暂无番剧规则",
+    "load_failed": "无法加载番剧规则",
+    "loading": "正在加载番剧规则...",
+    "retry": "重试"
+  },
   "downloader": {
     "hit": "请设置下载器"
   },
@@ -119,11 +125,13 @@
       "label": "行数"
     },
     "loading": "正在加载日志",
+    "load_failed": "无法加载日志",
     "message": "消息",
     "module": "模块",
     "no_matching": "没有匹配的日志",
     "reset": "重置",
     "refresh_stopped": "已停止刷新",
+    "retry": "重试",
     "reset_confirm": "确定要清空日志吗？",
     "start_refresh": "开始刷新",
     "stop_refresh": "停止刷新",
@@ -170,6 +178,8 @@
     "enabled_count": "已启用",
     "disabled_count": "已禁用",
     "empty": "暂无 RSS 条目",
+    "load_failed": "无法加载 RSS 条目",
+    "loading": "正在加载 RSS 条目...",
     "name": "名称",
     "more": "更多",
     "select_all": "全选",
@@ -177,6 +187,7 @@
     "selected": "已选择",
     "selectbox": "选择",
     "refresh": "刷新",
+    "retry": "重试",
     "status": "状态",
     "tags": "标签",
     "total": "全部",

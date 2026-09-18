@@ -2,6 +2,7 @@ import type { RSS } from './rss';
 
 export interface RSSLayoutProps {
   rss: RSS[];
+  loading: boolean;
   selectedRSS: number[];
   setSelectedRSS: (ids: number[]) => void;
   enableSelected: () => Promise<void>;

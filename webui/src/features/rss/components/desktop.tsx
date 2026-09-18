@@ -27,11 +27,13 @@ import {
 import type { RSS } from '../types/rss';
 import type { RSSLayoutProps } from '../types/page';
 import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 import { AbRssLink } from './ab-rss-link';
 import { AbRssTags } from './ab-rss-tags';
 
 export function RSSDesktop({
   rss,
+  loading,
   selectedRSS,
   setSelectedRSS,
   enableSelected,
@@ -164,7 +166,16 @@ export function RSSDesktop({
 
         <Card className="w-full overflow-hidden rounded-2xl [--card-spacing:0px]">
           <CardContent className="px-4 py-2 **:data-[slot=table-container]:overflow-visible">
-            {rss.length === 0 ? (
+            {loading ? (
+              <Empty className="min-h-64 border-0 p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
+                    <Spinner />
+                  </EmptyMedia>
+                  <EmptyTitle>{t('rss.loading')}</EmptyTitle>
+                </EmptyHeader>
+              </Empty>
+            ) : rss.length === 0 ? (
               <Empty className="min-h-64 border-0 p-6">
                 <EmptyHeader>
                   <EmptyMedia variant="icon" className="bg-brand/10 text-brand">

@@ -72,6 +72,12 @@
     "save_success": "Configuration saved",
     "save_failed": "Failed to save configuration. Your changes are still unsaved."
   },
+  "bangumi": {
+    "empty": "No Bangumi rules yet",
+    "load_failed": "Unable to load Bangumi rules",
+    "loading": "Loading Bangumi rules...",
+    "retry": "Retry"
+  },
   "downloader": {
     "hit": "Please set up the downloader"
   },
@@ -119,11 +125,13 @@
       "label": "Lines"
     },
     "loading": "Loading logs",
+    "load_failed": "Unable to load logs",
     "message": "Message",
     "module": "Module",
     "no_matching": "No matching logs",
     "reset": "Reset",
     "refresh_stopped": "Refresh stopped",
+    "retry": "Retry",
     "reset_confirm": "Are you sure you want to clear the logs?",
     "start_refresh": "Start refresh",
     "stop_refresh": "Stop refresh",
@@ -170,6 +178,8 @@
     "enabled_count": "Enabled",
     "disabled_count": "Disabled",
     "empty": "No RSS feeds yet",
+    "load_failed": "Unable to load RSS feeds",
+    "loading": "Loading RSS feeds...",
     "name": "Name",
     "more": "More",
     "select_all": "Select all",
@@ -177,6 +187,7 @@
     "selected": "Selected",
     "selectbox": "Select",
     "refresh": "Refresh",
+    "retry": "Retry",
     "status": "Status",
     "tags": "Tags",
     "total": "Total",

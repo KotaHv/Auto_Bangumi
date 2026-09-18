@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ import { AbRssTags } from './ab-rss-tags';
 
 export function RSSMobile({
   rss,
+  loading,
   selectedRSS,
   setSelectedRSS,
   enableSelected,
@@ -129,8 +131,17 @@ export function RSSMobile({
   return (
     <div className="flex h-full min-h-0 flex-col px-4">
       <div className="no-scrollbar my-3 min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain">
-        {rss.length === 0 ? (
-          <Empty className="min-h-64 border-0 p-6">
+        {loading ? (
+          <Empty className="h-full min-h-0 border-0 p-6">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
+                <Spinner />
+              </EmptyMedia>
+              <EmptyTitle>{t('rss.loading')}</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
+        ) : rss.length === 0 ? (
+          <Empty className="h-full min-h-0 border-0 p-6">
             <EmptyHeader>
               <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
                 <span className="text-sm">RSS</span>
