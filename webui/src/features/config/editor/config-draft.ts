@@ -21,6 +21,17 @@ export interface ConfigDraftContextValue {
   errors: ConfigFieldError[];
 }
 
+interface ConfigDraft {
+  config: Config;
+  baseline: Config;
+  apiKeyModeOverride?: boolean;
+}
+
+interface AdoptedSavedConfig {
+  config: Config;
+  source: Config;
+}
+
 export const ConfigDraftContext = createContext<ConfigDraftContextValue | null>(
   null,
 );
@@ -39,81 +50,104 @@ function shallowEqual<T extends object>(a: T, b: T) {
   );
 }
 
-function hasConfigChanges(
-  config: Config,
-  savedConfig: Config,
-  useApiKey: boolean,
-  savedUseApiKey: boolean,
-) {
-  if (useApiKey !== savedUseApiKey) return true;
-
-  return (Object.keys(config) as Array<keyof Config>).some(
-    (key) => !Object.is(config[key], savedConfig[key]),
+function matchesBaselineConfig(config: Config, baseline: Config) {
+  return (Object.keys(config) as Array<keyof Config>).every((key) =>
+    Object.is(config[key], baseline[key]),
   );
 }
 
 export function useConfigDraftState(savedConfig: Config) {
-  const [draftConfig, setDraftConfig] = useState<Config>();
-  const [draftUseApiKey, setDraftUseApiKey] = useState<boolean>();
+  const [draft, setDraft] = useState<ConfigDraft>();
+  const [adoptedSavedConfig, setAdoptedSavedConfig] =
+    useState<AdoptedSavedConfig>();
+
+  const activeSavedConfig =
+    adoptedSavedConfig?.source === savedConfig
+      ? adoptedSavedConfig.config
+      : savedConfig;
 
   useEffect(() => {
-    if (!draftConfig) {
-      setDraftConfig(savedConfig);
-      setDraftUseApiKey(!!savedConfig.downloader.api_key);
+    if (adoptedSavedConfig && adoptedSavedConfig.source !== savedConfig) {
+      setAdoptedSavedConfig(undefined);
     }
-  }, [draftConfig, savedConfig]);
+  }, [adoptedSavedConfig, savedConfig]);
 
-  const config = draftConfig ?? savedConfig;
-  const useApiKey = draftUseApiKey ?? !!savedConfig.downloader.api_key;
-  const savedUseApiKey = !!savedConfig.downloader.api_key;
+  const baseline = draft?.baseline ?? activeSavedConfig;
+  const config = draft?.config ?? activeSavedConfig;
+  const savedUseApiKey = !!baseline.downloader.api_key;
+  const useApiKey = draft?.apiKeyModeOverride ?? savedUseApiKey;
 
-  const setUseApiKey = useCallback((value: boolean) => {
-    setDraftUseApiKey(value);
-  }, []);
+  const setUseApiKey = useCallback(
+    (value: boolean) => {
+      setDraft((current) => {
+        const nextBaseline = current?.baseline ?? activeSavedConfig;
+        const nextConfig = current?.config ?? nextBaseline;
+        const apiKeyModeOverride =
+          value === !!nextBaseline.downloader.api_key ? undefined : value;
+
+        return matchesBaselineConfig(nextConfig, nextBaseline) &&
+          apiKeyModeOverride === undefined
+          ? undefined
+          : {
+              config: nextConfig,
+              baseline: nextBaseline,
+              apiKeyModeOverride,
+            };
+      });
+    },
+    [activeSavedConfig],
+  );
 
   const updateGroup = useCallback(
     <TKey extends keyof Config>(key: TKey, patch: Partial<Config[TKey]>) => {
-      setDraftConfig((current) => {
-        const base = current ?? config;
+      setDraft((current) => {
+        const nextBaseline = current?.baseline ?? activeSavedConfig;
+        const base = current?.config ?? nextBaseline;
         const nextGroup = { ...base[key], ...patch };
-        return {
+        const nextConfig = {
           ...base,
-          [key]: shallowEqual(nextGroup, savedConfig[key])
-            ? savedConfig[key]
+          [key]: shallowEqual(nextGroup, nextBaseline[key])
+            ? nextBaseline[key]
             : nextGroup,
         };
+        const apiKeyModeOverride = current?.apiKeyModeOverride;
+
+        return matchesBaselineConfig(nextConfig, nextBaseline) &&
+          apiKeyModeOverride === undefined
+          ? undefined
+          : {
+              config: nextConfig,
+              baseline: nextBaseline,
+              apiKeyModeOverride,
+            };
       });
     },
-    [config, savedConfig],
+    [activeSavedConfig],
   );
 
-  const isDirty = hasConfigChanges(
-    config,
-    savedConfig,
-    useApiKey,
-    savedUseApiKey,
-  );
   const errors = useMemo(
     () => getConfigErrors(config, useApiKey),
     [config, useApiKey],
   );
 
   const resetDraft = useCallback(() => {
-    setDraftConfig(undefined);
-    setDraftUseApiKey(undefined);
+    setDraft(undefined);
   }, []);
 
-  const adoptSavedConfig = useCallback((nextSavedConfig: Config) => {
-    setDraftConfig(nextSavedConfig);
-    setDraftUseApiKey(!!nextSavedConfig.downloader.api_key);
-  }, []);
+  const adoptSavedConfig = useCallback(
+    (nextSavedConfig: Config) => {
+      setDraft(undefined);
+      setAdoptedSavedConfig({ config: nextSavedConfig, source: savedConfig });
+    },
+    [savedConfig],
+  );
 
   return {
     config,
     useApiKey,
     setUseApiKey,
     updateGroup,
-    isDirty,
+    isDirty: draft !== undefined,
     errors,
     hasErrors: errors.length > 0,
     resetDraft,
