@@ -4,7 +4,7 @@ import { ConfigField } from './field';
 import { Separator } from '@/components/ui/separator';
 import type { ConfigFieldItem } from './types';
 import type { RssParser } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 const LANGS = [
   { value: 'zh', label: 'zh' },
@@ -66,12 +66,12 @@ export function ConfigParserFields({
 }
 
 export function ConfigParser() {
-  const { config, updateGroup } = useConfigDraft();
+  const { config, updateGroup, isSaving } = useConfigEditor();
 
   return (
     <ConfigParserFields
       parser={config.rss_parser}
-      disabled={false}
+      disabled={isSaving}
       onChange={(patch) => updateGroup('rss_parser', patch)}
     />
   );

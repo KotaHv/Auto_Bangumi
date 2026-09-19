@@ -9,7 +9,7 @@ import {
 } from '../../editor/validation';
 import type { ConfigFieldItem } from './types';
 import type { Downloader } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 interface ConfigDownloadFieldsProps {
   downloader: Downloader;
@@ -122,14 +122,14 @@ export function ConfigDownloadFields({
 }
 
 export function ConfigDownload() {
-  const { config, updateGroup, useApiKey, setUseApiKey, errors } =
-    useConfigDraft();
+  const { config, updateGroup, useApiKey, setUseApiKey, errors, isSaving } =
+    useConfigEditor();
 
   return (
     <ConfigDownloadFields
       downloader={config.downloader}
       useApiKey={useApiKey}
-      disabled={false}
+      disabled={isSaving}
       groupErrors={getGroupErrors(errors, 'downloader')}
       onChange={(patch) => updateGroup('downloader', patch)}
       onUseApiKeyChange={setUseApiKey}

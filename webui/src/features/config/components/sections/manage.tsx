@@ -4,7 +4,7 @@ import { ConfigField } from './field';
 import { Separator } from '@/components/ui/separator';
 import type { ConfigFieldItem } from './types';
 import type { BangumiManage } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 const RENAME_METHODS = [
   { value: 'normal', label: 'normal' },
@@ -82,12 +82,12 @@ export function ConfigManageFields({
 }
 
 export function ConfigManage() {
-  const { config, updateGroup } = useConfigDraft();
+  const { config, updateGroup, isSaving } = useConfigEditor();
 
   return (
     <ConfigManageFields
       manage={config.bangumi_manage}
-      disabled={false}
+      disabled={isSaving}
       onChange={(patch) => updateGroup('bangumi_manage', patch)}
     />
   );

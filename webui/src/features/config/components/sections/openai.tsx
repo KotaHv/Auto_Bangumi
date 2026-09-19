@@ -10,7 +10,7 @@ import {
 } from '../../editor/validation';
 import type { ConfigFieldItem } from './types';
 import type { ExperimentalOpenAI } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 interface ConfigOpenAIFieldsProps {
   openAI: ExperimentalOpenAI;
@@ -93,12 +93,12 @@ export function ConfigOpenAIFields({
 }
 
 export function ConfigOpenAI() {
-  const { config, updateGroup, errors } = useConfigDraft();
+  const { config, updateGroup, errors, isSaving } = useConfigEditor();
 
   return (
     <ConfigOpenAIFields
       openAI={config.experimental_openai}
-      disabled={false}
+      disabled={isSaving}
       groupErrors={getGroupErrors(errors, 'experimental_openai')}
       onChange={(patch) => updateGroup('experimental_openai', patch)}
     />

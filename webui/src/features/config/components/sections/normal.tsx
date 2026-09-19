@@ -8,7 +8,7 @@ import {
   type ConfigFieldError,
 } from '../../editor/validation';
 import type { Log, Program } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 interface ConfigNormalFieldsProps {
   program: Program;
@@ -91,13 +91,13 @@ export function ConfigNormalFields({
 }
 
 export function ConfigNormal() {
-  const { config, updateGroup, errors } = useConfigDraft();
+  const { config, updateGroup, errors, isSaving } = useConfigEditor();
 
   return (
     <ConfigNormalFields
       program={config.program}
       log={config.log}
-      disabled={false}
+      disabled={isSaving}
       groupErrors={getGroupErrors(errors, 'program')}
       onProgramChange={(patch) => updateGroup('program', patch)}
       onLogChange={(patch) => updateGroup('log', patch)}

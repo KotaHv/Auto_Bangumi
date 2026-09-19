@@ -9,7 +9,7 @@ import {
 } from '../../editor/validation';
 import type { ConfigFieldItem } from './types';
 import type { Notification } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 const NOTIFICATION_TYPES = [
   { value: 'telegram', label: 'telegram' },
@@ -91,12 +91,12 @@ export function ConfigNotificationFields({
 }
 
 export function ConfigNotification() {
-  const { config, updateGroup, errors } = useConfigDraft();
+  const { config, updateGroup, errors, isSaving } = useConfigEditor();
 
   return (
     <ConfigNotificationFields
       notification={config.notification}
-      disabled={false}
+      disabled={isSaving}
       groupErrors={getGroupErrors(errors, 'notification')}
       onChange={(patch) => updateGroup('notification', patch)}
     />

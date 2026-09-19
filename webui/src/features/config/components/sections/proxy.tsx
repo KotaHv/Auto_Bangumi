@@ -10,7 +10,7 @@ import {
 import type { AbSelectOption } from '@/components/shared/ab-select';
 import type { ConfigFieldItem } from './types';
 import type { Proxy } from '../../types/config';
-import { useConfigDraft } from '../../editor/config-draft';
+import { useConfigEditor } from '../../editor/context';
 
 const PROXY_TYPES: AbSelectOption[] = [
   { value: 'http', label: 'HTTP' },
@@ -103,12 +103,12 @@ export function ConfigProxyFields({
 }
 
 export function ConfigProxy() {
-  const { config, updateGroup, errors } = useConfigDraft();
+  const { config, updateGroup, errors, isSaving } = useConfigEditor();
 
   return (
     <ConfigProxyFields
       proxy={config.proxy}
-      disabled={false}
+      disabled={isSaving}
       groupErrors={getGroupErrors(errors, 'proxy')}
       onChange={(patch) => updateGroup('proxy', patch)}
     />

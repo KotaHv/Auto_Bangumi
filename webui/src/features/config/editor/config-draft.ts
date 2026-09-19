@@ -1,25 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Config } from '../types/config';
 import { getConfigErrors } from './validation';
-import type { ConfigFieldError } from './validation';
-
-export interface ConfigDraftContextValue {
-  config: Config;
-  updateGroup: <TKey extends keyof Config>(
-    key: TKey,
-    patch: Partial<Config[TKey]>,
-  ) => void;
-  useApiKey: boolean;
-  setUseApiKey: (value: boolean) => void;
-  errors: ConfigFieldError[];
-}
 
 interface ConfigDraft {
   config: Config;
@@ -30,16 +11,6 @@ interface ConfigDraft {
 interface AdoptedSavedConfig {
   config: Config;
   source: Config;
-}
-
-export const ConfigDraftContext = createContext<ConfigDraftContextValue | null>(
-  null,
-);
-
-export function useConfigDraft() {
-  const value = useContext(ConfigDraftContext);
-  if (!value) throw new Error('Config fields must be rendered in ConfigPage');
-  return value;
 }
 
 function shallowEqual<T extends object>(a: T, b: T) {

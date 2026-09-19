@@ -7,7 +7,8 @@ import { AbConfirm } from '@/components/shared/ab-confirm';
 import { configOptions } from '../queries';
 import { ConfigPageLayout } from '../components/layout/page-layout';
 import { ConfigSections } from '../components/layout/sections';
-import { ConfigDraftContext, useConfigDraftState } from './config-draft';
+import { useConfigDraftState } from './config-draft';
+import { ConfigEditorContext } from './context';
 import { CONFIG_SECTIONS } from './section-registry';
 import { useConfigSectionNavigation } from './hooks/use-config-section-navigation';
 import { useConfigSave } from './hooks/use-config-save';
@@ -190,17 +191,18 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
 
   return (
     <>
-      <ConfigDraftContext.Provider
+      <ConfigEditorContext.Provider
         value={{
           config,
           updateGroup,
           useApiKey,
           setUseApiKey,
           errors,
+          isSaving,
         }}
       >
         <ConfigPageLayout {...layoutProps} />
-      </ConfigDraftContext.Provider>
+      </ConfigEditorContext.Provider>
       <AbConfirm
         open={openLeaveConfirm}
         onOpenChange={handleLeaveOpenChange}
