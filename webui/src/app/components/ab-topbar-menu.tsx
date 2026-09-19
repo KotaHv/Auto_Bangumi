@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EllipsisVertical, UserRound } from 'lucide-react';
 import { AbChangeAccount } from '@/features/auth/components/ab-change-account';
+import { AbRefreshPosterMenuItem } from '@/features/bangumi/components/ab-refresh-poster-menu-item';
+import { AbProgramControls } from '@/features/program/components/ab-program-controls';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AbProgramControls } from './ab-program-controls';
 
 export function AbTopbarMenu() {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export function AbTopbarMenu() {
 
         <DropdownMenuContent align="end" sideOffset={16} className="w-max">
           <AbProgramControls />
+          <AbRefreshPosterMenuItem />
 
           <DropdownMenuItem onClick={() => setOpenAccount(true)}>
             <UserRound />

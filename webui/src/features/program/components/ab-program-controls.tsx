@@ -1,20 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Pause,
-  Play,
-  Power,
-  RefreshCw,
-  RotateCw,
-  type LucideIcon,
-} from 'lucide-react';
+import { Pause, Play, Power, RotateCw, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { apiBangumi } from '@/features/bangumi/api';
-import { apiProgram } from '@/features/program/api';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { returnUserLangMsg } from '@/lib/i18n';
 import { message } from '@/lib/message';
-import { bangumiKeys } from '@/features/bangumi/queries';
-import { programKeys } from '@/features/program/queries';
+import { apiProgram } from '../api';
+import { programKeys } from '../queries';
 
 export function AbProgramControls() {
   const { t } = useTranslation();
@@ -25,13 +16,6 @@ export function AbProgramControls() {
     onSuccess: async (data) => {
       message.success(returnUserLangMsg(data));
       await queryClient.invalidateQueries({ queryKey: programKeys.status() });
-    },
-  });
-  const refreshPosterMutation = useMutation({
-    mutationFn: apiBangumi.refreshPoster,
-    onSuccess: async (data) => {
-      message.success(returnUserLangMsg(data));
-      await queryClient.invalidateQueries({ queryKey: bangumiKeys.list() });
     },
   });
 
@@ -64,12 +48,6 @@ export function AbProgramControls() {
       icon: Power,
       label: t('topbar.shutdown'),
       handle: () => programMutation.mutate('shutdown'),
-    },
-    {
-      id: 5,
-      icon: RefreshCw,
-      label: t('topbar.refresh_poster'),
-      handle: () => refreshPosterMutation.mutate(),
     },
   ];
 
