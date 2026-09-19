@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBlocker, useSearchParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,25 +9,11 @@ import { AbConfirm } from '@/components/shared/ab-confirm';
 import { apiConfig } from './api';
 import { apiProgram } from '../program/api';
 import { configKeys, configOptions } from './queries';
-import { getConfigErrors } from './validation';
 import { ConfigPageLayout } from './layout';
 import { ConfigSections } from './sections';
-import { ConfigDraftContext } from './config-draft';
+import { ConfigDraftContext, useConfigDraftState } from './config-draft';
 import { CONFIG_GROUP_SECTION_KEYS, CONFIG_SECTIONS } from './section-registry';
 import type { Config } from './types/config';
-
-function hasConfigChanges(
-  config: Config,
-  savedConfig: Config,
-  useApiKey: boolean,
-  savedUseApiKey: boolean,
-) {
-  if (useApiKey !== savedUseApiKey) return true;
-
-  return (Object.keys(config) as Array<keyof Config>).some(
-    (key) => !Object.is(config[key], savedConfig[key]),
-  );
-}
 
 // The tab strip is outside the scrolling content, so section positions only
 // need to account for the scroll container's own padding.
@@ -41,56 +27,17 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [draftConfig, setDraftConfig] = useState<Config>();
-  const [draftUseApiKey, setDraftUseApiKey] = useState<boolean>();
-
-  useEffect(() => {
-    if (!draftConfig) {
-      setDraftConfig(fetchedConfig);
-      setDraftUseApiKey(!!fetchedConfig.downloader.api_key);
-    }
-  }, [draftConfig, fetchedConfig]);
-
-  const config = draftConfig ?? fetchedConfig;
-  const savedConfig = fetchedConfig;
-  const useApiKey = draftUseApiKey ?? !!fetchedConfig.downloader.api_key;
-  const savedUseApiKey = !!fetchedConfig.downloader.api_key;
-
-  function shallowEqual<T extends object>(a: T, b: T) {
-    const keys = Object.keys(a) as Array<keyof T>;
-    return (
-      keys.length === Object.keys(b).length &&
-      keys.every((key) => Object.is(a[key], b[key]))
-    );
-  }
-
-  function updateGroup<TKey extends keyof Config>(
-    key: TKey,
-    patch: Partial<Config[TKey]>,
-  ) {
-    setDraftConfig((current) => {
-      const base = current ?? config;
-      const nextGroup = { ...base[key], ...patch };
-      return {
-        ...base,
-        [key]: shallowEqual(nextGroup, savedConfig[key])
-          ? savedConfig[key]
-          : nextGroup,
-      };
-    });
-  }
-  const configChanged = hasConfigChanges(
+  const {
     config,
-    savedConfig,
     useApiKey,
-    savedUseApiKey,
-  );
-
-  const errors = useMemo(
-    () => getConfigErrors(config, useApiKey),
-    [config, useApiKey],
-  );
-  const hasErrors = errors.length > 0;
+    setUseApiKey,
+    updateGroup,
+    isDirty,
+    errors,
+    hasErrors,
+    resetDraft,
+    adoptSavedConfig,
+  } = useConfigDraftState(fetchedConfig);
 
   const [activeTab, setActiveTabState] = useState(() => {
     const param = searchParams.get('tab');
@@ -187,8 +134,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   function cancelChanges() {
     setOpenCancelConfirm(false);
     setSaveError(null);
-    setDraftConfig(undefined);
-    setDraftUseApiKey(undefined);
+    resetDraft();
     void queryClient.refetchQueries({
       queryKey: configOptions().queryKey,
     });
@@ -227,8 +173,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         configKeys.current(),
       );
       if (savedConfig) {
-        setDraftConfig(savedConfig);
-        setDraftUseApiKey(!!savedConfig.downloader.api_key);
+        adoptSavedConfig(savedConfig);
       }
       restartMutation.mutate();
     },
@@ -272,19 +217,19 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   }
 
   useEffect(() => {
-    if (!configChanged) return;
+    if (!isDirty) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [configChanged]);
+  }, [isDirty]);
 
   // Block in-app route navigation (sidebar links, back/forward) while dirty;
   // `?tab=` changes keep the same pathname and never trigger the blocker.
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     if (nextLocation.pathname === currentLocation.pathname) return false;
-    return configChanged;
+    return isDirty;
   });
 
   useEffect(() => {
@@ -309,13 +254,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
     if (!((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's')) return;
 
     e.preventDefault();
-    const dirty = hasConfigChanges(
-      config,
-      savedConfig,
-      useApiKey,
-      savedUseApiKey,
-    );
-    if (dirty && !hasErrors) {
+    if (isDirty && !hasErrors) {
       applyChanges();
     }
   });
@@ -453,7 +392,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
       );
     }
 
-    if (configChanged && !hasErrors) {
+    if (isDirty && !hasErrors) {
       return (
         <span className="inline-flex min-h-5 items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
           <span className="size-1.5 rounded-full bg-current" />
@@ -480,7 +419,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         variant="outline"
         className="h-9 min-w-20 sm:min-w-24"
         onClick={() => setOpenCancelConfirm(true)}
-        disabled={!configChanged || saveMutation.isPending}
+        disabled={!isDirty || saveMutation.isPending}
       >
         {t('config.cancel')}
       </Button>
@@ -490,7 +429,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         className="h-9 min-w-24 sm:min-w-28"
         onClick={applyChanges}
         loading={saveMutation.isPending}
-        disabled={!configChanged || saveMutation.isPending}
+        disabled={!isDirty || saveMutation.isPending}
       >
         {t('config.apply')}
       </Button>
@@ -505,7 +444,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
     tabRefs,
     contentRef,
     content,
-    footer: configChanged
+    footer: isDirty
       ? {
           status: renderFooterStatus(),
           actions: renderFooterActions(),
@@ -520,7 +459,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
           config,
           updateGroup,
           useApiKey,
-          setUseApiKey: setDraftUseApiKey,
+          setUseApiKey,
           errors,
         }}
       >
