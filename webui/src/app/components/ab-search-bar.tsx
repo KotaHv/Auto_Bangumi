@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { AbSearch } from './ab-search';
+import { AbSearch } from '@/features/search/components/ab-search';
 import { AbBangumiCard } from '@/features/bangumi/components/ab-bangumi-card';
 import { AbBangumiReview } from '@/features/rss/components/ab-bangumi-review';
 import { AbPopup } from '@/components/shared/ab-popup';
 import { cn } from '@/lib/utils';
-import { searchProviderOptions } from '../queries';
-import { useSearchSSE } from '../hooks/use-search-sse';
-import type { SearchResult } from '../types';
+import { searchProviderOptions } from '@/features/search/queries';
+import { useSearchSSE } from '@/features/search/hooks/use-search-sse';
+import type { SearchResult } from '@/features/search/types';
 
 interface AbSearchBarProps {
   className?: string;

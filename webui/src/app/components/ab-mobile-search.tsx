@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { AbSearchBar } from '@/features/search/components/ab-search-bar';
+import { AbSearchBar } from './ab-search-bar';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
