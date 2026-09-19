@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ConfigSection } from './types/page';
+import type { ConfigSection } from '../../types/page';
 
 interface ConfigSectionsProps {
   sections: ConfigSection[];

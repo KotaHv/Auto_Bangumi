@@ -1,6 +1,6 @@
-import { ConfigNav } from './components/nav';
+import { ConfigNav } from '../nav';
 import { useTranslation } from 'react-i18next';
-import type { ConfigLayoutProps } from './types/page';
+import type { ConfigLayoutProps } from '../../types/page';
 
 export function ConfigDesktop({
   sections,

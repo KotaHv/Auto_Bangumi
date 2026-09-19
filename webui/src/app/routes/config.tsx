@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { ConfigLoadError } from '@/features/config/components/config-load-error';
-import { ConfigLoadingView } from '@/features/config/loading';
+import { ConfigLoadError } from '@/features/config/components/layout/config-load-error';
+import { ConfigLoadingView } from '@/features/config/components/layout/loading';
 import { ConfigEditor } from '@/features/config/editor';
 import { configOptions } from '@/features/config/queries';
 import { CONFIG_SECTIONS } from '@/features/config/section-registry';

@@ -2,17 +2,17 @@ import type { ReactNode } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/ui/spinner';
-import { ConfigDownloadFields } from './components/download';
-import { ConfigManageFields } from './components/manage';
-import { ConfigNormalFields } from './components/normal';
-import { ConfigNotificationFields } from './components/notification';
-import { ConfigOpenAIFields } from './components/openai';
-import { ConfigParserFields } from './components/parser';
-import { ConfigProxyFields } from './components/proxy';
-import { ConfigPageLayout } from './layout';
+import { ConfigDownloadFields } from '../download';
+import { ConfigManageFields } from '../manage';
+import { ConfigNormalFields } from '../normal';
+import { ConfigNotificationFields } from '../notification';
+import { ConfigOpenAIFields } from '../openai';
+import { ConfigParserFields } from '../parser';
+import { ConfigProxyFields } from '../proxy';
+import { ConfigPageLayout } from './page-layout';
 import { configLoadingDefaults } from './loading-defaults';
 import { ConfigSections } from './sections';
-import type { ConfigSection } from './types/page';
+import type { ConfigSection } from '../../types/page';
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled config loading section: ${value}`);
