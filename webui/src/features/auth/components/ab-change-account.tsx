@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { apiAuth } from '../api';
+import { validateCredentials } from '../credentials';
 import { message } from '@/lib/message';
 import { returnUserLangText } from '@/lib/i18n';
 import { Input } from '@/components/ui/input';
@@ -30,19 +31,20 @@ export function AbChangeAccount({ open, onOpenChange }: AbChangeAccountProps) {
   });
 
   function update() {
-    if (user.username === '') {
+    const validationError = validateCredentials(user);
+    if (validationError === 'username-required') {
       message.warning(
         t('notify.please_enter', { field: t('topbar.profile.username') }),
       );
       return;
     }
-    if (user.password === '') {
+    if (validationError === 'password-required') {
       message.warning(
         t('notify.please_enter', { field: t('topbar.profile.password') }),
       );
       return;
     }
-    if (user.password.length < 8) {
+    if (validationError === 'password-too-short') {
       message.error(t('notify.password_length_error'));
       return;
     }

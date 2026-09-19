@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { AbPassword } from '@/components/shared/ab-password';
 import { LoginGlow } from '@/features/auth/components/login-glow';
 import { apiAuth } from '@/features/auth/api';
+import { validateCredentials } from '@/features/auth/credentials';
 import { message } from '@/lib/message';
 import { returnUserLangText } from '@/lib/i18n';
 
@@ -37,19 +38,20 @@ export default function LoginPage() {
   });
 
   async function handleLogin() {
-    if (user.username === '') {
+    const validationError = validateCredentials(user);
+    if (validationError === 'username-required') {
       message.warning(
         t('notify.please_enter', { field: t('topbar.profile.username') }),
       );
       return;
     }
-    if (user.password === '') {
+    if (validationError === 'password-required') {
       message.warning(
         t('notify.please_enter', { field: t('topbar.profile.password') }),
       );
       return;
     }
-    if (user.password.length < 8) {
+    if (validationError === 'password-too-short') {
       message.error(t('notify.password_length_error'));
       return;
     }
