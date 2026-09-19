@@ -13,7 +13,6 @@ export function useConfigSectionNavigation() {
       ? (param as string)
       : 'normal';
   });
-  const tabOffsetRef = useRef(0);
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLElement | null>>({});
   const contentRef = useRef<HTMLDivElement>(null);
@@ -70,8 +69,7 @@ export function useConfigSectionNavigation() {
       return;
     }
 
-    const offset = tabOffsetRef.current;
-    const alreadyAtTarget = Math.abs(targetTop - (scrollerTop + offset)) <= 1;
+    const alreadyAtTarget = Math.abs(targetTop - scrollerTop) <= 1;
 
     if (alreadyAtTarget) {
       programmaticRef.current = false;
@@ -86,7 +84,7 @@ export function useConfigSectionNavigation() {
     finishProgrammaticRef.current = finish;
     programmaticRef.current = true;
     scroller.addEventListener('scrollend', finish, { once: true });
-    scrollToSection(Math.max(offset, scrollPaddingTop));
+    scrollToSection(Math.max(0, scrollPaddingTop));
   }
 
   function selectSection(key: string) {
@@ -172,8 +170,7 @@ export function useConfigSectionNavigation() {
     let frameId: number | null = null;
 
     const updateActiveTab = () => {
-      const scrollerTop = scroller.getBoundingClientRect().top;
-      const activationLine = scrollerTop + tabOffsetRef.current;
+      const activationLine = scroller.getBoundingClientRect().top;
       let activeKey = CONFIG_SECTIONS[0].key;
 
       // When scrolled to (or past) the bottom, the last section's top can never
@@ -221,7 +218,7 @@ export function useConfigSectionNavigation() {
       }
       programmaticRef.current = false;
     };
-  }, [tabOffsetRef]);
+  }, []);
 
   return {
     activeTab,
