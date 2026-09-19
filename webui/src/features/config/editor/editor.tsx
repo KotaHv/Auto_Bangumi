@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useBlocker } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AbConfirm } from '@/components/shared/ab-confirm';
-import { configOptions } from './queries';
-import { ConfigPageLayout } from './components/layout/page-layout';
-import { ConfigSections } from './components/layout/sections';
-import { ConfigDraftContext, useConfigDraftState } from './editor/config-draft';
-import { CONFIG_SECTIONS } from './editor/section-registry';
-import { useConfigSectionNavigation } from './editor/hooks/use-config-section-navigation';
-import { useConfigSave } from './editor/hooks/use-config-save';
-import type { Config } from './types/config';
+import { configOptions } from '../queries';
+import { ConfigPageLayout } from '../components/layout/page-layout';
+import { ConfigSections } from '../components/layout/sections';
+import { ConfigDraftContext, useConfigDraftState } from './config-draft';
+import { CONFIG_SECTIONS } from './section-registry';
+import { useConfigSectionNavigation } from './hooks/use-config-section-navigation';
+import { useConfigSave } from './hooks/use-config-save';
+import type { Config } from '../types/config';
 
 export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
   const { t } = useTranslation();
