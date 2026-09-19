@@ -46,6 +46,7 @@ export function AbSearch({
           size="icon-sm"
           aria-label="search"
           className="size-9 md:size-7"
+          disabled={loading}
           onClick={onSearch}
         >
           {loading ? (

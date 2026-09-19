@@ -52,6 +52,8 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
   }
 
   function handleSearch() {
+    if (state.status === 'loading') return;
+
     const keyword = inputValue.trim();
     if (!keyword) {
       handleClear();
