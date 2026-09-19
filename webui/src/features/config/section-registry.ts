@@ -7,13 +7,13 @@ import {
   Settings2,
   Sparkles,
 } from 'lucide-react';
-import { ConfigDownload } from './components/download';
-import { ConfigManage } from './components/manage';
-import { ConfigNormal } from './components/normal';
-import { ConfigNotification } from './components/notification';
-import { ConfigOpenAI } from './components/openai';
-import { ConfigParser } from './components/parser';
-import { ConfigProxy } from './components/proxy';
+import { ConfigDownload } from './components/sections/download';
+import { ConfigManage } from './components/sections/manage';
+import { ConfigNormal } from './components/sections/normal';
+import { ConfigNotification } from './components/sections/notification';
+import { ConfigOpenAI } from './components/sections/openai';
+import { ConfigParser } from './components/sections/parser';
+import { ConfigProxy } from './components/sections/proxy';
 import type { ConfigSection } from './types/page';
 
 export const CONFIG_SECTIONS: ConfigSection[] = [

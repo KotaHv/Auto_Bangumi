@@ -1,4 +1,4 @@
-import { ConfigNav } from '../nav';
+import { ConfigNav } from '../navigation/nav';
 import { useTranslation } from 'react-i18next';
 import type { ConfigLayoutProps } from '../../types/page';
 

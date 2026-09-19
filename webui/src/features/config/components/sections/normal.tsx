@@ -6,9 +6,9 @@ import {
   formatConfigError,
   getGroupErrors,
   type ConfigFieldError,
-} from '../validation';
-import type { Log, Program } from '../types/config';
-import { useConfigDraft } from '../config-draft';
+} from '../../validation';
+import type { Log, Program } from '../../types/config';
+import { useConfigDraft } from '../../config-draft';
 
 interface ConfigNormalFieldsProps {
   program: Program;

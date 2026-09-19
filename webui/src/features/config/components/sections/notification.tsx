@@ -6,10 +6,10 @@ import {
   formatConfigError,
   getGroupErrors,
   type ConfigFieldError,
-} from '../validation';
+} from '../../validation';
 import type { ConfigFieldItem } from './types';
-import type { Notification } from '../types/config';
-import { useConfigDraft } from '../config-draft';
+import type { Notification } from '../../types/config';
+import { useConfigDraft } from '../../config-draft';
 
 const NOTIFICATION_TYPES = [
   { value: 'telegram', label: 'telegram' },

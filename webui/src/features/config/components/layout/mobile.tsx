@@ -1,5 +1,5 @@
 import { AbFloatingBar } from '@/components/shared/ab-floating-bar';
-import { ConfigTabs } from '../tabs';
+import { ConfigTabs } from '../navigation/tabs';
 import type { ConfigLayoutProps } from '../../types/page';
 
 export function ConfigMobile({
