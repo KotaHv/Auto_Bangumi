@@ -6,10 +6,10 @@ import {
   formatConfigError,
   getGroupErrors,
   type ConfigFieldError,
-} from '../../validation';
+} from '../../editor/validation';
 import type { ConfigFieldItem } from './types';
 import type { Downloader } from '../../types/config';
-import { useConfigDraft } from '../../config-draft';
+import { useConfigDraft } from '../../editor/config-draft';
 
 interface ConfigDownloadFieldsProps {
   downloader: Downloader;

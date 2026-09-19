@@ -1,5 +1,5 @@
 import { i18n } from '@/lib/i18n';
-import type { Config } from './types/config';
+import type { Config } from '../types/config';
 
 export interface ConfigFieldError {
   /** Config group the field belongs to, e.g. `program`, `downloader`. */

@@ -4,7 +4,7 @@ import { ConfigField } from './field';
 import { Separator } from '@/components/ui/separator';
 import type { ConfigFieldItem } from './types';
 import type { BangumiManage } from '../../types/config';
-import { useConfigDraft } from '../../config-draft';
+import { useConfigDraft } from '../../editor/config-draft';
 
 const RENAME_METHODS = [
   { value: 'normal', label: 'normal' },

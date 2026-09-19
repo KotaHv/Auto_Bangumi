@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from '@/lib/message';
 import { returnUserLangMsg } from '@/lib/i18n';
-import { apiConfig } from './api';
-import { apiProgram } from '../program/api';
-import { configKeys } from './queries';
-import type { Config } from './types/config';
+import { apiConfig } from '../../api';
+import { apiProgram } from '../../../program/api';
+import { configKeys } from '../../queries';
+import type { Config } from '../../types/config';
 
 interface UseConfigSaveOptions {
   config: Config;

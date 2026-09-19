@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { Config } from './types/config';
+import type { Config } from '../types/config';
 import { getConfigErrors } from './validation';
 import type { ConfigFieldError } from './validation';
 

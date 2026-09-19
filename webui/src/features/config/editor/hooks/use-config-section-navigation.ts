@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { CONFIG_GROUP_SECTION_KEYS, CONFIG_SECTIONS } from './section-registry';
-import type { ConfigFieldError } from './validation';
+import {
+  CONFIG_GROUP_SECTION_KEYS,
+  CONFIG_SECTIONS,
+} from '../section-registry';
+import type { ConfigFieldError } from '../validation';
 
 // The tab strip is outside the scrolling content, so section positions only
 // need to account for the scroll container's own padding.

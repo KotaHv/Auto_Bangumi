@@ -7,10 +7,10 @@ import { AbConfirm } from '@/components/shared/ab-confirm';
 import { configOptions } from './queries';
 import { ConfigPageLayout } from './components/layout/page-layout';
 import { ConfigSections } from './components/layout/sections';
-import { ConfigDraftContext, useConfigDraftState } from './config-draft';
-import { CONFIG_SECTIONS } from './section-registry';
-import { useConfigSectionNavigation } from './use-config-section-navigation';
-import { useConfigSave } from './use-config-save';
+import { ConfigDraftContext, useConfigDraftState } from './editor/config-draft';
+import { CONFIG_SECTIONS } from './editor/section-registry';
+import { useConfigSectionNavigation } from './editor/hooks/use-config-section-navigation';
+import { useConfigSave } from './editor/hooks/use-config-save';
 import type { Config } from './types/config';
 
 export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {

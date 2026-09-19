@@ -3,7 +3,7 @@ import { ConfigLoadError } from '@/features/config/components/layout/config-load
 import { ConfigLoadingView } from '@/features/config/components/layout/loading';
 import { ConfigEditor } from '@/features/config/editor';
 import { configOptions } from '@/features/config/queries';
-import { CONFIG_SECTIONS } from '@/features/config/section-registry';
+import { CONFIG_SECTIONS } from '@/features/config/editor/section-registry';
 
 export default function ConfigPage() {
   const configQuery = useQuery(configOptions());

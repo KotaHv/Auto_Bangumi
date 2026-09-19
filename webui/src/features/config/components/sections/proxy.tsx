@@ -6,11 +6,11 @@ import {
   formatConfigError,
   getGroupErrors,
   type ConfigFieldError,
-} from '../../validation';
+} from '../../editor/validation';
 import type { AbSelectOption } from '@/components/shared/ab-select';
 import type { ConfigFieldItem } from './types';
 import type { Proxy } from '../../types/config';
-import { useConfigDraft } from '../../config-draft';
+import { useConfigDraft } from '../../editor/config-draft';
 
 const PROXY_TYPES: AbSelectOption[] = [
   { value: 'http', label: 'HTTP' },
