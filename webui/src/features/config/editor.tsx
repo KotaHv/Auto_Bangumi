@@ -2,18 +2,15 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBlocker } from 'react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { message } from '@/lib/message';
-import { returnUserLangMsg } from '@/lib/i18n';
+import { useQueryClient } from '@tanstack/react-query';
 import { AbConfirm } from '@/components/shared/ab-confirm';
-import { apiConfig } from './api';
-import { apiProgram } from '../program/api';
-import { configKeys, configOptions } from './queries';
+import { configOptions } from './queries';
 import { ConfigPageLayout } from './layout';
 import { ConfigSections } from './sections';
 import { ConfigDraftContext, useConfigDraftState } from './config-draft';
 import { CONFIG_SECTIONS } from './section-registry';
 import { useConfigSectionNavigation } from './use-config-section-navigation';
+import { useConfigSave } from './use-config-save';
 import type { Config } from './types/config';
 
 export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
@@ -39,72 +36,30 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
     selectSection,
     focusConfigError,
   } = useConfigSectionNavigation();
+  const { saveConfig, isSaving, saveError, clearSaveError } = useConfigSave({
+    config,
+    useApiKey,
+    onSavedConfig: adoptSavedConfig,
+  });
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
   const [openLeaveConfirm, setOpenLeaveConfirm] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   function cancelChanges() {
     setOpenCancelConfirm(false);
-    setSaveError(null);
+    clearSaveError();
     resetDraft();
     void queryClient.refetchQueries({
       queryKey: configOptions().queryKey,
     });
   }
 
-  const restartMutation = useMutation({
-    mutationFn: apiProgram.restart,
-    onSuccess: (data) => message.success(returnUserLangMsg(data)),
-  });
-  const saveMutation = useMutation({
-    mutationFn: ({ next }: { next: Config }) => apiConfig.updateConfig(next),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: configKeys.current() });
-      const savedConfig = queryClient.getQueryData<Config>(
-        configKeys.current(),
-      );
-      if (savedConfig) {
-        adoptSavedConfig(savedConfig);
-      }
-      restartMutation.mutate();
-    },
-  });
-
-  async function applyChanges() {
-    if (saveMutation.isPending) return;
-
+  function applyChanges() {
     if (errors.length > 0) {
       focusConfigError(errors[0]);
       return;
     }
 
-    setSaveError(null);
-    const next: Config = {
-      ...config,
-      downloader: { ...config.downloader, api_key: null },
-    };
-    if (useApiKey) {
-      const key = config.downloader.api_key?.trim() ?? '';
-      if (!key) {
-        message.warning(
-          t('notify.please_enter', {
-            field: t('config.downloader_set.api_key'),
-          }),
-        );
-        return;
-      }
-      if (!/^qbt_[A-Za-z0-9]{28}$/.test(key)) {
-        message.error(t('notify.api_key_format_error'));
-        return;
-      }
-      next.downloader = { ...config.downloader, api_key: key };
-    }
-    try {
-      await saveMutation.mutateAsync({ next });
-      message.success(t('config.save_success'));
-    } catch {
-      setSaveError(t('config.save_failed'));
-    }
+    void saveConfig();
   }
 
   useEffect(() => {
@@ -200,7 +155,7 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         variant="outline"
         className="h-9 min-w-20 sm:min-w-24"
         onClick={() => setOpenCancelConfirm(true)}
-        disabled={!isDirty || saveMutation.isPending}
+        disabled={!isDirty || isSaving}
       >
         {t('config.cancel')}
       </Button>
@@ -209,8 +164,8 @@ export function ConfigEditor({ fetchedConfig }: { fetchedConfig: Config }) {
         variant="brand"
         className="h-9 min-w-24 sm:min-w-28"
         onClick={applyChanges}
-        loading={saveMutation.isPending}
-        disabled={!isDirty || saveMutation.isPending}
+        loading={isSaving}
+        disabled={!isDirty || isSaving}
       >
         {t('config.apply')}
       </Button>
