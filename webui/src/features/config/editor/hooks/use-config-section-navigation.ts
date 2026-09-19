@@ -1,10 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   CONFIG_GROUP_SECTION_KEYS,
   CONFIG_SECTIONS,
 } from '../section-registry';
 import type { ConfigFieldError } from '../validation';
+
+interface ProgrammaticScrollCompletion {
+  container: HTMLDivElement;
+  finish: () => void;
+  fallbackTimer: number;
+}
 
 // The tab strip is outside the scrolling content, so section positions only
 // need to account for the scroll container's own padding.
@@ -16,79 +22,105 @@ export function useConfigSectionNavigation() {
       ? (param as string)
       : 'normal';
   });
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLElement | null>>({});
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useCallback((node: HTMLDivElement | null) => {
+    scrollContainerRef.current = node;
+    setScrollContainer(node);
+  }, []);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const activeTabRef = useRef(activeTab);
   const programmaticRef = useRef(false);
-  const finishProgrammaticRef = useRef<(() => void) | null>(null);
+  const programmaticCompletionRef = useRef<ProgrammaticScrollCompletion | null>(
+    null,
+  );
   const tabInlineRef = useRef<ScrollLogicalPosition>('nearest');
   const initialUrlSyncRef = useRef(false);
 
-  function setActiveTab(
-    key: string,
-    inline: ScrollLogicalPosition = 'nearest',
-  ) {
-    if (activeTabRef.current === key) return;
-    tabInlineRef.current = inline;
-    activeTabRef.current = key;
-    setActiveTabState(key);
-  }
-
-  function scrollToSection(key: string, lockScrollSpy = false) {
-    const el = sectionRefs.current[key];
-    const scroller = contentRef.current;
-    if (!el) return;
-
-    if (!scroller) {
-      el.scrollIntoView({
-        behavior: 'auto',
-        block: 'start',
-        inline: 'nearest',
-      });
-      return;
-    }
-
-    const scrollerTop = scroller.getBoundingClientRect().top;
-    const targetTop = el.getBoundingClientRect().top;
-    const scrollPaddingTop =
-      Number.parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0;
-    const scrollToSection = (offset: number) => {
-      scroller.scrollTo({
-        top: Math.max(0, scroller.scrollTop + targetTop - scrollerTop - offset),
-        behavior: 'auto',
-      });
-    };
-
-    if (finishProgrammaticRef.current) {
-      scroller.removeEventListener('scrollend', finishProgrammaticRef.current);
-      finishProgrammaticRef.current = null;
-    }
-
-    if (!lockScrollSpy) {
-      programmaticRef.current = false;
-      scrollToSection(scrollPaddingTop);
-      return;
-    }
-
-    const alreadyAtTarget = Math.abs(targetTop - scrollerTop) <= 1;
-
-    if (alreadyAtTarget) {
+  const clearProgrammaticScroll = useCallback((container?: HTMLDivElement) => {
+    const completion = programmaticCompletionRef.current;
+    if (!completion) {
       programmaticRef.current = false;
       return;
     }
+    if (container && completion.container !== container) return;
 
-    const finish = () => {
-      programmaticRef.current = false;
-      finishProgrammaticRef.current = null;
-    };
+    completion.container.removeEventListener('scrollend', completion.finish);
+    window.clearTimeout(completion.fallbackTimer);
+    programmaticCompletionRef.current = null;
+    programmaticRef.current = false;
+  }, []);
 
-    finishProgrammaticRef.current = finish;
-    programmaticRef.current = true;
-    scroller.addEventListener('scrollend', finish, { once: true });
-    scrollToSection(Math.max(0, scrollPaddingTop));
-  }
+  const setActiveTab = useCallback(
+    (key: string, inline: ScrollLogicalPosition = 'nearest') => {
+      if (activeTabRef.current === key) return;
+      tabInlineRef.current = inline;
+      activeTabRef.current = key;
+      setActiveTabState(key);
+    },
+    [],
+  );
+
+  const scrollToSection = useCallback(
+    (key: string, lockScrollSpy = false) => {
+      const el = sectionRefs.current[key];
+      const scroller = scrollContainerRef.current;
+      if (!el) return;
+
+      clearProgrammaticScroll();
+
+      if (!scroller) {
+        el.scrollIntoView({
+          behavior: 'auto',
+          block: 'start',
+          inline: 'nearest',
+        });
+        return;
+      }
+
+      const containerTop = scroller.getBoundingClientRect().top;
+      const sectionTop = el.getBoundingClientRect().top;
+      const scrollPaddingTop =
+        Number.parseFloat(getComputedStyle(scroller).scrollPaddingTop) || 0;
+      const rawTargetTop =
+        scroller.scrollTop + sectionTop - containerTop - scrollPaddingTop;
+      const maxScrollTop = Math.max(
+        0,
+        scroller.scrollHeight - scroller.clientHeight,
+      );
+      const targetTop = Math.min(Math.max(0, rawTargetTop), maxScrollTop);
+
+      if (Math.abs(targetTop - scroller.scrollTop) <= 1) {
+        return;
+      }
+
+      if (!lockScrollSpy) {
+        scroller.scrollTo({ top: targetTop, behavior: 'auto' });
+        return;
+      }
+
+      const completion: ProgrammaticScrollCompletion = {
+        container: scroller,
+        finish: () => {},
+        fallbackTimer: 0,
+      };
+      completion.finish = () => {
+        if (programmaticCompletionRef.current !== completion) return;
+        clearProgrammaticScroll(scroller);
+      };
+
+      programmaticCompletionRef.current = completion;
+      programmaticRef.current = true;
+      scroller.addEventListener('scrollend', completion.finish, { once: true });
+      completion.fallbackTimer = window.setTimeout(completion.finish, 1000);
+      scroller.scrollTo({ top: targetTop, behavior: 'auto' });
+    },
+    [clearProgrammaticScroll],
+  );
 
   function selectSection(key: string) {
     setActiveTab(key, 'center');
@@ -127,9 +159,7 @@ export function useConfigSectionNavigation() {
       scrollToSection(key);
     }
     initialUrlSyncRef.current = true;
-    // scrollToSection is recreated each render; adding it can repeat URL-driven scrolling.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, scrollToSection, setActiveTab]);
 
   useEffect(() => {
     const tab = tabRefs.current[activeTab];
@@ -168,19 +198,25 @@ export function useConfigSectionNavigation() {
   }, [activeTab]);
 
   useEffect(() => {
-    const scroller = contentRef.current;
-    if (!scroller) return;
+    if (!scrollContainer) return;
     let frameId: number | null = null;
 
     const updateActiveTab = () => {
-      const activationLine = scroller.getBoundingClientRect().top;
+      const scrollPaddingTop =
+        Number.parseFloat(getComputedStyle(scrollContainer).scrollPaddingTop) ||
+        0;
+      const activationLine =
+        scrollContainer.getBoundingClientRect().top + scrollPaddingTop;
       let activeKey = CONFIG_SECTIONS[0].key;
 
       // When scrolled to (or past) the bottom, the last section's top can never
       // cross the activation line because there's no more content to push it up.
       // Force the last section active so scrollspy doesn't strand an item short.
       const atBottom =
-        scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= 1;
+        scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight <=
+        1;
       if (atBottom) {
         setActiveTab(CONFIG_SECTIONS[CONFIG_SECTIONS.length - 1].key);
         return;
@@ -206,22 +242,15 @@ export function useConfigSectionNavigation() {
       });
     };
 
-    scroller.addEventListener('scroll', handleScroll, { passive: true });
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
     updateActiveTab();
 
     return () => {
-      scroller.removeEventListener('scroll', handleScroll);
+      scrollContainer.removeEventListener('scroll', handleScroll);
       if (frameId !== null) window.cancelAnimationFrame(frameId);
-      if (finishProgrammaticRef.current) {
-        scroller.removeEventListener(
-          'scrollend',
-          finishProgrammaticRef.current,
-        );
-        finishProgrammaticRef.current = null;
-      }
-      programmaticRef.current = false;
+      clearProgrammaticScroll(scrollContainer);
     };
-  }, []);
+  }, [clearProgrammaticScroll, scrollContainer, setActiveTab]);
 
   return {
     activeTab,

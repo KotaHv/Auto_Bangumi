@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode, RefObject } from 'react';
+import type { ComponentType, ReactNode, Ref, RefObject } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 export type ConfigSectionKey =
@@ -23,7 +23,7 @@ export interface ConfigLayoutProps {
   onSelectTab: (key: string) => void;
   tabListRef: RefObject<HTMLDivElement | null>;
   tabRefs: RefObject<Record<string, HTMLElement | null>>;
-  contentRef: RefObject<HTMLDivElement | null>;
+  contentRef: Ref<HTMLDivElement>;
   content: ReactNode;
   footer?: {
     status: ReactNode;
