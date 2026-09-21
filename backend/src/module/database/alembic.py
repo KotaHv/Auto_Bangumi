@@ -1,10 +1,12 @@
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
+from typing import Any
 
+from alembic import command
 from alembic.config import Config
 from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import AsyncEngine
-
-from alembic import command
 
 from .engine import engine
 
@@ -15,6 +17,25 @@ def _project_config_path() -> Path:
         if config_path.is_file():
             return config_path
     raise RuntimeError("Alembic project configuration could not be located")
+
+
+def upgrade_schema(
+    connection,
+    *,
+    migration_dir: str,
+    before_upgrade: Callable[[Any, Config], None] | None = None,
+) -> None:
+    """Point Alembic at a migration tree and upgrade it to head."""
+
+    project_config_path = _project_config_path()
+    alembic_config = Config(toml_file=str(project_config_path))
+    alembic_config.set_main_option(
+        "script_location", str(project_config_path.parent / migration_dir)
+    )
+    alembic_config.attributes["connection"] = connection
+    if before_upgrade is not None:
+        before_upgrade(connection, alembic_config)
+    command.upgrade(alembic_config, "head")
 
 
 def _columns(connection, table_name: str) -> set[str]:
@@ -119,16 +140,19 @@ def _has_alembic_revision(connection) -> bool:
     return connection.execute(text("SELECT 1 FROM alembic_version LIMIT 1")).first() is not None
 
 
-def _run_alembic_upgrade(connection, alembic_config: Config):
-    alembic_config.attributes["connection"] = connection
+def _stamp_legacy_revision(connection, alembic_config: Config) -> None:
     if not _has_alembic_revision(connection):
         tables = set(inspect(connection).get_table_names()) - {"alembic_version"}
         if tables:
             command.stamp(alembic_config, _detect_legacy_revision(connection))
-    command.upgrade(alembic_config, "head")
 
 
 async def upgrade_database(async_engine: AsyncEngine = engine):
-    alembic_config = Config(toml_file=str(_project_config_path()))
     async with async_engine.begin() as connection:
-        await connection.run_sync(_run_alembic_upgrade, alembic_config)
+        await connection.run_sync(
+            partial(
+                upgrade_schema,
+                migration_dir="migrations",
+                before_upgrade=_stamp_legacy_revision,
+            )
+        )

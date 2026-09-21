@@ -1,10 +1,12 @@
 import asyncio
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from module.conf import settings, setup_logger
+from module.conf import settings
+from module.logger import LoggerManager
 from module.models import APIResponse, Config
 from module.security.session import require_session
 
@@ -13,20 +15,30 @@ router = APIRouter(
 )
 
 
+def get_log_manager(request: Request) -> LoggerManager:
+    return request.app.state.log_manager
+
+
+LogManagerDep = Annotated[LoggerManager, Depends(get_log_manager)]
+
+
 @router.get("/get", response_model=Config)
 async def get_config():
     return settings
 
 
-@router.patch(
-    "/update", response_model=APIResponse
-)
-async def update_config(config: Config):
+@router.patch("/update", response_model=APIResponse)
+async def update_config(
+    config: Config,
+    log_manager: LogManagerDep,
+):
     try:
         await asyncio.to_thread(settings.save, config.model_dump_json(by_alias=True))
         await asyncio.to_thread(settings.load)
         # update_rss()
-        setup_logger()
+        await asyncio.to_thread(
+            log_manager.setup, debug_enabled=settings.log.debug_enable
+        )
         logger.info("Config updated")
         return JSONResponse(
             status_code=200,

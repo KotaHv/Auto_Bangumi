@@ -1,4 +1,12 @@
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+
+DATA_PATH = "sqlite+aiosqlite:///data/data.db"
+LOG_ROOT = Path("data")
+LOG_PATH = LOG_ROOT / "log.txt"
+LOG_DATABASE_PATH = Path("data/logs.db")
+TMDB_API = "32b19d6a05b512190a056fa4e747cbbc"
+POSTERS_PATH = Path("data/posters")
 
 DEFAULT_SETTINGS = {
     "program": {

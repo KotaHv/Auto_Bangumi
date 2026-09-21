@@ -248,10 +248,6 @@ class Renamer(DownloadClient):
 
 
 if __name__ == "__main__":
-    from module.conf import setup_logger
-
-    settings.log.debug_enable = True
-    setup_logger()
 
     async def _main():
         async with Renamer() as renamer:

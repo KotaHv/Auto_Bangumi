@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -16,10 +17,12 @@ from qbittorrentapi.exceptions import (
 from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from module.api import v1
-from module.conf import VERSION, settings, setup_logger
+from module.conf import VERSION, settings
+from module.logger import LoggerManager
 from module.middleware import enforce_same_origin, renew_session
 
-setup_logger(reset=True)
+log_manager = LoggerManager()
+log_manager.setup(debug_enabled=settings.log.debug_enable)
 
 # Order matters: LoginFailed/Forbidden403Error/etc. all inherit from
 # APIConnectionError, so specific subclasses must come first.
@@ -68,8 +71,17 @@ def _downloader_error_handler(msg_en: str, msg_zh: str):
     return handler
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        yield
+    finally:
+        await app.state.log_manager.shutdown()
+
+
 def create_app() -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
+    app.state.log_manager = log_manager
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(_request: Request, exc: HTTPException):

@@ -28,7 +28,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
 COPY backend/pyproject.toml backend/uv.lock ./
-COPY backend/alembic ./alembic
+COPY backend/migrations ./migrations
+COPY backend/log_migrations ./log_migrations
 COPY --chmod=755 backend/src/. ./
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 

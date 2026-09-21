@@ -1,20 +1,20 @@
-from pathlib import Path
-
 from .config import VERSION, settings
-from .log import LOG_PATH, setup_logger
+from .const import (
+    DATA_PATH,
+    LOG_DATABASE_PATH,
+    LOG_PATH,
+    POSTERS_PATH,
+    TMDB_API,
+)
 from .search_provider import SEARCH_CONFIG
-
-TMDB_API = "32b19d6a05b512190a056fa4e747cbbc"
-DATA_PATH = "sqlite+aiosqlite:///data/data.db"
-POSTERS_PATH = Path("data/posters")
 
 PLATFORM = "Windows" if "\\" in settings.downloader.path else "Unix"
 
 __all__ = [
     "VERSION",
     "settings",
+    "LOG_DATABASE_PATH",
     "LOG_PATH",
-    "setup_logger",
     "SEARCH_CONFIG",
     "TMDB_API",
     "DATA_PATH",
