@@ -1,13 +1,24 @@
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import Engine, create_engine, event
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
 from module.conf import LOG_DATABASE_PATH
-from module.models.log import LogEntry
+from module.exceptions import (
+    InvalidLogLevel,
+    InvalidLogLimit,
+    InvalidLogTimeRange,
+)
+from module.models.log import LogEntry, LogPage, LogRecord
+from module.utils.log_level import LEVEL_NAMES, LEVEL_NUMBERS
+from module.utils.log_time import from_microseconds, to_microseconds
 
 from .alembic import upgrade_schema
+
+DEFAULT_LIMIT = 100
+MAX_LIMIT = 500
 
 
 class LogDatabase:
@@ -40,9 +51,71 @@ class LogDatabase:
             upgrade_schema(connection, migration_dir="log_migrations")
 
     def add(self, entry: LogEntry) -> None:
-        with Session(self.engine) as session:
+        with Session(self.engine, expire_on_commit=False) as session:
             session.add(entry)
             session.commit()
 
+    def query_logs(
+        self,
+        *,
+        level: str | None = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        module: str | None = None,
+        query: str | None = None,
+        limit: int = DEFAULT_LIMIT,
+        before_id: int | None = None,
+    ) -> LogPage:
+        if level is not None and level not in LEVEL_NUMBERS:
+            raise InvalidLogLevel(level)
+        if not 1 <= limit <= MAX_LIMIT:
+            raise InvalidLogLimit(limit, MAX_LIMIT)
+
+        if start is not None and end is not None and start > end:
+            raise InvalidLogTimeRange(start, end)
+
+        statement = select(LogEntry)
+        if level is not None:
+            statement = statement.where(col(LogEntry.level_no) == LEVEL_NUMBERS[level])
+        if start is not None:
+            statement = statement.where(
+                col(LogEntry.timestamp) >= to_microseconds(start)
+            )
+        if end is not None:
+            statement = statement.where(col(LogEntry.timestamp) <= to_microseconds(end))
+        if module:
+            statement = statement.where(
+                col(LogEntry.module).contains(module, autoescape=True)
+            )
+        if query:
+            statement = statement.where(
+                col(LogEntry.message).contains(query, autoescape=True)
+            )
+        if before_id is not None:
+            statement = statement.where(col(LogEntry.id) < before_id)
+
+        statement = statement.order_by(col(LogEntry.id).desc()).limit(limit + 1)
+
+        with Session(self.engine) as session:
+            rows = list(session.exec(statement).all())
+            items = [_to_record(entry) for entry in rows[:limit]]
+
+        has_more = len(rows) > limit
+        next_cursor = items[-1].id if has_more else None
+        return LogPage(items=items, next_cursor=next_cursor, has_more=has_more)
+
     def dispose(self) -> None:
         self.engine.dispose()
+
+
+def _to_record(entry: LogEntry) -> LogRecord:
+    return LogRecord(
+        id=cast(int, entry.id),
+        timestamp=from_microseconds(entry.timestamp).isoformat(),
+        level=LEVEL_NAMES[entry.level_no],
+        message=entry.message,
+        module=entry.module,
+        function=entry.function,
+        line=entry.line,
+        exception=entry.exception,
+    )

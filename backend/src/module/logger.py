@@ -1,8 +1,6 @@
-import calendar
 import logging
 import sys
 import traceback
-from datetime import UTC, datetime
 from pathlib import Path
 
 import loguru
@@ -11,6 +9,7 @@ from loguru import logger
 from module.conf import LOG_PATH
 from module.database.log import LogDatabase
 from module.models.log import LogEntry
+from module.utils.log_time import to_microseconds
 
 EXCEPTION_EXTRA_KEY = "formatted_exception"
 SKIP_DATABASE_EXTRA_KEY = "skip_database"
@@ -45,13 +44,6 @@ def allows_log(name: str | None, level_no: int) -> bool:
 
 def console_only() -> loguru.Logger:
     return logger.bind(**{SKIP_DATABASE_EXTRA_KEY: True})
-
-
-def _timestamp_in_microseconds(value: datetime) -> int:
-    # Integer seconds plus the separate microsecond field keeps full microsecond
-    # precision; value.timestamp() would round through a float.
-    utc_value = value.astimezone(UTC)
-    return calendar.timegm(utc_value.utctimetuple()) * 1_000_000 + utc_value.microsecond
 
 
 def _allows_database_log(record: loguru.Record) -> bool:
@@ -96,7 +88,7 @@ class LoggerManager:
         record = message.record
         try:
             entry = LogEntry(
-                timestamp=_timestamp_in_microseconds(record["time"]),
+                timestamp=to_microseconds(record["time"]),
                 level_no=record["level"].no,
                 message=record["message"],
                 module=record["name"],
