@@ -1,7 +1,6 @@
 """Create the supported legacy database baseline."""
 
 import sqlalchemy as sa
-
 from alembic import op
 
 revision = "0001_baseline"

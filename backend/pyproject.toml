@@ -35,7 +35,7 @@ build-backend = "hatchling.build"
 package = false
 
 [tool.alembic]
-script_location = "%(here)s/alembic"
+script_location = "%(here)s/migrations"
 prepend_sys_path = ["%(here)s/src"]
 
 [dependency-groups]

@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import pytest
+from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from alembic import command
 from module.database.alembic import (
     _detect_legacy_revision,
     _is_supported_legacy_schema,

@@ -1,10 +1,10 @@
 import os
 
+from alembic import context
 from sqlalchemy import create_engine, pool
 from sqlmodel import SQLModel
 
 import module.models  # noqa: F401
-from alembic import context
 
 config = context.config
 target_metadata = SQLModel.metadata
