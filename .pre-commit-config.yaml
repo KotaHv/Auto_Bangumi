@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.16.1
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+      # Run the formatter.
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: webui-format
+        name: webui format
+        files: ^webui/
+        entry: bun run --cwd webui format:check
+        language: system
+        pass_filenames: false
+      - id: webui-lint
+        name: webui lint
+        files: ^webui/
+        entry: bun run --cwd webui lint
+        language: system
+        pass_filenames: false
+      - id: webui-typecheck
+        name: webui typecheck
+        files: ^webui/
+        entry: bun run --cwd webui typecheck
+        language: system
+        pass_filenames: false

@@ -1,4 +1,0 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-cd ./webui && bun run format:check && bun run lint && bun run typecheck
