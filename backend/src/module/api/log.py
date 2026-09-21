@@ -8,9 +8,7 @@ from module.conf import LOG_PATH
 from module.models import APIResponse
 from module.security.session import require_session
 
-router = APIRouter(
-    prefix="/log", tags=["log"], dependencies=[Depends(require_session)]
-)
+router = APIRouter(prefix="/log", tags=["log"], dependencies=[Depends(require_session)])
 
 
 def read_log(lines: int | None) -> bytes:

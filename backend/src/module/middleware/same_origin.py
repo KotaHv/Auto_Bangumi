@@ -11,9 +11,9 @@ async def enforce_same_origin(
     request: Request, call_next: RequestResponseEndpoint
 ) -> Response:
     path = request.scope["path"]
-    if (path == API_PREFIX or path.startswith(f"{API_PREFIX}/")) and not _passes_origin_check(
-        request
-    ):
+    if (
+        path == API_PREFIX or path.startswith(f"{API_PREFIX}/")
+    ) and not _passes_origin_check(request):
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
     return await call_next(request)
 

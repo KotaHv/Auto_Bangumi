@@ -43,7 +43,9 @@ def _columns(connection, table_name: str) -> set[str]:
 
 
 def _has_primary_key(connection, table_name: str) -> bool:
-    return inspect(connection).get_pk_constraint(table_name).get("constrained_columns") == ["id"]
+    return inspect(connection).get_pk_constraint(table_name).get(
+        "constrained_columns"
+    ) == ["id"]
 
 
 def _has_foreign_key(connection, table_name: str, column: str, target: str) -> bool:
@@ -115,9 +117,7 @@ def _is_supported_legacy_schema(connection) -> bool:
         return False
 
     has_hash = "hash" in torrent_columns
-    has_rss_foreign_key = _has_foreign_key(
-        connection, "torrent", "rss_id", "rssitem"
-    )
+    has_rss_foreign_key = _has_foreign_key(connection, "torrent", "rss_id", "rssitem")
     return has_hash or has_rss_foreign_key
 
 
@@ -137,7 +137,10 @@ def _detect_legacy_revision(connection) -> str:
 def _has_alembic_revision(connection) -> bool:
     if "alembic_version" not in inspect(connection).get_table_names():
         return False
-    return connection.execute(text("SELECT 1 FROM alembic_version LIMIT 1")).first() is not None
+    return (
+        connection.execute(text("SELECT 1 FROM alembic_version LIMIT 1")).first()
+        is not None
+    )
 
 
 def _stamp_legacy_revision(connection, alembic_config: Config) -> None:

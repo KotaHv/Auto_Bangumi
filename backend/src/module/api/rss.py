@@ -9,22 +9,16 @@ from module.security.session import require_session
 
 from .response import u_response
 
-router = APIRouter(
-    prefix="/rss", tags=["rss"], dependencies=[Depends(require_session)]
-)
+router = APIRouter(prefix="/rss", tags=["rss"], dependencies=[Depends(require_session)])
 
 
-@router.get(
-    path="", response_model=list[RSSItem]
-)
+@router.get(path="", response_model=list[RSSItem])
 async def get_rss():
     async with RSSEngine() as engine:
         return await engine.rss.search_all()
 
 
-@router.post(
-    path="/add", response_model=APIResponse
-)
+@router.post(path="/add", response_model=APIResponse)
 async def add_rss(rss: RSSItem):
     async with RSSEngine() as engine:
         result = await engine.add_rss(rss.url, rss.name, rss.aggregate, rss.parser)
@@ -184,9 +178,7 @@ async def get_torrent(
 analyser = RSSAnalyser()
 
 
-@router.post(
-    "/analysis", response_model=Bangumi
-)
+@router.post("/analysis", response_model=Bangumi)
 async def analysis(rss: RSSItem):
     data = await analyser.link_to_data(rss)
     if isinstance(data, Bangumi):
@@ -195,18 +187,14 @@ async def analysis(rss: RSSItem):
         return u_response(data)
 
 
-@router.post(
-    "/collect", response_model=APIResponse
-)
+@router.post("/collect", response_model=APIResponse)
 async def download_collection(data: Bangumi):
     async with SeasonCollector() as collector:
         resp = await collector.collect_season(data, data.rss_link)
         return u_response(resp)
 
 
-@router.post(
-    "/subscribe", response_model=APIResponse
-)
+@router.post("/subscribe", response_model=APIResponse)
 async def subscribe(data: Bangumi, rss: RSSItem):
     async with SeasonCollector() as collector:
         resp = await collector.subscribe_season(data, parser=rss.parser)

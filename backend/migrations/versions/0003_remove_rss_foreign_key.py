@@ -12,7 +12,9 @@ def upgrade():
     with op.batch_alter_table(
         "torrent",
         recreate="always",
-        naming_convention={"fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s"},
+        naming_convention={
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s"
+        },
     ) as batch_op:
         batch_op.drop_constraint("fk_torrent_rss_id_rssitem", type_="foreignkey")
 
@@ -21,7 +23,9 @@ def downgrade():
     with op.batch_alter_table(
         "torrent",
         recreate="always",
-        naming_convention={"fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s"},
+        naming_convention={
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s"
+        },
     ) as batch_op:
         batch_op.create_foreign_key(
             "fk_torrent_rss_id_rssitem", "rssitem", ["rss_id"], ["id"]

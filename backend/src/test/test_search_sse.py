@@ -53,7 +53,9 @@ async def test_search_streams_results_then_complete(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("keywords", [None, "", "   "])
-async def test_search_rejects_missing_or_blank_keywords(tmp_path, monkeypatch, keywords):
+async def test_search_rejects_missing_or_blank_keywords(
+    tmp_path, monkeypatch, keywords
+):
     search_module, require_session = load_search_module(tmp_path, monkeypatch)
     params = {} if keywords is None else {"keywords": keywords}
     async with AsyncClient(
@@ -67,9 +69,7 @@ async def test_search_rejects_missing_or_blank_keywords(tmp_path, monkeypatch, k
 
 
 @pytest.mark.asyncio
-async def test_search_with_no_provider_results_completes(
-    tmp_path, monkeypatch
-):
+async def test_search_with_no_provider_results_completes(tmp_path, monkeypatch):
     search_module, require_session = load_search_module(tmp_path, monkeypatch)
 
     class EmptySearch(SearchStub):
@@ -169,8 +169,7 @@ async def test_title_search_generates_one_poster_per_anime(tmp_path, monkeypatch
     monkeypatch.setattr(searcher, "raw_parser", raw_parser)
     monkeypatch.setattr(searcher, "tmdb_parser", tmdb_parser)
     results = [
-        item
-        async for item in searcher.analyse_keyword(keywords=["demo"], site="mikan")
+        item async for item in searcher.analyse_keyword(keywords=["demo"], site="mikan")
     ]
 
     assert len(results) == 2
@@ -179,7 +178,8 @@ async def test_title_search_generates_one_poster_per_anime(tmp_path, monkeypatch
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "feed", [None, xml.etree.ElementTree.fromstring("<rss><channel><item /></channel></rss>")]
+    "feed",
+    [None, xml.etree.ElementTree.fromstring("<rss><channel><item /></channel></rss>")],
 )
 async def test_title_search_reports_unavailable_feeds(tmp_path, monkeypatch, feed):
     load_search_module(tmp_path, monkeypatch)

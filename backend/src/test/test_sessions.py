@@ -49,9 +49,7 @@ async def add_session(async_engine, raw_token: str, created_at: int, expires_at:
 
 @pytest.mark.asyncio
 async def test_session_database_round_trip_and_raw_token_is_not_stored(tmp_path):
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'session.db'}"
-    )
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'session.db'}")
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     now = int(time.time())
@@ -74,12 +72,12 @@ async def test_session_database_round_trip_and_raw_token_is_not_stored(tmp_path)
 
 
 @pytest.mark.asyncio
-async def test_login_sets_opaque_cookie_and_persists_idle_deadline(tmp_path, monkeypatch):
+async def test_login_sets_opaque_cookie_and_persists_idle_deadline(
+    tmp_path, monkeypatch
+):
     import module.api.auth as auth_module
 
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'login.db'}"
-    )
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'login.db'}")
     await upgrade_database(async_engine)
     expired_token = generate_session_token()
     async with Database(async_engine) as db:
@@ -94,9 +92,7 @@ async def test_login_sets_opaque_cookie_and_persists_idle_deadline(tmp_path, mon
     monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
     before = int(time.time())
     response = Response()
-    result = await auth_module.login(
-        request_for(), response, "admin", "adminadmin"
-    )
+    result = await auth_module.login(request_for(), response, "admin", "adminadmin")
     after = int(time.time())
 
     assert isinstance(result, dict)
@@ -115,7 +111,10 @@ async def test_login_sets_opaque_cookie_and_persists_idle_deadline(tmp_path, mon
         assert session is not None
         assert session.token_hash == hash_session_token(raw_token)
         assert session.token_hash not in cookie
-        assert await db.sessions.find_by_token_hash(hash_session_token(expired_token)) is None
+        assert (
+            await db.sessions.find_by_token_hash(hash_session_token(expired_token))
+            is None
+        )
         assert before <= session.created_at <= after
         assert session.expires_at == session.created_at + SESSION_TIMEOUT
 
@@ -167,9 +166,7 @@ async def test_failed_login_does_not_create_session(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_valid_request_renews_session_on_every_activity(tmp_path, monkeypatch):
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'renew.db'}"
-    )
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'renew.db'}")
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 1000 + SESSION_TIMEOUT)
@@ -187,10 +184,10 @@ async def test_valid_request_renews_session_on_every_activity(tmp_path, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_repeated_activity_survives_original_login_deadline(tmp_path, monkeypatch):
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'sliding.db'}"
-    )
+async def test_repeated_activity_survives_original_login_deadline(
+    tmp_path, monkeypatch
+):
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'sliding.db'}")
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 1000 + SESSION_TIMEOUT)
@@ -198,7 +195,9 @@ async def test_repeated_activity_survives_original_login_deadline(tmp_path, monk
 
     for current_time in (4500, 8000):
         monkeypatch.setattr(
-            security_session.time, "time", lambda current_time=current_time: current_time
+            security_session.time,
+            "time",
+            lambda current_time=current_time: current_time,
         )
         await security_session.require_session(request_for(), raw_token)
 
@@ -212,9 +211,7 @@ async def test_repeated_activity_survives_original_login_deadline(tmp_path, monk
 
 @pytest.mark.asyncio
 async def test_expired_session_is_deleted_and_rejected(tmp_path, monkeypatch):
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'expired.db'}"
-    )
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'expired.db'}")
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 2000)
@@ -226,7 +223,9 @@ async def test_expired_session_is_deleted_and_rejected(tmp_path, monkeypatch):
     assert error.value.status_code == 401
 
     async with Database(async_engine) as db:
-        assert await db.sessions.find_by_token_hash(hash_session_token(raw_token)) is None
+        assert (
+            await db.sessions.find_by_token_hash(hash_session_token(raw_token)) is None
+        )
 
     await async_engine.dispose()
 
@@ -254,12 +253,12 @@ async def test_session_survives_new_database_engine_context(tmp_path, monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_logout_is_idempotent_and_only_deletes_current_session(tmp_path, monkeypatch):
+async def test_logout_is_idempotent_and_only_deletes_current_session(
+    tmp_path, monkeypatch
+):
     import module.api.auth as auth_module
 
-    async_engine = create_async_engine(
-        f"sqlite+aiosqlite:///{tmp_path / 'logout.db'}"
-    )
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'logout.db'}")
     await upgrade_database(async_engine)
     first_token = generate_session_token()
     second_token = generate_session_token()
@@ -273,8 +272,14 @@ async def test_logout_is_idempotent_and_only_deletes_current_session(tmp_path, m
     assert "session=" in response.headers["set-cookie"]
 
     async with Database(async_engine) as db:
-        assert await db.sessions.find_by_token_hash(hash_session_token(first_token)) is None
-        assert await db.sessions.find_by_token_hash(hash_session_token(second_token)) is not None
+        assert (
+            await db.sessions.find_by_token_hash(hash_session_token(first_token))
+            is None
+        )
+        assert (
+            await db.sessions.find_by_token_hash(hash_session_token(second_token))
+            is not None
+        )
 
     second_response = Response()
     await auth_module.logout(second_response, first_token)

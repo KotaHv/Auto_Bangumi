@@ -40,9 +40,14 @@ async def _schema_info(async_engine):
         return await connection.run_sync(
             lambda conn: {
                 table: {
-                    "columns": {column["name"] for column in inspect(conn).get_columns(table)},
+                    "columns": {
+                        column["name"] for column in inspect(conn).get_columns(table)
+                    },
                     "primary_key": tuple(
-                        inspect(conn).get_pk_constraint(table).get("constrained_columns") or ()
+                        inspect(conn)
+                        .get_pk_constraint(table)
+                        .get("constrained_columns")
+                        or ()
                     ),
                     "foreign_keys": {
                         (
@@ -61,14 +66,29 @@ async def _schema_info(async_engine):
 async def _assert_current_schema(async_engine):
     schema = await _schema_info(async_engine)
     assert schema["rssitem"]["columns"] == {
-        "id", "name", "url", "aggregate", "parser", "enabled"
+        "id",
+        "name",
+        "url",
+        "aggregate",
+        "parser",
+        "enabled",
     }
     assert schema["torrent"]["columns"] == {
-        "id", "bangumi_id", "rss_id", "name", "url", "homepage", "downloaded", "hash"
+        "id",
+        "bangumi_id",
+        "rss_id",
+        "name",
+        "url",
+        "homepage",
+        "downloaded",
+        "hash",
     }
     assert schema["user"]["columns"] == {"id", "username", "password"}
     assert schema["session"]["columns"] == {
-        "id", "token_hash", "created_at", "expires_at"
+        "id",
+        "token_hash",
+        "created_at",
+        "expires_at",
     }
     assert schema["session"]["primary_key"] == ("id",)
     assert schema["session"]["foreign_keys"] == set()
@@ -106,7 +126,9 @@ def _patch_startup_dependencies(async_engine, monkeypatch, tmp_path):
         lambda: real_rss_engine(async_engine),
     )
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(poster_module, "RSSEngine", lambda: real_rss_engine(async_engine))
+    monkeypatch.setattr(
+        poster_module, "RSSEngine", lambda: real_rss_engine(async_engine)
+    )
     monkeypatch.setattr(hash_module, "RSSEngine", lambda: real_rss_engine(async_engine))
 
 
@@ -133,7 +155,7 @@ async def _make_git_schema_fixture(path: Path, state: str):
                 "id INTEGER PRIMARY KEY, official_title VARCHAR NOT NULL, year VARCHAR, "
                 "title_raw VARCHAR NOT NULL, season INTEGER NOT NULL, season_raw VARCHAR, "
                 "group_name VARCHAR, dpi VARCHAR, source VARCHAR, subtitle VARCHAR, "
-                "eps_collect BOOLEAN NOT NULL, \"offset\" INTEGER NOT NULL, "
+                'eps_collect BOOLEAN NOT NULL, "offset" INTEGER NOT NULL, '
                 "filter VARCHAR NOT NULL, rss_link VARCHAR NOT NULL, poster_link VARCHAR, "
                 "added BOOLEAN NOT NULL, rule_name VARCHAR, save_path VARCHAR, "
                 "deleted BOOLEAN NOT NULL)"
@@ -156,7 +178,9 @@ async def _make_git_schema_fixture(path: Path, state: str):
         foreign_keys = ", FOREIGN KEY (bangumi_id) REFERENCES bangumi(id)"
         if has_rss_foreign_key:
             foreign_keys += ", FOREIGN KEY (rss_id) REFERENCES rssitem(id)"
-        await connection.execute(text(f"CREATE TABLE torrent ({torrent_columns}{foreign_keys})"))
+        await connection.execute(
+            text(f"CREATE TABLE torrent ({torrent_columns}{foreign_keys})")
+        )
         await connection.execute(
             text(
                 "CREATE TABLE user (id INTEGER PRIMARY KEY, username VARCHAR NOT NULL, "
@@ -164,14 +188,22 @@ async def _make_git_schema_fixture(path: Path, state: str):
             )
         )
         await _insert_bangumi(connection)
-        await connection.execute(text("INSERT INTO rssitem VALUES (1, 'Current', 'https://example.test/rss', 1, 'mikan', 1)"))
+        await connection.execute(
+            text(
+                "INSERT INTO rssitem VALUES (1, 'Current', 'https://example.test/rss', 1, 'mikan', 1)"
+            )
+        )
         torrent_columns = "id, bangumi_id, rss_id, name, url, homepage, downloaded"
         torrent_values = "1, 1, 1, 'Torrent', 'magnet:?xt=test', NULL, 0"
         if has_hash:
             torrent_columns += ", hash"
             torrent_values += ", NULL"
-        await connection.execute(text(f"INSERT INTO torrent ({torrent_columns}) VALUES ({torrent_values})"))
-        await connection.execute(text("INSERT INTO user VALUES (1, 'admin', 'hashed-password')"))
+        await connection.execute(
+            text(f"INSERT INTO torrent ({torrent_columns}) VALUES ({torrent_values})")
+        )
+        await connection.execute(
+            text("INSERT INTO user VALUES (1, 'admin', 'hashed-password')")
+        )
     return async_engine
 
 
@@ -195,7 +227,9 @@ async def test_existing_empty_database_is_fresh_and_seeded(tmp_path, monkeypatch
     path = tmp_path / "empty.db"
     path.touch()
     async_engine = create_async_engine(_async_url(path))
-    monkeypatch.setattr(program_module, "upgrade_database", lambda: upgrade_database(async_engine))
+    monkeypatch.setattr(
+        program_module, "upgrade_database", lambda: upgrade_database(async_engine)
+    )
     _patch_startup_dependencies(async_engine, monkeypatch, tmp_path)
     monkeypatch.setattr(
         program_module,
@@ -216,7 +250,9 @@ async def test_default_user_retries_after_failure(tmp_path, monkeypatch):
     import module.update.startup as startup_module
 
     async_engine = create_async_engine(_async_url(tmp_path / "retry.db"))
-    monkeypatch.setattr(program_module, "upgrade_database", lambda: upgrade_database(async_engine))
+    monkeypatch.setattr(
+        program_module, "upgrade_database", lambda: upgrade_database(async_engine)
+    )
     _patch_startup_dependencies(async_engine, monkeypatch, tmp_path)
     real_ensure_default_user = startup_module.ensure_default_user
     attempts = 0
@@ -236,7 +272,10 @@ async def test_default_user_retries_after_failure(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="injected initialization failure"):
         await program_module.Program().startup()
-    assert await _scalar(async_engine, "SELECT version_num FROM alembic_version") == CURRENT_REVISION
+    assert (
+        await _scalar(async_engine, "SELECT version_num FROM alembic_version")
+        == CURRENT_REVISION
+    )
 
     result = await program_module.Program().startup()
 
@@ -295,7 +334,10 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
 
     assert calls == ["mikan", "tmdb"]
     assert (tmp_path / "data" / "posters" / "repaired.jpg").read_bytes() == b"poster"
-    assert await _scalar(async_engine, "SELECT poster_link FROM bangumi") == "posters/repaired.jpg"
+    assert (
+        await _scalar(async_engine, "SELECT poster_link FROM bangumi")
+        == "posters/repaired.jpg"
+    )
     await async_engine.dispose()
 
 
@@ -306,7 +348,9 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
     import module.update.poster_cache as poster_module
     from module.rss import RSSEngine
 
-    async_engine = await _make_git_schema_fixture(tmp_path / "mikan-poster.db", "current")
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "mikan-poster.db", "current"
+    )
     async with async_engine.begin() as connection:
         await connection.execute(
             text("UPDATE bangumi SET poster_link = 'posters/missing.jpg'")
@@ -332,7 +376,10 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
     await poster_module.ensure_poster_cache()
 
     assert calls == [("mikan", "https://mikan.example/torrent")]
-    assert await _scalar(async_engine, "SELECT poster_link FROM bangumi") == "posters/from-mikan.jpg"
+    assert (
+        await _scalar(async_engine, "SELECT poster_link FROM bangumi")
+        == "posters/from-mikan.jpg"
+    )
     await async_engine.dispose()
 
 
@@ -341,9 +388,13 @@ async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
     import module.update.poster_cache as poster_module
     from module.rss import RSSEngine
 
-    async_engine = await _make_git_schema_fixture(tmp_path / "existing-poster.db", "current")
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "existing-poster.db", "current"
+    )
     async with async_engine.begin() as connection:
-        await connection.execute(text("UPDATE bangumi SET poster_link = 'posters/existing.jpg'"))
+        await connection.execute(
+            text("UPDATE bangumi SET poster_link = 'posters/existing.jpg'")
+        )
     monkeypatch.chdir(tmp_path)
     Path("data/posters").mkdir(parents=True)
     Path("data/posters/existing.jpg").write_bytes(b"original")
@@ -385,7 +436,9 @@ async def test_ensure_torrent_hashes_repairs_missing_hash(tmp_path, monkeypatch)
     import module.update.torrent_hash as hash_module
     from module.rss import RSSEngine
 
-    async_engine = await _make_git_schema_fixture(tmp_path / "missing-hash.db", "current")
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "missing-hash.db", "current"
+    )
     monkeypatch.setattr(hash_module, "RSSEngine", lambda: RSSEngine(async_engine))
     monkeypatch.setattr(
         hash_module.torrent_hash,
@@ -404,7 +457,9 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
     import module.update.torrent_hash as hash_module
     from module.rss import RSSEngine
 
-    async_engine = await _make_git_schema_fixture(tmp_path / "mixed-hashes.db", "current")
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "mixed-hashes.db", "current"
+    )
     async with async_engine.begin() as connection:
         await connection.execute(
             text(
@@ -424,8 +479,14 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
     await hash_module.ensure_torrent_hashes()
 
     assert resolved_urls == ["magnet:?xt=test"]
-    assert await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 1") == "repaired-hash"
-    assert await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 2") == "keep-hash"
+    assert (
+        await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 1")
+        == "repaired-hash"
+    )
+    assert (
+        await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 2")
+        == "keep-hash"
+    )
     await async_engine.dispose()
 
 
@@ -435,7 +496,10 @@ async def test_fresh_upgrade_creates_current_schema(tmp_path):
 
     await upgrade_database(async_engine)
 
-    assert await _scalar(async_engine, "SELECT version_num FROM alembic_version") == CURRENT_REVISION
+    assert (
+        await _scalar(async_engine, "SELECT version_num FROM alembic_version")
+        == CURRENT_REVISION
+    )
     await _assert_current_schema(async_engine)
     await async_engine.dispose()
 
@@ -449,7 +513,9 @@ async def test_fresh_upgrade_creates_current_schema(tmp_path):
         ("current", "0003_remove_rss_foreign_key"),
     ],
 )
-async def test_unversioned_git_schema_adopts_to_head(tmp_path, state, expected_revision):
+async def test_unversioned_git_schema_adopts_to_head(
+    tmp_path, state, expected_revision
+):
     async_engine = await _make_git_schema_fixture(tmp_path / f"{state}.db", state)
     async with async_engine.connect() as connection:
         assert await connection.run_sync(_detect_legacy_revision) == expected_revision
@@ -458,7 +524,10 @@ async def test_unversioned_git_schema_adopts_to_head(tmp_path, state, expected_r
 
     assert await _scalar(async_engine, "SELECT COUNT(*) FROM torrent") == 1
     assert await _scalar(async_engine, "SELECT password FROM user") == "hashed-password"
-    assert await _scalar(async_engine, "SELECT version_num FROM alembic_version") == CURRENT_REVISION
+    assert (
+        await _scalar(async_engine, "SELECT version_num FROM alembic_version")
+        == CURRENT_REVISION
+    )
     await _assert_current_schema(async_engine)
     await async_engine.dispose()
 
@@ -474,10 +543,13 @@ async def test_unknown_or_partial_schema_fails_closed(tmp_path):
 
     with pytest.raises(RuntimeError, match="Unsupported"):
         await upgrade_database(async_engine)
-    assert await _scalar(
-        async_engine,
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
-    ) == 0
+    assert (
+        await _scalar(
+            async_engine,
+            "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
+        )
+        == 0
+    )
     await async_engine.dispose()
 
 
@@ -494,10 +566,13 @@ async def test_hash_absent_without_rss_fk_is_unsupported(tmp_path):
 
     with pytest.raises(RuntimeError, match="Unsupported"):
         await upgrade_database(async_engine)
-    assert await _scalar(
-        async_engine,
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
-    ) == 0
+    assert (
+        await _scalar(
+            async_engine,
+            "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
+        )
+        == 0
+    )
     await async_engine.dispose()
 
 
@@ -517,10 +592,13 @@ async def test_unknown_extra_column_fails_closed(tmp_path):
 
     with pytest.raises(RuntimeError, match="Unsupported"):
         await upgrade_database(async_engine)
-    assert await _scalar(
-        async_engine,
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
-    ) == 0
+    assert (
+        await _scalar(
+            async_engine,
+            "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
+        )
+        == 0
+    )
     await async_engine.dispose()
 
 
@@ -537,23 +615,31 @@ async def test_already_versioned_database_uses_normal_upgrade(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_real_migration_failure_aborts_startup_without_false_head(tmp_path, monkeypatch):
+async def test_real_migration_failure_aborts_startup_without_false_head(
+    tmp_path, monkeypatch
+):
     import module.core.program as program_module
 
     async_engine = await _make_git_schema_fixture(tmp_path / "failed.db", "baseline")
 
-    def fail_hash_migration(_connection, _cursor, statement, _parameters, _context, _executemany):
+    def fail_hash_migration(
+        _connection, _cursor, statement, _parameters, _context, _executemany
+    ):
         if "HASH" in statement.upper() and "TORRENT" in statement.upper():
             raise RuntimeError("injected migration failure")
 
     event.listen(async_engine.sync_engine, "before_cursor_execute", fail_hash_migration)
-    monkeypatch.setattr(program_module, "upgrade_database", lambda: upgrade_database(async_engine))
+    monkeypatch.setattr(
+        program_module, "upgrade_database", lambda: upgrade_database(async_engine)
+    )
 
     try:
         with pytest.raises(RuntimeError, match="injected migration failure"):
             await program_module.Program().startup()
     finally:
-        event.remove(async_engine.sync_engine, "before_cursor_execute", fail_hash_migration)
+        event.remove(
+            async_engine.sync_engine, "before_cursor_execute", fail_hash_migration
+        )
 
     assert "hash" not in await _columns(async_engine, "torrent")
     version_table_exists = await _scalar(
@@ -561,7 +647,9 @@ async def test_real_migration_failure_aborts_startup_without_false_head(tmp_path
         "SELECT COUNT(*) FROM sqlite_master WHERE name = 'alembic_version'",
     )
     if version_table_exists:
-        assert await _scalar(async_engine, "SELECT version_num FROM alembic_version") in {
+        assert await _scalar(
+            async_engine, "SELECT version_num FROM alembic_version"
+        ) in {
             None,
             "0001_baseline",
         }

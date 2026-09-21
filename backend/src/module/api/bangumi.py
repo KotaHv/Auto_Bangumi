@@ -12,9 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "/get/all", response_model=list[Bangumi]
-)
+@router.get("/get/all", response_model=list[Bangumi])
 async def get_all_data():
     async with TorrentManager() as manager:
         return await manager.bangumi.search_all()

@@ -28,9 +28,7 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/restart", response_model=APIResponse
-)
+@router.post("/restart", response_model=APIResponse)
 async def restart():
     try:
         resp = await program.restart()
@@ -47,9 +45,7 @@ async def restart():
         ) from e
 
 
-@router.post(
-    "/start", response_model=APIResponse
-)
+@router.post("/start", response_model=APIResponse)
 async def start():
     try:
         resp = await program.start()
@@ -66,9 +62,7 @@ async def start():
         ) from e
 
 
-@router.post(
-    "/stop", response_model=APIResponse
-)
+@router.post("/stop", response_model=APIResponse)
 async def stop():
     return u_response(await program.stop())
 
@@ -89,9 +83,7 @@ async def program_status():
         }
 
 
-@router.post(
-    "/shutdown", response_model=APIResponse
-)
+@router.post("/shutdown", response_model=APIResponse)
 async def shutdown_program():
     await program.stop()
     logger.info("Shutting down program...")

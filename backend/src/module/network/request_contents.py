@@ -50,7 +50,7 @@ class RequestContent(RequestURL):
                 if isinstance(limit, int) and len(torrents) >= limit:
                     break
             return torrents
-        except (AttributeError, TypeError, ValueError, re.error):
+        except AttributeError, TypeError, ValueError, re.error:
             logger.warning("[Network] Invalid torrent feed: {}", _url)
             return []
 
