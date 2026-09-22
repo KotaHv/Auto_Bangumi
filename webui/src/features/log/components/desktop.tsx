@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import type { LogLayoutProps, LogLevelFilter, LogLineLimit } from '../types';
 
 function getTypeStyle(type: string) {

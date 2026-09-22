@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/table';
 import type { RSS } from '../types/rss';
 import type { RSSLayoutProps } from '../types/page';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { Spinner } from '@/components/ui/spinner';
 import { AbRssLink } from './ab-rss-link';
 import { AbRssTags } from './ab-rss-tags';

@@ -4,7 +4,7 @@ import { AbPassword } from '@/components/shared/ab-password';
 import { AbSelect } from '@/components/shared/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { AbDynamicTags } from '@/components/shared/ab-dynamic-tags';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import type { ConfigControlType, ConfigFieldDefinition } from './types';
 
 type ConfigValueFor<TType extends ConfigControlType> = TType extends 'input'

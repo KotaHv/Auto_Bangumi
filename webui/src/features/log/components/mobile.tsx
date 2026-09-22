@@ -22,7 +22,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import type { LogLayoutProps, LogLine, LogLineLimit } from '../types';
 
 function getTypeStyle(type: string) {

@@ -5,7 +5,7 @@ import {
   DialogTrigger,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import type { ReactElement, ReactNode } from 'react';
 
 export type AbPopupWidth = 'sm' | 'md' | 'lg' | 'xl';

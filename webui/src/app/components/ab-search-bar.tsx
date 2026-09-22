@@ -5,7 +5,7 @@ import { AbSearch } from '@/features/search/components/ab-search';
 import { AbBangumiCard } from '@/features/bangumi/components/ab-bangumi-card';
 import { AbBangumiReview } from '@/features/rss/components/ab-bangumi-review';
 import { AbPopup } from '@/components/shared/ab-popup';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { searchProviderOptions } from '@/features/search/queries';
 import { useSearchSSE } from '@/features/search/hooks/use-search-sse';
 import type { SearchResult } from '@/features/search/types';

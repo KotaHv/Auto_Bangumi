@@ -11,7 +11,7 @@ import {
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AbPopupWidth } from '@/components/shared/ab-popup';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 const WIDTH_CLASS: Record<AbPopupWidth, string> = {
   sm: 'w-[280px]',
