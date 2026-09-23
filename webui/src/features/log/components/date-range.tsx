@@ -70,18 +70,20 @@ export function LogDateRange({
           autoFocus
           className="w-full! p-0"
         />
-        <div className="flex items-center justify-between gap-2 border-t p-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!hasDate}
-            onClick={() => setDraftRange(undefined)}
-          >
-            {t('log.clear_date_range')}
-          </Button>
+        <div className="flex items-center gap-2 border-t p-2">
+          {hasDate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDraftRange(undefined)}
+            >
+              {t('log.clear_date_range')}
+            </Button>
+          )}
           <Button
             variant="brand"
             size="sm"
+            className="ml-auto"
             onClick={() => {
               onChange(draftRange);
               setOpen(false);
