@@ -17,6 +17,7 @@ router = APIRouter(prefix="/log", tags=["log"], dependencies=[Depends(require_se
 TAIL_POLL_INTERVAL_SECONDS = 1
 
 
+# Keep SQLite-backed routes synchronous: FastAPI runs def handlers in its thread pool.
 @router.get("", response_model=LogPage)
 def get_log(
     log_manager: LogManagerDep,
@@ -110,6 +111,7 @@ async def _tail_event_stream(
         await asyncio.sleep(TAIL_POLL_INTERVAL_SECONDS)
 
 
+# Keep SQLite-backed routes synchronous: FastAPI runs def handlers in its thread pool.
 @router.delete("", response_model=ClearLogResult)
 def clear_log(log_manager: LogManagerDep):
     return ClearLogResult(deleted_count=log_manager.database.clear())
