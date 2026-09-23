@@ -128,6 +128,7 @@
     "tail_resume": "恢复",
     "tail_retry": "重试连接",
     "clear_date_range": "清除日期范围",
+    "confirm_date_range": "确认",
     "clear_filters": "清除筛选",
     "cleared": "已清空 {count} 条日志",
     "collapse": "收起",

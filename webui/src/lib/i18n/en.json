@@ -128,6 +128,7 @@
     "tail_resume": "Resume",
     "tail_retry": "Retry connection",
     "clear_date_range": "Clear date range",
+    "confirm_date_range": "Apply",
     "clear_filters": "Clear filters",
     "cleared": "Cleared {count} log(s)",
     "collapse": "Collapse",

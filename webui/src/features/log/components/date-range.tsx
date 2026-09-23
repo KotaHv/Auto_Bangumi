@@ -27,10 +27,20 @@ export function LogDateRange({
   const { t, i18n } = useTranslation();
   const locale = i18n.language.toLowerCase().startsWith('zh') ? zhCN : enUS;
   const [open, setOpen] = useState(false);
+  const [draftRange, setDraftRange] = useState(range);
   const label = formatDateRangeLabel(range?.from, range?.to);
+  const hasDate = Boolean(
+    range?.from || range?.to || draftRange?.from || draftRange?.to,
+  );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) setDraftRange(range);
+        setOpen(nextOpen);
+      }}
+    >
       <PopoverTrigger
         render={
           <Button
@@ -47,31 +57,39 @@ export function LogDateRange({
           </Button>
         }
       />
-      <PopoverContent className="w-(--anchor-width) min-w-0 p-0" align="start">
+      <PopoverContent
+        className="w-(--anchor-width) min-w-0 p-0 shadow-sm"
+        align="start"
+      >
         <Calendar
           mode="range"
-          selected={range}
-          onSelect={onChange}
+          selected={draftRange}
+          onSelect={setDraftRange}
           numberOfMonths={1}
           locale={locale}
           autoFocus
-          className="w-full!"
+          className="w-full! p-0"
         />
-        {label && (
-          <div className="border-t p-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full"
-              onClick={() => {
-                onChange(undefined);
-                setOpen(false);
-              }}
-            >
-              {t('log.clear_date_range')}
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center justify-between gap-2 border-t p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!hasDate}
+            onClick={() => setDraftRange(undefined)}
+          >
+            {t('log.clear_date_range')}
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            onClick={() => {
+              onChange(draftRange);
+              setOpen(false);
+            }}
+          >
+            {t('log.confirm_date_range')}
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
