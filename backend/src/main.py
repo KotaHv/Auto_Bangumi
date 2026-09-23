@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -108,7 +109,15 @@ app = create_app()
 
 @app.get("/posters/{path:path}", tags=["posters"])
 def posters(path: str):
-    return FileResponse(f"data/posters/{path}")
+    try:
+        poster_root = Path("data/posters").resolve(strict=True)
+        poster_path = (poster_root / path).resolve(strict=True)
+        if not poster_path.is_relative_to(poster_root) or not poster_path.is_file():
+            raise HTTPException(status_code=404)
+    except OSError, RuntimeError, ValueError:
+        raise HTTPException(status_code=404) from None
+
+    return FileResponse(poster_path)
 
 
 if VERSION != "DEV_VERSION":
