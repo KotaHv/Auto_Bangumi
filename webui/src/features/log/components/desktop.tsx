@@ -87,47 +87,50 @@ export function LogDesktop({
     <div className="flex h-full min-h-0 overflow-hidden p-4 md:p-6">
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4">
         <Card className="shrink-0 rounded-2xl [--card-spacing:0px]">
-          <CardContent className="flex flex-wrap items-center gap-2 px-4 py-3">
-            <LogLevelFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="bg-background w-32 text-xs"
-            />
-
-            <Separator
-              orientation="vertical"
-              className="mx-1 h-8 self-center!"
-            />
-
-            <LogDateFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="w-56"
-            />
-
-            <Separator
-              orientation="vertical"
-              className="mx-1 h-8 self-center!"
-            />
-
-            <LogModuleFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="h-8 w-48 text-xs"
-            />
-            <Separator
-              orientation="vertical"
-              className="mx-1 h-8 self-center!"
-            />
-            <LogQueryFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="h-8 w-56 text-xs"
-            />
-
-            <div className="ml-auto flex items-center gap-1">
-              <LogClearFilters filters={filters} setFilters={setFilters} />
+          <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+            <div className="grid min-w-0 grid-cols-[0.7fr_1fr_1fr_1fr] items-center gap-2">
+              <LogLevelFilter
+                filters={filters}
+                setFilters={setFilters}
+                className="bg-background w-full min-w-0 text-xs"
+              />
+              <div className="flex min-w-0 items-center gap-2">
+                <Separator
+                  orientation="vertical"
+                  className="h-8 shrink-0 self-center!"
+                />
+                <LogDateFilter
+                  filters={filters}
+                  setFilters={setFilters}
+                  className="min-w-0 flex-1"
+                />
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <Separator
+                  orientation="vertical"
+                  className="h-8 shrink-0 self-center!"
+                />
+                <LogModuleFilter
+                  filters={filters}
+                  setFilters={setFilters}
+                  className="h-8 min-w-0 flex-1 text-xs"
+                />
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <Separator
+                  orientation="vertical"
+                  className="h-8 shrink-0 self-center!"
+                />
+                <LogQueryFilter
+                  filters={filters}
+                  setFilters={setFilters}
+                  className="h-8 min-w-0 flex-1 text-xs"
+                />
+              </div>
             </div>
+            {hasFilters && (
+              <LogClearFilters filters={filters} setFilters={setFilters} />
+            )}
           </CardContent>
         </Card>
 
