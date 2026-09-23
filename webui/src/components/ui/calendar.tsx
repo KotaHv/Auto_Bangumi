@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cn } from 'cn';
+import { differenceInCalendarDays } from 'date-fns';
 import {
   DayPicker,
   getDefaultClassNames,
@@ -15,6 +16,9 @@ import {
   ChevronRightIcon,
   ChevronDownIcon,
 } from 'lucide-react';
+
+const rangeBackground =
+  'bg-center bg-no-repeat [background-size:100%_calc(100%-4px)]';
 
 function Calendar({
   className,
@@ -30,12 +34,17 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
   const defaultClassNames = getDefaultClassNames();
+  const hasRangeSpan =
+    props.mode === 'range' &&
+    props.selected?.from &&
+    props.selected.to &&
+    differenceInCalendarDays(props.selected.to, props.selected.from) > 0;
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        'group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+        'group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] [--range-fill:color-mix(in_srgb,var(--brand)_24%,transparent)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className,
@@ -114,18 +123,25 @@ function Calendar({
           defaultClassNames.day,
         ),
         range_start: cn(
-          'relative isolate z-0 rounded-l-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-muted',
+          'rounded-none',
+          hasRangeSpan &&
+            'bg-[linear-gradient(to_right,transparent_50%,var(--range-fill)_50%)]',
+          rangeBackground,
           defaultClassNames.range_start,
         ),
-        range_middle: cn('rounded-none', defaultClassNames.range_middle),
+        range_middle: cn(
+          'rounded-none bg-[linear-gradient(var(--range-fill),var(--range-fill))]',
+          rangeBackground,
+          defaultClassNames.range_middle,
+        ),
         range_end: cn(
-          'relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted',
+          'rounded-none',
+          hasRangeSpan &&
+            'bg-[linear-gradient(to_right,var(--range-fill)_50%,transparent_50%)]',
+          rangeBackground,
           defaultClassNames.range_end,
         ),
-        today: cn(
-          'rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none',
-          defaultClassNames.today,
-        ),
+        today: cn('bg-transparent text-foreground', defaultClassNames.today),
         outside: cn(
           'text-muted-foreground aria-selected:text-muted-foreground',
           defaultClassNames.outside,
@@ -195,6 +211,7 @@ function CalendarDayButton({
   ...props
 }: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
   const defaultClassNames = getDefaultClassNames();
+  const isSelectedDay = modifiers.selected && !modifiers.range_middle;
 
   const ref = React.useRef<HTMLButtonElement>(null);
   React.useEffect(() => {
@@ -203,6 +220,7 @@ function CalendarDayButton({
 
   return (
     <Button
+      ref={ref}
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString(locale?.code)}
@@ -216,8 +234,25 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        'group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) [&>span]:text-xs [&>span]:opacity-70',
-        defaultClassNames.day,
+        'relative z-10 m-[2px_auto] flex aspect-square size-auto w-[calc(100%-4px)] min-w-0 flex-col gap-1 rounded-(--cell-radius) border-0 leading-none font-normal hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] hover:text-inherit focus:border-transparent focus:shadow-none focus:outline-none focus-visible:ring-0 dark:hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] [&>span]:text-xs [&>span]:opacity-70',
+        isSelectedDay &&
+          'text-(--sidebar-primary-foreground) hover:text-(--sidebar-primary-foreground)',
+        isSelectedDay &&
+          (modifiers.focused
+            ? 'bg-[color-mix(in_srgb,var(--brand)_78%,black)] hover:bg-[color-mix(in_srgb,var(--brand)_78%,black)] dark:hover:bg-[color-mix(in_srgb,var(--brand)_78%,black)]'
+            : 'bg-brand hover:bg-[color-mix(in_srgb,var(--brand)_88%,black)] dark:hover:bg-[color-mix(in_srgb,var(--brand)_88%,black)]'),
+        modifiers.range_middle &&
+          (modifiers.focused
+            ? 'bg-[color-mix(in_srgb,var(--brand)_32%,var(--background))] hover:bg-[color-mix(in_srgb,var(--brand)_32%,var(--background))] dark:hover:bg-[color-mix(in_srgb,var(--brand)_32%,var(--background))]'
+            : 'text-foreground bg-transparent hover:bg-[color-mix(in_srgb,var(--brand)_32%,var(--background))] dark:hover:bg-[color-mix(in_srgb,var(--brand)_32%,var(--background))]'),
+        modifiers.focused &&
+          !modifiers.selected &&
+          'bg-[color-mix(in_srgb,var(--brand)_24%,var(--background))] hover:bg-[color-mix(in_srgb,var(--brand)_24%,var(--background))] dark:hover:bg-[color-mix(in_srgb,var(--brand)_24%,var(--background))]',
+        modifiers.today &&
+          !modifiers.selected &&
+          !modifiers.focused &&
+          'shadow-[inset_0_0_0_1px_var(--muted-foreground)]',
+        defaultClassNames.day_button,
         className,
       )}
       {...props}
