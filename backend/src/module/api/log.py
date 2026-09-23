@@ -18,7 +18,7 @@ TAIL_POLL_INTERVAL_SECONDS = 1
 
 
 @router.get("", response_model=LogPage)
-async def get_log(
+def get_log(
     log_manager: LogManagerDep,
     level: str | None = None,
     start: datetime | None = None,
@@ -111,5 +111,5 @@ async def _tail_event_stream(
 
 
 @router.delete("", response_model=ClearLogResult)
-async def clear_log(log_manager: LogManagerDep):
+def clear_log(log_manager: LogManagerDep):
     return ClearLogResult(deleted_count=log_manager.database.clear())
