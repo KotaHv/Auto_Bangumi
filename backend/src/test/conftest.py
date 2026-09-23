@@ -10,10 +10,7 @@ from module.logger import LoggerManager
 
 @pytest.fixture
 def isolated_log_manager(tmp_path: Path) -> Iterator[LoggerManager]:
-    manager = LoggerManager(
-        database=LogDatabase(path=tmp_path / "logs.db"),
-        log_path=tmp_path / "data" / "log.txt",
-    )
+    manager = LoggerManager(database=LogDatabase(path=tmp_path / "logs.db"))
     try:
         yield manager
     finally:

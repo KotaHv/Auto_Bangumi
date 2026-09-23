@@ -9,7 +9,7 @@ from sqlalchemy import inspect
 from sqlmodel import Session, SQLModel, col, select
 
 from module.database.log import LogDatabase
-from module.logger import LoggerManager, console_only
+from module.logger import LoggerManager, skip_database_log
 from module.models.log import LOG_METADATA, LogEntry
 
 
@@ -52,7 +52,8 @@ def test_log_schema_is_independent_from_business_metadata(tmp_path: Path):
 
 def test_durable_database_is_created_on_init(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    manager = LoggerManager(log_path=tmp_path / "data" / "log.txt")
+    monkeypatch.chdir(tmp_path)
+    manager = LoggerManager()
     try:
         assert (tmp_path / "data" / "logs.db").exists()
     finally:
@@ -81,12 +82,8 @@ def test_durable_database_follows_cwd(tmp_path: Path, monkeypatch):
 
 def test_history_survives_restart(tmp_path: Path):
     database_path = tmp_path / "logs.db"
-    log_path = tmp_path / "log.txt"
 
-    first = LoggerManager(
-        database=LogDatabase(path=database_path),
-        log_path=log_path,
-    )
+    first = LoggerManager(database=LogDatabase(path=database_path))
     first.setup(debug_enabled=False)
     try:
         logger.info("persisted across restart")
@@ -94,10 +91,7 @@ def test_history_survives_restart(tmp_path: Path):
     finally:
         asyncio.run(first.shutdown())
 
-    second = LoggerManager(
-        database=LogDatabase(path=database_path),
-        log_path=log_path,
-    )
+    second = LoggerManager(database=LogDatabase(path=database_path))
     second.setup(debug_enabled=False)
     try:
         with Session(second.database.engine) as session:
@@ -191,7 +185,7 @@ def test_config_reconfiguration_rebuilds_sinks_once(manager_and_database, monkey
     ]
 
 
-def test_debug_enabled_records_debug_in_all_sinks(manager_and_database, tmp_path):
+def test_debug_enabled_records_debug(manager_and_database):
     manager, database = manager_and_database
     manager.setup(debug_enabled=True)
 
@@ -200,31 +194,29 @@ def test_debug_enabled_records_debug_in_all_sinks(manager_and_database, tmp_path
     )
     logger.complete()
 
-    assert (tmp_path / "data" / "log.txt").read_text().count("debug visible") == 1
     with Session(database.engine) as session:
         entries = session.exec(select(LogEntry).order_by(col(LogEntry.id))).all()
 
     assert [entry.level_no for entry in entries] == [logging.DEBUG]
 
 
-def test_debug_disabled_excludes_debug_from_all_sinks(manager_and_database, tmp_path):
+def test_debug_disabled_excludes_debug(manager_and_database):
     manager, database = manager_and_database
 
     logger.patch(lambda record: record.update(name="module.test")).debug("debug hidden")
     logger.info("info visible")
     logger.complete()
 
-    assert "debug hidden" not in (tmp_path / "data" / "log.txt").read_text()
     with Session(database.engine) as session:
         entries = session.exec(select(LogEntry).order_by(col(LogEntry.id))).all()
 
     assert [entry.message for entry in entries] == ["info visible"]
 
 
-def test_skip_database_excludes_record_from_sqlite_only(manager_and_database, tmp_path):
+def test_skip_database_excludes_record_from_sqlite(manager_and_database):
     manager, database = manager_and_database
 
-    console_only().info("banner line")
+    skip_database_log().info("banner line")
     logger.info("normal line")
     logger.complete()
 
@@ -232,6 +224,3 @@ def test_skip_database_excludes_record_from_sqlite_only(manager_and_database, tm
         entries = session.exec(select(LogEntry).order_by(col(LogEntry.id))).all()
 
     assert [entry.message for entry in entries] == ["normal line"]
-    text = (tmp_path / "data" / "log.txt").read_text()
-    assert "banner line" in text
-    assert "normal line" in text

@@ -1,30 +1,47 @@
 import type { RefObject } from 'react';
 
-export interface LogLine {
-  index: number;
-  date: string;
-  type: string;
-  module: string;
-  content: string;
+export interface LogEntry {
+  id: number;
+  timestamp: string;
+  level: string;
+  message: string;
+  module: string | null;
+  function: string;
+  line: number;
+  exception: string | null;
 }
 
-export type LogLevelFilter = 'ALL' | 'INFO' | 'WARNING' | 'ERROR' | 'DEBUG';
-export type LogLineLimit = number | null;
+export interface LogPage {
+  items: LogEntry[];
+  next_cursor: number | null;
+  has_more: boolean;
+}
 
-export interface LogLayoutProps {
-  log: LogLine[];
-  visibleLog: LogLine[];
+export interface ClearLogResult {
+  deleted_count: number;
+}
+
+export interface LogFilters {
+  level: string | null;
+  start: string | null;
+  end: string | null;
+  module: string;
+  query: string;
+}
+
+export type LogLoadingState = 'idle' | 'loading' | 'refreshing';
+
+export type LogLayoutProps = {
+  entries: LogEntry[];
   loaded: boolean;
-  loading: false | 'visible' | 'silent';
-  debugEnable: boolean;
-  filterLevel: LogLevelFilter;
-  setFilterLevel: (level: LogLevelFilter) => void;
-  lineLimit: LogLineLimit;
-  setLineLimit: (limit: LogLineLimit) => void;
-  pollingActive: boolean;
-  togglePolling: () => void;
+  loading: LogLoadingState;
+  filters: LogFilters;
+  setFilters: (filters: LogFilters) => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMoreFailed: boolean;
+  onLoadMore: () => void;
   logContainerRef: RefObject<HTMLElement | null>;
-  getLog: (lineLimit?: LogLineLimit, showLoading?: boolean) => Promise<void>;
   onReset: () => void;
   copy: () => Promise<void>;
-}
+};

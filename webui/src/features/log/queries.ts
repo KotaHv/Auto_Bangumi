@@ -1,15 +1,19 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions } from '@tanstack/react-query';
 import { apiLog } from './api';
+import type { LogFilters, LogPage } from './types';
 
 export const logKeys = {
   all: ['log'] as const,
-  lines: (lineLimit: number | null) => [...logKeys.all, lineLimit] as const,
+  pages: (filters: LogFilters) => [...logKeys.all, 'pages', filters] as const,
 };
 
-export function logOptions(lineLimit: number | null) {
-  return queryOptions({
-    queryKey: logKeys.lines(lineLimit),
-    queryFn: ({ signal }) => apiLog.getLog(lineLimit, signal),
+export function logPagesOptions(filters: LogFilters) {
+  return infiniteQueryOptions({
+    queryKey: logKeys.pages(filters),
+    queryFn: ({ pageParam, signal }) =>
+      apiLog.getLog(filters, pageParam, signal),
+    initialPageParam: null as number | null,
+    getNextPageParam: (lastPage: LogPage) => lastPage.next_cursor,
     meta: { requiresAuth: true },
   });
 }

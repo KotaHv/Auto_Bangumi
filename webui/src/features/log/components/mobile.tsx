@@ -1,20 +1,18 @@
+import { useState } from 'react';
 import {
-  Bug,
-  CircleAlert,
   Clipboard,
+  CircleAlert,
   FileText,
-  Pause,
-  Play,
-  RefreshCw,
+  Loader2,
   RotateCcw,
-  TriangleAlert,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { AbFloatingBar } from '@/components/shared/ab-floating-bar';
-import { AbSelect } from '@/components/shared/ab-select';
 import {
   Empty,
   EmptyHeader,
@@ -23,164 +21,137 @@ import {
 } from '@/components/ui/empty';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from 'cn';
-import type { LogLayoutProps, LogLine, LogLineLimit } from '../types';
-
-function getTypeStyle(type: string) {
-  switch (type) {
-    case 'ERROR':
-      return 'text-destructive bg-destructive/10';
-    case 'WARNING':
-      return 'text-amber-600 bg-amber-500/10 dark:text-amber-400';
-    case 'DEBUG':
-      return 'text-muted-foreground bg-muted';
-    default:
-      return 'text-brand bg-brand/10';
-  }
-}
+import { hasActiveFilters } from '../filters';
+import {
+  LogClearFiltersIcon,
+  LogDateFilter,
+  LogLevelFilter,
+  LogModuleFilter,
+  LogQueryFilter,
+} from './filter-controls';
+import type { LogEntry, LogLayoutProps } from '../types';
+import { formatLocalTime, getLevelStyle } from './presentation';
 
 const MobileLogRow = memo(function MobileLogRow({
-  item,
-  debugEnable,
+  entry,
 }: {
-  item: LogLine;
-  debugEnable: boolean;
+  entry: LogEntry;
 }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
   return (
     <Card className="border-border rounded-2xl px-4 py-3 [--card-spacing:0px]">
       <CardContent>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-muted-foreground/60 shrink-0 font-mono text-xs font-semibold tabular-nums">
-              #{item.index + 1}
+              #{entry.id}
             </span>
             <span className="min-w-0 flex-1 font-mono text-sm break-all whitespace-normal tabular-nums">
-              {item.date || '-'}
+              {formatLocalTime(entry.timestamp)}
             </span>
           </div>
 
           <span
             className={cn(
               'inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-semibold tracking-wide',
-              getTypeStyle(item.type),
+              getLevelStyle(entry.level),
             )}
           >
-            {item.type || 'LOG'}
+            {entry.level}
           </span>
         </div>
 
-        {debugEnable && item.module && (
-          <div className="mt-2 font-mono text-sm wrap-break-word break-all whitespace-pre-wrap text-cyan-700 dark:text-cyan-300">
-            {item.module}
+        <div className="text-muted-foreground mt-2 flex min-w-0 gap-1 text-xs">
+          <span className="shrink-0">{t('log.module')}:</span>
+          <span className="min-w-0 font-mono break-all">
+            {entry.module ?? '-'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-label={open ? t('log.collapse') : t('log.expand')}
+          className="mt-2 flex w-full items-start gap-1.5 text-left"
+        >
+          <span className="text-muted-foreground hover:text-foreground mt-1 flex size-5 shrink-0 items-center justify-center">
+            {open ? (
+              <ChevronDown className="size-3.5" />
+            ) : (
+              <ChevronRight className="size-3.5" />
+            )}
+          </span>
+          <span className="min-w-0 flex-1 text-base leading-relaxed wrap-break-word whitespace-pre-wrap">
+            {entry.message}
+          </span>
+        </button>
+
+        {open && (
+          <div className="text-muted-foreground mt-1 space-y-1 font-mono text-xs">
+            <div>
+              {t('log.at')} {entry.function}:{entry.line}
+            </div>
+            {entry.exception && (
+              <pre className="bg-muted overflow-x-auto rounded-md p-2 whitespace-pre-wrap">
+                {entry.exception}
+              </pre>
+            )}
           </div>
         )}
-
-        <div className="mt-2 text-base leading-relaxed wrap-break-word whitespace-pre-wrap">
-          {item.content}
-        </div>
       </CardContent>
     </Card>
   );
 });
 
 export function LogMobile({
-  log,
-  visibleLog,
+  entries,
   loaded,
   loading,
-  debugEnable,
-  filterLevel,
-  setFilterLevel,
-  lineLimit,
-  setLineLimit,
-  pollingActive,
-  togglePolling,
+  filters,
+  setFilters,
+  hasMore,
+  loadingMore,
+  loadMoreFailed,
+  onLoadMore,
   logContainerRef,
-  getLog,
   onReset,
   copy,
 }: LogLayoutProps) {
   const { t } = useTranslation();
-  const errorCount = log.filter((item) => item.type === 'ERROR').length;
-  const warningCount = log.filter((item) => item.type === 'WARNING').length;
-  const levelItems = [
-    { value: 'ALL', label: t('log.levels.all') },
-    { value: 'INFO', label: 'INFO' },
-    { value: 'WARNING', label: 'WARNING' },
-    { value: 'ERROR', label: 'ERROR' },
-    { value: 'DEBUG', label: 'DEBUG' },
-  ];
-  const lineLimitItems = [
-    { value: '100', label: '100' },
-    { value: '500', label: '500' },
-    { value: '1000', label: '1,000' },
-    { value: '5000', label: '5,000' },
-    { value: 'all', label: t('log.lines.all') },
-  ];
+  const hasFilters = hasActiveFilters(filters);
 
   return (
     <div className="mx-4 flex h-full min-h-0 flex-col">
       <AbFloatingBar position="top" className="w-full shadow-none">
-        <CardContent className="divide-border/60 grid w-full grid-cols-4 gap-0 divide-x">
-          <div
-            className="text-brand flex min-w-0 items-center justify-center gap-1.5 px-2 first:pl-0"
-            aria-label={`${t('log.total')}: ${loaded ? log.length : '-'}`}
-            title={t('log.total')}
-          >
-            <FileText className="size-3.5 shrink-0" />
-            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
-              {loaded ? log.length : '-'}
-            </span>
-            <span
-              className={cn(
-                'size-1 shrink-0 rounded-full',
-                pollingActive
-                  ? 'animate-pulse bg-emerald-500'
-                  : 'bg-muted-foreground/50',
-              )}
-              title={
-                pollingActive ? t('log.auto_refresh') : t('log.refresh_stopped')
-              }
+        <CardContent className="flex w-full flex-col gap-2 py-2">
+          <div className="flex items-center gap-1.5">
+            <LogLevelFilter
+              filters={filters}
+              setFilters={setFilters}
+              className="min-w-20"
+            />
+            <LogModuleFilter
+              filters={filters}
+              setFilters={setFilters}
+              className="h-8 text-xs"
+            />
+            <LogQueryFilter
+              filters={filters}
+              setFilters={setFilters}
+              className="h-8 text-xs"
             />
           </div>
 
-          <div
-            className="text-destructive flex min-w-0 items-center justify-center gap-1.5 px-2"
-            aria-label={`${t('log.errors')}: ${loaded ? errorCount : '-'}`}
-            title={t('log.errors')}
-          >
-            <TriangleAlert className="size-3.5 shrink-0" />
-            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
-              {loaded ? errorCount : '-'}
-            </span>
-          </div>
-
-          <div
-            className="flex min-w-0 items-center justify-center gap-1.5 px-2 text-amber-600 dark:text-amber-400"
-            aria-label={`${t('log.warnings')}: ${loaded ? warningCount : '-'}`}
-            title={t('log.warnings')}
-          >
-            <CircleAlert className="size-3.5 shrink-0" />
-            <span className="font-display min-w-0 truncate text-sm font-semibold tabular-nums">
-              {loaded ? warningCount : '-'}
-            </span>
-          </div>
-
-          <div
-            className="text-muted-foreground flex min-w-0 items-center justify-center gap-1.5 px-2 last:pr-0"
-            aria-label={`${t('log.debug')}: ${loaded ? (debugEnable ? t('log.enabled') : t('log.disabled')) : '-'}`}
-            title={t('log.debug')}
-          >
-            <Bug className="size-3.5 shrink-0" />
-            <span
-              className={cn(
-                'size-2 shrink-0 rounded-full',
-                loaded
-                  ? debugEnable
-                    ? 'bg-emerald-500'
-                    : 'bg-muted-foreground/50'
-                  : 'bg-muted-foreground/30',
-              )}
+          <div className="flex items-center gap-1.5">
+            <LogDateFilter
+              filters={filters}
+              setFilters={setFilters}
+              className="flex-1"
             />
+            <LogClearFiltersIcon filters={filters} setFilters={setFilters} />
           </div>
         </CardContent>
       </AbFloatingBar>
@@ -192,35 +163,58 @@ export function LogMobile({
           }}
           className={cn(
             'no-scrollbar h-full space-y-3 overscroll-none',
-            !loaded || loading === 'visible'
+            !loaded || loading === 'loading'
               ? 'overflow-hidden'
               : 'overflow-y-auto',
           )}
         >
           {!loaded ? (
             <div className="min-h-48" />
-          ) : visibleLog.length === 0 ? (
+          ) : entries.length === 0 ? (
             <Empty className="h-full min-h-0 border-0 p-6">
               <EmptyHeader>
                 <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
                   <FileText />
                 </EmptyMedia>
                 <EmptyTitle>
-                  {log.length === 0 ? t('log.empty') : t('log.no_matching')}
+                  {hasFilters ? t('log.no_matching') : t('log.empty')}
                 </EmptyTitle>
               </EmptyHeader>
             </Empty>
           ) : (
-            visibleLog.map((item) => (
-              <MobileLogRow
-                key={item.index}
-                item={item}
-                debugEnable={debugEnable}
-              />
-            ))
+            <>
+              {entries.map((entry) => (
+                <MobileLogRow key={entry.id} entry={entry} />
+              ))}
+              {hasMore && (
+                <div className="flex flex-col items-center gap-1 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={loadingMore}
+                    onClick={onLoadMore}
+                  >
+                    {loadingMore ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <ChevronDown className="size-3.5" />
+                    )}
+                    {loadMoreFailed
+                      ? t('log.load_earlier_retry')
+                      : t('log.load_earlier')}
+                  </Button>
+                  {loadMoreFailed && (
+                    <span className="text-destructive flex items-center gap-1 text-xs">
+                      <CircleAlert className="size-3.5" />
+                      {t('log.load_earlier_failed')}
+                    </span>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
-        {(!loaded || loading === 'visible') && (
+        {(!loaded || loading === 'loading') && (
           <div className="bg-card/70 absolute inset-0 z-20 flex touch-none items-center justify-center backdrop-blur-[1px]">
             <Spinner className="text-brand size-5" />
           </div>
@@ -231,56 +225,11 @@ export function LogMobile({
         position="bottom"
         className="w-full flex-wrap justify-between gap-2"
       >
-        <div className="flex min-w-0 items-center gap-1.5">
-          <AbSelect
-            value={filterLevel}
-            items={levelItems}
-            size="sm"
-            triggerClassName="min-w-18"
-            onValueChange={(value) => {
-              setFilterLevel(value as typeof filterLevel);
-            }}
-          />
-          <AbSelect
-            value={lineLimit === null ? 'all' : String(lineLimit)}
-            items={lineLimitItems}
-            size="sm"
-            triggerClassName="min-w-15"
-            onValueChange={(value) => {
-              setLineLimit(
-                value === 'all' ? null : (Number(value) as LogLineLimit),
-              );
-            }}
-          />
-        </div>
+        <span className="text-muted-foreground text-xs">
+          {t('log.loaded_count', { count: String(entries.length) })}
+        </span>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('log.update_now')}
-            title={t('log.update_now')}
-            onClick={() => getLog()}
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={
-              pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
-            }
-            title={
-              pollingActive ? t('log.stop_refresh') : t('log.start_refresh')
-            }
-            onClick={togglePolling}
-          >
-            {pollingActive ? (
-              <Pause className="size-3.5" />
-            ) : (
-              <Play className="size-3.5" />
-            )}
-          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -295,7 +244,7 @@ export function LogMobile({
             size="icon"
             aria-label={t('log.copy')}
             title={t('log.copy')}
-            onClick={copy}
+            onClick={() => void copy()}
           >
             <Clipboard className="size-3.5" />
           </Button>

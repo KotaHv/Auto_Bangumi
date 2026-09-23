@@ -4,7 +4,7 @@ from loguru import logger
 
 from module.conf import VERSION, settings
 from module.database.alembic import upgrade_database
-from module.logger import console_only
+from module.logger import skip_database_log
 from module.models import ResponseModel
 from module.update import (
     ensure_default_user,
@@ -29,10 +29,10 @@ figlet = r"""
 class Program(RenameThread, RSSThread):
     @staticmethod
     def __start_info():
-        console_logger = console_only()
+        banner_logger = skip_database_log()
 
         for line in figlet.splitlines():
-            console_logger.info(line.strip("\n"))
+            banner_logger.info(line.strip("\n"))
         logger.info("Starting AutoBangumi Version {}...", VERSION)
 
     async def startup(self):

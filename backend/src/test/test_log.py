@@ -40,10 +40,11 @@ def test_setup_configures_stdlib_hierarchy(
     )
 
 
-def test_setup_writes_text_log_to_the_manager_path(
+def test_setup_writes_no_text_log_file(
     isolated_log_manager: LoggerManager, tmp_path: Path
 ):
     isolated_log_manager.setup(debug_enabled=False)
-    logger.info("isolated text log marker")
+    logger.info("no text sink anymore")
+    logger.complete()
 
-    assert "isolated text log marker" in (tmp_path / "data" / "log.txt").read_text()
+    assert not (tmp_path / "data" / "log.txt").exists()

@@ -2,7 +2,6 @@ from .config import VERSION, settings
 from .const import (
     DATA_PATH,
     LOG_DATABASE_PATH,
-    LOG_PATH,
     POSTERS_PATH,
     TMDB_API,
 )
@@ -14,7 +13,6 @@ __all__ = [
     "VERSION",
     "settings",
     "LOG_DATABASE_PATH",
-    "LOG_PATH",
     "SEARCH_CONFIG",
     "TMDB_API",
     "DATA_PATH",

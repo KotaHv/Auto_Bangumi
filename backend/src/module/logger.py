@@ -1,17 +1,15 @@
 import logging
 import sys
 import traceback
-from pathlib import Path
 
 import loguru
 from loguru import logger
 
-from module.conf import LOG_PATH
 from module.database.log import LogDatabase
 from module.models.log import LogEntry
 from module.utils.log_time import to_microseconds
 
-EXCEPTION_EXTRA_KEY = "formatted_exception"
+TRACEBACK_EXTRA_KEY = "formatted_traceback"
 SKIP_DATABASE_EXTRA_KEY = "skip_database"
 
 
@@ -25,7 +23,7 @@ def _patch_record(record: loguru.Record) -> None:
     exception = record["exception"]
     if exception is None or exception.value is None:
         return
-    record["extra"][EXCEPTION_EXTRA_KEY] = "".join(
+    record["extra"][TRACEBACK_EXTRA_KEY] = "".join(
         traceback.format_exception(
             exception.type,
             exception.value,
@@ -42,11 +40,15 @@ def allows_log(name: str | None, level_no: int) -> bool:
     return level_no != logging.DEBUG or is_module_logger(name)
 
 
-def console_only() -> loguru.Logger:
+def skip_database_log() -> loguru.Logger:
     return logger.bind(**{SKIP_DATABASE_EXTRA_KEY: True})
 
 
-def _allows_database_log(record: loguru.Record) -> bool:
+def _should_log_to_stderr(record: loguru.Record) -> bool:
+    return allows_log(record["name"], record["level"].no)
+
+
+def _should_log_to_database(record: loguru.Record) -> bool:
     return not record["extra"].get(SKIP_DATABASE_EXTRA_KEY, False) and allows_log(
         record["name"], record["level"].no
     )
@@ -76,13 +78,8 @@ class InterceptHandler(logging.Handler):
 
 
 class LoggerManager:
-    def __init__(
-        self,
-        database: LogDatabase | None = None,
-        log_path: Path = LOG_PATH,
-    ) -> None:
+    def __init__(self, database: LogDatabase | None = None) -> None:
         self.database = database if database is not None else LogDatabase()
-        self.log_path = log_path
 
     def _write_structured_log(self, message: loguru.Message) -> None:
         record = message.record
@@ -96,7 +93,7 @@ class LoggerManager:
                 line=record["line"],
                 # Set by _patch_record in the producer thread; the consumer's
                 # record["exception"].traceback is None after enqueue pickling.
-                exception=record["extra"].get(EXCEPTION_EXTRA_KEY),
+                exception=record["extra"].get(TRACEBACK_EXTRA_KEY),
             )
             self.database.add(entry)
         except Exception as error:
@@ -108,21 +105,15 @@ class LoggerManager:
         logger.configure(patcher=_patch_record)
         logger.remove()
 
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
         logger.add(
             sys.stderr,
             level=level,
-            filter=lambda record: allows_log(record["name"], record["level"].no),
-        )
-        logger.add(
-            self.log_path,
-            level=level,
-            filter=lambda record: allows_log(record["name"], record["level"].no),
+            filter=_should_log_to_stderr,
         )
         logger.add(
             self._write_structured_log,
             level=level,
-            filter=_allows_database_log,
+            filter=_should_log_to_database,
             enqueue=True,
         )
 

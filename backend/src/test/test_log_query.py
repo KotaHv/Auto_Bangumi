@@ -10,7 +10,7 @@ from module.exceptions import (
     InvalidLogLimit,
     InvalidLogTimeRange,
     LogQueryError,
-    NaiveLogTimestamp,
+    MissingTimezone,
 )
 from module.models.log import LogEntry
 from module.utils.log_time import from_microseconds, to_microseconds
@@ -156,27 +156,29 @@ def test_start_and_end_filter_timestamps(logs: LogDatabase):
         "new",
         "middle",
     ]
-    assert [item.message for item in logs.query_logs(end=end).items] == [
-        "middle",
-        "old",
-    ]
-    assert [item.message for item in logs.query_logs(start=start, end=end).items] == [
-        "middle"
-    ]
+    # `end` is exclusive: the record exactly at `end` is not included.
+    assert [item.message for item in logs.query_logs(end=end).items] == ["old"]
+    assert [item.message for item in logs.query_logs(start=start, end=end).items] == []
+
+
+def test_end_bound_is_exclusive(logs: LogDatabase):
+    add(logs, level_no=20, message="at end", offset=5_000_000)
+    add(logs, level_no=20, message="just before", offset=4_999_999)
+    add(logs, level_no=20, message="after", offset=5_000_001)
+
+    end = BASE + timedelta(seconds=5)
+    page = logs.query_logs(end=end)
+
+    assert [item.message for item in page.items] == ["just before"]
 
 
 def test_naive_datetime_is_rejected(logs: LogDatabase):
     for naive in (BASE.replace(tzinfo=None),):
-        with pytest.raises(NaiveLogTimestamp) as excinfo:
+        with pytest.raises(MissingTimezone) as excinfo:
             logs.query_logs(start=naive)
-        assert excinfo.value.msg_en == (
-            "timestamp must be timezone-aware; send UTC instead of a naive datetime"
-        )
-        assert (
-            excinfo.value.msg_zh
-            == "时间戳必须携带时区，请发送 UTC 时间而非无时区的时间"
-        )
-        with pytest.raises(NaiveLogTimestamp):
+        assert excinfo.value.msg_en == "timestamp must be timezone-aware"
+        assert excinfo.value.msg_zh == "时间戳必须携带时区"
+        with pytest.raises(MissingTimezone):
             logs.query_logs(end=naive)
 
 
@@ -309,7 +311,7 @@ def test_all_query_errors_share_a_base_class():
     assert issubclass(InvalidLogLevel, LogQueryError)
     assert issubclass(InvalidLogLimit, LogQueryError)
     assert issubclass(InvalidLogTimeRange, LogQueryError)
-    assert issubclass(NaiveLogTimestamp, LogQueryError)
+    assert issubclass(MissingTimezone, LogQueryError)
     assert not issubclass(LogQueryError, ValueError)
 
 

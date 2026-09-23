@@ -109,36 +109,35 @@
     }
   },
   "log": {
-    "auto_refresh": "Auto refresh",
+    "at": "at",
+    "clear_date_range": "Clear date range",
+    "clear_filters": "Clear filters",
+    "cleared": "Cleared {count} log(s)",
+    "collapse": "Collapse",
     "copy": "Copy",
-    "debug": "Debug mode",
+    "date_range": "Date range",
     "disabled": "Disabled",
     "empty": "No logs yet",
     "enabled": "Enabled",
-    "errors": "Errors",
+    "expand": "Expand",
     "level": "Level",
     "levels": {
       "all": "ALL"
     },
-    "lines": {
-      "all": "All",
-      "label": "Lines"
-    },
-    "loading": "Loading logs",
+    "load_earlier": "Load earlier",
+    "load_earlier_failed": "Failed to load earlier logs",
+    "load_earlier_retry": "Retry loading earlier",
     "load_failed": "Unable to load logs",
+    "loaded_count": "{count} loaded",
+    "loading": "Loading logs",
     "message": "Message",
     "module": "Module",
     "no_matching": "No matching logs",
+    "no_more": "No more logs",
     "reset": "Reset",
-    "refresh_stopped": "Refresh stopped",
-    "retry": "Retry",
     "reset_confirm": "Are you sure you want to clear the logs?",
-    "start_refresh": "Start refresh",
-    "stop_refresh": "Stop refresh",
-    "time": "Time",
-    "total": "Loaded logs",
-    "update_now": "Update Now",
-    "warnings": "Warnings"
+    "retry": "Retry",
+    "time": "Time"
   },
   "login": {
     "hide_password": "Hide password",

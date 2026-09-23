@@ -28,6 +28,7 @@ axios.interceptors.response.use(
           window.location.replace('#/login');
         }
         break;
+      case 400:
       case 406:
         if (errorMsg) message.error(errorMsg);
         break;

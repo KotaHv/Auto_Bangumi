@@ -1,12 +1,12 @@
 import calendar
 from datetime import UTC, datetime
 
-from module.exceptions import NaiveLogTimestamp
+from module.exceptions import MissingTimezone
 
 
 def to_microseconds(value: datetime) -> int:
     if value.tzinfo is None:
-        raise NaiveLogTimestamp()
+        raise MissingTimezone()
     utc_value = value.astimezone(UTC)
     return calendar.timegm(utc_value.utctimetuple()) * 1_000_000 + utc_value.microsecond
 

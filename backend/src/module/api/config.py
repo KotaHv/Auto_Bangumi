@@ -1,25 +1,18 @@
 import asyncio
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from loguru import logger
 
 from module.conf import settings
-from module.logger import LoggerManager
 from module.models import APIResponse, Config
 from module.security.session import require_session
+
+from .deps import LogManagerDep
 
 router = APIRouter(
     prefix="/config", tags=["config"], dependencies=[Depends(require_session)]
 )
-
-
-def get_log_manager(request: Request) -> LoggerManager:
-    return request.app.state.log_manager
-
-
-LogManagerDep = Annotated[LoggerManager, Depends(get_log_manager)]
 
 
 @router.get("/get", response_model=Config)

@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, delete, event
 from sqlmodel import Session, col, select
 
 from module.conf import LOG_DATABASE_PATH
@@ -70,19 +70,20 @@ class LogDatabase:
             raise InvalidLogLevel(level)
         if not 1 <= limit <= MAX_LIMIT:
             raise InvalidLogLimit(limit, MAX_LIMIT)
-
-        if start is not None and end is not None and start > end:
-            raise InvalidLogTimeRange(start, end)
+        start_us = to_microseconds(start) if start is not None else None
+        end_us = to_microseconds(end) if end is not None else None
+        if start_us is not None and end_us is not None and start_us > end_us:
+            raise InvalidLogTimeRange(
+                from_microseconds(start_us), from_microseconds(end_us)
+            )
 
         statement = select(LogEntry)
         if level is not None:
             statement = statement.where(col(LogEntry.level_no) == LEVEL_NUMBERS[level])
-        if start is not None:
-            statement = statement.where(
-                col(LogEntry.timestamp) >= to_microseconds(start)
-            )
-        if end is not None:
-            statement = statement.where(col(LogEntry.timestamp) <= to_microseconds(end))
+        if start_us is not None:
+            statement = statement.where(col(LogEntry.timestamp) >= start_us)
+        if end_us is not None:
+            statement = statement.where(col(LogEntry.timestamp) < end_us)
         if module:
             statement = statement.where(
                 col(LogEntry.module).contains(module, autoescape=True)
@@ -103,6 +104,12 @@ class LogDatabase:
         has_more = len(rows) > limit
         next_cursor = items[-1].id if has_more else None
         return LogPage(items=items, next_cursor=next_cursor, has_more=has_more)
+
+    def clear(self) -> int:
+        with Session(self.engine) as session:
+            result = session.exec(delete(LogEntry))
+            session.commit()
+            return result.rowcount
 
     def dispose(self) -> None:
         self.engine.dispose()

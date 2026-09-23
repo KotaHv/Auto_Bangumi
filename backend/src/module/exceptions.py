@@ -32,9 +32,9 @@ class InvalidLogTimeRange(LogQueryError):
         )
 
 
-class NaiveLogTimestamp(LogQueryError):
+class MissingTimezone(LogQueryError):
     def __init__(self) -> None:
         super().__init__(
-            "timestamp must be timezone-aware; send UTC instead of a naive datetime",
-            "时间戳必须携带时区，请发送 UTC 时间而非无时区的时间",
+            "timestamp must be timezone-aware",
+            "时间戳必须携带时区",
         )

@@ -49,3 +49,7 @@ class LogPage(BaseModel):
     items: list[LogRecord]
     next_cursor: int | None
     has_more: bool
+
+
+class ClearLogResult(BaseModel):
+    deleted_count: int
