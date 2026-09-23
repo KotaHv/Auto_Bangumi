@@ -1,17 +1,15 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
-  Clipboard,
-  CircleAlert,
-  FileText,
-  Loader2,
-  RotateCcw,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
+  FileText,
+  MoreHorizontal,
 } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
 import { AbFloatingBar } from '@/components/shared/ab-floating-bar';
 import {
   Empty,
@@ -29,7 +27,7 @@ import {
   LogModuleFilter,
   LogQueryFilter,
 } from './filter-controls';
-import type { LogEntry, LogLayoutProps } from '../types';
+import type { LogEntry, LogViewProps } from '../types';
 import { formatLocalTime, getLevelStyle } from './presentation';
 
 const MobileLogRow = memo(function MobileLogRow({
@@ -112,15 +110,13 @@ export function LogMobile({
   loading,
   filters,
   setFilters,
-  hasMore,
-  loadingMore,
-  loadMoreFailed,
-  onLoadMore,
   logContainerRef,
-  onReset,
-  copy,
-}: LogLayoutProps) {
+  onLogScroll,
+  slots,
+}: LogViewProps) {
   const { t } = useTranslation();
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
+  const moreFiltersId = useId();
   const hasFilters = hasActiveFilters(filters);
 
   return (
@@ -131,28 +127,45 @@ export function LogMobile({
             <LogLevelFilter
               filters={filters}
               setFilters={setFilters}
-              className="min-w-20"
+              className="min-w-20 flex-1"
             />
-            <LogModuleFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="h-8 text-xs"
-            />
-            <LogQueryFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <LogDateFilter
-              filters={filters}
-              setFilters={setFilters}
-              className="flex-1"
-            />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={t(
+                moreFiltersOpen ? 'log.less_filters' : 'log.more_filters',
+              )}
+              title={t(
+                moreFiltersOpen ? 'log.less_filters' : 'log.more_filters',
+              )}
+              aria-expanded={moreFiltersOpen}
+              aria-controls={moreFiltersId}
+              onClick={() => setMoreFiltersOpen((open) => !open)}
+            >
+              {moreFiltersOpen ? <ChevronUp /> : <MoreHorizontal />}
+            </Button>
             <LogClearFiltersIcon filters={filters} setFilters={setFilters} />
           </div>
+
+          {moreFiltersOpen && (
+            <div id={moreFiltersId} className="flex flex-col gap-2">
+              <LogModuleFilter
+                filters={filters}
+                setFilters={setFilters}
+                className="h-8 w-full text-xs"
+              />
+              <LogQueryFilter
+                filters={filters}
+                setFilters={setFilters}
+                className="h-8 w-full text-xs"
+              />
+              <LogDateFilter
+                filters={filters}
+                setFilters={setFilters}
+                className="w-full"
+              />
+            </div>
+          )}
         </CardContent>
       </AbFloatingBar>
 
@@ -161,6 +174,7 @@ export function LogMobile({
           ref={(element) => {
             logContainerRef.current = element;
           }}
+          onScroll={onLogScroll}
           className={cn(
             'no-scrollbar h-full space-y-3 overscroll-none',
             !loaded || loading === 'loading'
@@ -168,86 +182,45 @@ export function LogMobile({
               : 'overflow-y-auto',
           )}
         >
-          {!loaded ? (
-            <div className="min-h-48" />
-          ) : entries.length === 0 ? (
-            <Empty className="h-full min-h-0 border-0 p-6">
-              <EmptyHeader>
-                <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
-                  <FileText />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {hasFilters ? t('log.no_matching') : t('log.empty')}
-                </EmptyTitle>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <>
-              {entries.map((entry) => (
-                <MobileLogRow key={entry.id} entry={entry} />
-              ))}
-              {hasMore && (
-                <div className="flex flex-col items-center gap-1 py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={loadingMore}
-                    onClick={onLoadMore}
-                  >
-                    {loadingMore ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <ChevronDown className="size-3.5" />
-                    )}
-                    {loadMoreFailed
-                      ? t('log.load_earlier_retry')
-                      : t('log.load_earlier')}
-                  </Button>
-                  {loadMoreFailed && (
-                    <span className="text-destructive flex items-center gap-1 text-xs">
-                      <CircleAlert className="size-3.5" />
-                      {t('log.load_earlier_failed')}
-                    </span>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+          {slots.loadError ??
+            (!loaded ? (
+              <div className="min-h-48" />
+            ) : entries.length === 0 ? (
+              <Empty className="h-full min-h-0 border-0 p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" className="bg-brand/10 text-brand">
+                    <FileText />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {hasFilters ? t('log.no_matching') : t('log.empty')}
+                  </EmptyTitle>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <>
+                {entries.map((entry) => (
+                  <MobileLogRow key={entry.id} entry={entry} />
+                ))}
+                {slots.listEnd}
+              </>
+            ))}
         </div>
-        {(!loaded || loading === 'loading') && (
+        {slots.loadError == null && (!loaded || loading === 'loading') && (
           <div className="bg-card/70 absolute inset-0 z-20 flex touch-none items-center justify-center backdrop-blur-[1px]">
             <Spinner className="text-brand size-5" />
           </div>
         )}
+        {slots.overlay}
       </div>
 
-      <AbFloatingBar
-        position="bottom"
-        className="w-full flex-wrap justify-between gap-2"
-      >
-        <span className="text-muted-foreground text-xs">
-          {t('log.loaded_count', { count: String(entries.length) })}
-        </span>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('log.reset')}
-            title={t('log.reset')}
-            onClick={onReset}
-          >
-            <RotateCcw className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('log.copy')}
-            title={t('log.copy')}
-            onClick={() => void copy()}
-          >
-            <Clipboard className="size-3.5" />
-          </Button>
+      <AbFloatingBar position="bottom" className="w-full">
+        <div className="flex w-full items-center gap-2">
+          <span className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs">
+            {slots.loadedIcon}
+            {t('log.loaded_count', { count: String(entries.length) })}
+          </span>
+          {slots.modeSwitcher}
+          {slots.moreActions}
         </div>
       </AbFloatingBar>
     </div>

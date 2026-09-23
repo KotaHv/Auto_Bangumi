@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, Field
@@ -49,6 +50,14 @@ class LogPage(BaseModel):
     items: list[LogRecord]
     next_cursor: int | None
     has_more: bool
+
+
+class TailFilters(BaseModel):
+    level: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+    module: str | None = None
+    query: str | None = None
 
 
 class ClearLogResult(BaseModel):

@@ -35,7 +35,7 @@ export function LogDateRange({
         render={
           <Button
             variant="outline"
-            size="sm"
+            size="default"
             className={cn(
               'justify-start font-normal',
               !label && 'text-muted-foreground',
@@ -47,7 +47,7 @@ export function LogDateRange({
           </Button>
         }
       />
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-(--anchor-width) min-w-0 p-0" align="start">
         <Calendar
           mode="range"
           selected={range}
@@ -55,6 +55,7 @@ export function LogDateRange({
           numberOfMonths={1}
           locale={locale}
           autoFocus
+          className="w-full!"
         />
         {label && (
           <div className="border-t p-2">

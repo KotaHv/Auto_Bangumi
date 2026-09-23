@@ -13,3 +13,6 @@ export const LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR'] as const;
 // Sent explicitly on every request. Keep PAGE_SIZE at or below the backend's
 // MAX_LIMIT (500), or the backend will reject the request.
 export const PAGE_SIZE = 100;
+export const TAIL_INITIAL_WINDOW = 100;
+export const MAX_LOG_LIMIT = 500;
+export const MAX_TAIL_ENTRIES = 1_000;

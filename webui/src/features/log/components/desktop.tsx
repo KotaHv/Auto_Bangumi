@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Clipboard,
-  CircleAlert,
-  FileText,
-  Loader2,
-  RotateCcw,
-  ChevronDown,
-  ChevronRight,
-} from 'lucide-react';
+import { FileText, ChevronDown, ChevronRight, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   Empty,
@@ -37,7 +28,7 @@ import {
   LogModuleFilter,
   LogQueryFilter,
 } from './filter-controls';
-import type { LogEntry, LogLayoutProps } from '../types';
+import type { LogEntry, LogViewProps } from '../types';
 
 function ExpandableMessage({ entry }: { entry: LogEntry }) {
   const { t } = useTranslation();
@@ -85,14 +76,10 @@ export function LogDesktop({
   loading,
   filters,
   setFilters,
-  hasMore,
-  loadingMore,
-  loadMoreFailed,
-  onLoadMore,
   logContainerRef,
-  onReset,
-  copy,
-}: LogLayoutProps) {
+  onLogScroll,
+  slots,
+}: LogViewProps) {
   const { t } = useTranslation();
   const hasFilters = hasActiveFilters(filters);
 
@@ -101,16 +88,16 @@ export function LogDesktop({
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4">
         <Card className="shrink-0 rounded-2xl [--card-spacing:0px]">
           <CardContent className="flex flex-wrap items-center gap-2 px-4 py-3">
-            <span className="text-muted-foreground text-xs">
-              {t('log.level')}
-            </span>
             <LogLevelFilter
               filters={filters}
               setFilters={setFilters}
               className="bg-background w-32 text-xs"
             />
 
-            <Separator orientation="vertical" className="mx-1 h-5" />
+            <Separator
+              orientation="vertical"
+              className="mx-1 h-8 self-center!"
+            />
 
             <LogDateFilter
               filters={filters}
@@ -118,12 +105,19 @@ export function LogDesktop({
               className="w-56"
             />
 
-            <Separator orientation="vertical" className="mx-1 h-5" />
+            <Separator
+              orientation="vertical"
+              className="mx-1 h-8 self-center!"
+            />
 
             <LogModuleFilter
               filters={filters}
               setFilters={setFilters}
               className="h-8 w-48 text-xs"
+            />
+            <Separator
+              orientation="vertical"
+              className="mx-1 h-8 self-center!"
             />
             <LogQueryFilter
               filters={filters}
@@ -140,124 +134,96 @@ export function LogDesktop({
         <div className="min-h-0 flex-1">
           <Card className="flex max-h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl [--card-spacing:0px]">
             <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-2 **:data-[slot=table-container]:overflow-visible">
-              {!loaded ? (
-                <div className="min-h-48" />
-              ) : entries.length === 0 ? (
-                <Empty className="min-h-48 border-0 p-6">
-                  <EmptyHeader>
-                    <EmptyMedia
-                      variant="icon"
-                      className="bg-brand/10 text-brand"
-                    >
-                      <FileText />
-                    </EmptyMedia>
-                    <EmptyTitle>
-                      {hasFilters ? t('log.no_matching') : t('log.empty')}
-                    </EmptyTitle>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <div
-                  ref={(element) => {
-                    logContainerRef.current = element;
-                  }}
-                  className="ab-log-scrollbar min-h-0 flex-1 overflow-auto overscroll-contain"
-                >
-                  <Table className="w-full table-fixed">
-                    <TableHeader className="bg-card sticky top-0 z-10">
-                      <TableRow>
-                        <TableHead className="w-[20%] text-center text-sm font-semibold">
-                          {t('log.time')}
-                        </TableHead>
-                        <TableHead className="w-[12%] text-center text-sm font-semibold">
-                          {t('log.level')}
-                        </TableHead>
-                        <TableHead className="w-[28%] text-center text-sm font-semibold">
-                          {t('log.module')}
-                        </TableHead>
-                        <TableHead className="text-center text-sm font-semibold">
-                          {t('log.message')}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                      {entries.map((entry) => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="text-muted-foreground min-w-0 font-mono text-xs wrap-break-word break-all whitespace-pre-wrap tabular-nums">
-                            {formatLocalTime(entry.timestamp)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span
-                              className={cn(
-                                'inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide',
-                                getLevelStyle(entry.level),
-                              )}
-                            >
-                              {entry.level}
-                            </span>
-                          </TableCell>
-                          <TableCell className="min-w-0 wrap-break-word break-all whitespace-pre-wrap text-cyan-700 dark:text-cyan-300">
-                            {entry.module ?? '-'}
-                          </TableCell>
-                          <TableCell className="min-w-0">
-                            <ExpandableMessage entry={entry} />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  <div className="flex flex-col items-center justify-center gap-1 py-3">
-                    {hasMore ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={loadingMore}
-                        onClick={onLoadMore}
+              {slots.loadError ??
+                (!loaded ? (
+                  <div className="min-h-48" />
+                ) : entries.length === 0 ? (
+                  <Empty className="min-h-48 border-0 p-6">
+                    <EmptyHeader>
+                      <EmptyMedia
+                        variant="icon"
+                        className="bg-brand/10 text-brand"
                       >
-                        {loadingMore && (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        )}
-                        {loadMoreFailed
-                          ? t('log.load_earlier_retry')
-                          : t('log.load_earlier')}
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">
-                        {t('log.no_more')}
-                      </span>
-                    )}
-                    {loadMoreFailed && (
-                      <span className="text-destructive flex items-center gap-1 text-xs">
-                        <CircleAlert className="size-3.5" />
-                        {t('log.load_earlier_failed')}
-                      </span>
-                    )}
+                        <FileText />
+                      </EmptyMedia>
+                      <EmptyTitle>
+                        {hasFilters ? t('log.no_matching') : t('log.empty')}
+                      </EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <div
+                    ref={(element) => {
+                      logContainerRef.current = element;
+                    }}
+                    onScroll={onLogScroll}
+                    className="ab-log-scrollbar min-h-0 flex-1 overflow-auto overscroll-contain"
+                  >
+                    <Table className="w-full table-fixed">
+                      <TableHeader className="bg-card sticky top-0 z-10">
+                        <TableRow>
+                          <TableHead className="w-[20%] text-center text-sm font-semibold">
+                            {t('log.time')}
+                          </TableHead>
+                          <TableHead className="w-[12%] text-center text-sm font-semibold">
+                            {t('log.level')}
+                          </TableHead>
+                          <TableHead className="w-[28%] text-center text-sm font-semibold">
+                            {t('log.module')}
+                          </TableHead>
+                          <TableHead className="text-center text-sm font-semibold">
+                            {t('log.message')}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+
+                      <TableBody>
+                        {entries.map((entry) => (
+                          <TableRow key={entry.id}>
+                            <TableCell className="text-muted-foreground min-w-0 font-mono text-xs wrap-break-word break-all whitespace-pre-wrap tabular-nums">
+                              {formatLocalTime(entry.timestamp)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span
+                                className={cn(
+                                  'inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide',
+                                  getLevelStyle(entry.level),
+                                )}
+                              >
+                                {entry.level}
+                              </span>
+                            </TableCell>
+                            <TableCell className="min-w-0 wrap-break-word break-all whitespace-pre-wrap text-cyan-700 dark:text-cyan-300">
+                              {entry.module ?? '-'}
+                            </TableCell>
+                            <TableCell className="min-w-0">
+                              <ExpandableMessage entry={entry} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {slots.listEnd}
                   </div>
-                </div>
-              )}
-              {(!loaded || loading === 'loading') && (
-                <div className="bg-card/70 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]">
-                  <Spinner className="text-brand size-5" />
-                </div>
-              )}
+                ))}
+              {slots.loadError == null &&
+                (!loaded || loading === 'loading') && (
+                  <div className="bg-card/70 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]">
+                    <Spinner className="text-brand size-5" />
+                  </div>
+                )}
+              {slots.overlay}
             </CardContent>
 
-            <div className="bg-muted/30 border-border/70 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
-              <span className="text-muted-foreground text-xs">
+            <div className="bg-muted/30 border-border/70 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-t px-5 py-3">
+              <span className="text-muted-foreground flex items-center gap-1.5 justify-self-start text-xs">
+                <List className="size-3.5" />
                 {t('log.loaded_count', { count: String(entries.length) })}
               </span>
-
-              <div className="flex flex-wrap items-center justify-end gap-1">
-                <Button variant="ghost" size="sm" onClick={onReset}>
-                  <RotateCcw className="size-3.5" />
-                  {t('log.reset')}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => void copy()}>
-                  <Clipboard className="size-3.5" />
-                  {t('log.copy')}
-                </Button>
+              {slots.modeSwitcher}
+              <div className="flex flex-wrap items-center gap-1 justify-self-end">
+                {slots.footerActions}
               </div>
             </div>
           </Card>

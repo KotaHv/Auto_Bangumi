@@ -63,7 +63,79 @@ def test_empty_database_returns_empty_page(logs: LogDatabase):
     assert page.has_more is False
 
 
+def test_latest_logs_empty_database_returns_empty_list(logs: LogDatabase):
+    assert logs.query_latest_logs() == []
+
+
+def test_latest_logs_returns_newest_window_oldest_first(logs: LogDatabase):
+    ids = [add(logs, level_no=20, message=f"line {index}") for index in range(105)]
+
+    items = logs.query_latest_logs()
+
+    assert len(items) == DEFAULT_LIMIT
+    assert [item.id for item in items] == ids[-DEFAULT_LIMIT:]
+
+
+def test_logs_after_cursor_returns_incremental_batches_in_order(logs: LogDatabase):
+    ids = [add(logs, level_no=20, message=f"line {index}") for index in range(5)]
+
+    first = logs.query_logs_after(last_id=ids[0], limit=2)
+    second = logs.query_logs_after(last_id=first.next_cursor or 0, limit=2)
+
+    assert [item.id for item in first.items] == ids[1:3]
+    assert first.has_more is True
+    assert first.next_cursor == ids[2]
+    assert [item.id for item in second.items] == ids[3:]
+    assert second.has_more is False
+    assert second.next_cursor is None
+
+
+def test_latest_and_incremental_queries_share_exact_filters(logs: LogDatabase):
+    ids = [
+        add(logs, level_no=20, message="target", module="module.rss", offset=4_000_000),
+        add(logs, level_no=40, message="target", module="module.rss", offset=5_000_000),
+        add(
+            logs, level_no=40, message="target", module="module.other", offset=6_000_000
+        ),
+        add(logs, level_no=40, message="other", module="module.rss", offset=7_000_000),
+        add(logs, level_no=40, message="target", module="module.rss", offset=8_000_000),
+    ]
+    filters = {
+        "level": "ERROR",
+        "start": BASE + timedelta(seconds=4),
+        "end": BASE + timedelta(seconds=9),
+        "module": "rss",
+        "query": "target",
+    }
+
+    initial = logs.query_latest_logs(**filters)
+    incremental = logs.query_logs_after(last_id=ids[1], **filters)
+
+    assert [item.id for item in initial] == [ids[1], ids[4]]
+    assert [item.id for item in incremental.items] == [ids[4]]
+
+
+def test_logs_after_reads_backlog_without_gaps(logs: LogDatabase):
+    expected = [
+        add(logs, level_no=20, message=f"line {index}")
+        for index in range(MAX_LIMIT * 2 + 5)
+    ]
+
+    collected: list[int] = []
+    cursor = 0
+    while True:
+        page = logs.query_logs_after(last_id=cursor)
+        collected.extend(item.id for item in page.items)
+        if not page.has_more:
+            break
+        assert page.next_cursor is not None
+        cursor = page.next_cursor
+
+    assert collected == expected
+
+
 def test_items_are_ordered_newest_first(logs: LogDatabase):
+
     seed(logs)
 
     page = logs.query_logs()

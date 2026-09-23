@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 export interface LogEntry {
   id: number;
@@ -31,17 +31,23 @@ export interface LogFilters {
 
 export type LogLoadingState = 'idle' | 'loading' | 'refreshing';
 
-export type LogLayoutProps = {
+export interface LogViewSlots {
+  modeSwitcher: ReactNode;
+  loadedIcon: ReactNode;
+  loadError: ReactNode;
+  listEnd: ReactNode;
+  overlay: ReactNode;
+  moreActions: ReactNode;
+  footerActions: ReactNode;
+}
+
+export type LogViewProps = {
   entries: LogEntry[];
   loaded: boolean;
   loading: LogLoadingState;
   filters: LogFilters;
   setFilters: (filters: LogFilters) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  loadMoreFailed: boolean;
-  onLoadMore: () => void;
   logContainerRef: RefObject<HTMLElement | null>;
-  onReset: () => void;
-  copy: () => Promise<void>;
+  onLogScroll: () => void;
+  slots: LogViewSlots;
 };

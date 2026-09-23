@@ -1,8 +1,13 @@
-import { RotateCcw } from 'lucide-react';
+import { useId } from 'react';
+import { Activity, FilterX, MessageSquareText, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AbSelect } from '@/components/shared/ab-select';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { EMPTY_LOG_FILTERS, LOG_LEVELS } from '../constants';
 import { hasActiveFilters } from '../filters';
 import { applyDateRange, filtersToDateRange } from '../time';
@@ -13,29 +18,45 @@ interface FilterControlProps {
   filters: LogFilters;
   setFilters: (filters: LogFilters) => void;
   className?: string;
+  showIcon?: boolean;
 }
 
 export function LogLevelFilter({
   filters,
   setFilters,
   className,
+  showIcon = true,
 }: FilterControlProps) {
   const { t } = useTranslation();
+  const labelId = useId();
   const items = [
     { value: 'ALL', label: t('log.levels.all') },
     ...LOG_LEVELS.map((level) => ({ value: level, label: level })),
   ];
 
   return (
-    <AbSelect
-      value={filters.level ?? 'ALL'}
-      items={items}
-      size="sm"
-      triggerClassName={className}
-      onValueChange={(value) =>
-        setFilters({ ...filters, level: value === 'ALL' ? null : value })
-      }
-    />
+    <>
+      <span id={labelId} className="sr-only">
+        {t('log.level')}
+      </span>
+      <AbSelect
+        value={filters.level ?? 'ALL'}
+        items={items}
+        triggerClassName={className}
+        contentClassName="min-w-0"
+        icon={
+          showIcon ? (
+            <Activity aria-hidden="true" className="text-muted-foreground" />
+          ) : undefined
+        }
+        contentAlign="start"
+        alignItemWithTrigger={false}
+        aria-labelledby={labelId}
+        onValueChange={(value) =>
+          setFilters({ ...filters, level: value === 'ALL' ? null : value })
+        }
+      />
+    </>
   );
 }
 
@@ -43,18 +64,26 @@ export function LogModuleFilter({
   filters,
   setFilters,
   className,
+  showIcon = true,
 }: FilterControlProps) {
   const { t } = useTranslation();
 
   return (
-    <Input
-      className={className}
-      placeholder={t('log.module')}
-      value={filters.module}
-      onChange={(event) =>
-        setFilters({ ...filters, module: event.target.value })
-      }
-    />
+    <InputGroup className={className}>
+      {showIcon && (
+        <InputGroupAddon align="inline-start">
+          <Package aria-hidden="true" />
+        </InputGroupAddon>
+      )}
+      <InputGroupInput
+        className="text-xs"
+        placeholder={t('log.module')}
+        value={filters.module}
+        onChange={(event) =>
+          setFilters({ ...filters, module: event.target.value })
+        }
+      />
+    </InputGroup>
   );
 }
 
@@ -62,18 +91,26 @@ export function LogQueryFilter({
   filters,
   setFilters,
   className,
+  showIcon = true,
 }: FilterControlProps) {
   const { t } = useTranslation();
 
   return (
-    <Input
-      className={className}
-      placeholder={t('log.message')}
-      value={filters.query}
-      onChange={(event) =>
-        setFilters({ ...filters, query: event.target.value })
-      }
-    />
+    <InputGroup className={className}>
+      {showIcon && (
+        <InputGroupAddon align="inline-start">
+          <MessageSquareText aria-hidden="true" />
+        </InputGroupAddon>
+      )}
+      <InputGroupInput
+        className="text-xs"
+        placeholder={t('log.message')}
+        value={filters.query}
+        onChange={(event) =>
+          setFilters({ ...filters, query: event.target.value })
+        }
+      />
+    </InputGroup>
   );
 }
 
@@ -100,10 +137,10 @@ export function LogClearFilters({
   return (
     <Button
       variant="ghost"
-      size="sm"
       onClick={() => setFilters(EMPTY_LOG_FILTERS)}
       disabled={!hasActiveFilters(filters)}
     >
+      <FilterX data-icon="inline-start" />
       {t('log.clear_filters')}
     </Button>
   );
@@ -124,7 +161,7 @@ export function LogClearFiltersIcon({
       title={t('log.clear_filters')}
       onClick={() => setFilters(EMPTY_LOG_FILTERS)}
     >
-      <RotateCcw data-icon="inline-start" />
+      <FilterX data-icon="inline-start" />
     </Button>
   );
 }

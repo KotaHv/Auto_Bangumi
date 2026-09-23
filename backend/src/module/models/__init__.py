@@ -1,6 +1,6 @@
 from .bangumi import Bangumi, BangumiUpdate, Episode, Notification
 from .config import Config
-from .log import ClearLogResult, LogEntry, LogPage, LogRecord
+from .log import ClearLogResult, LogEntry, LogPage, LogRecord, TailFilters
 from .response import APIResponse, ProgramStatusResponse, ResponseModel
 from .rss import RSSItem, RSSUpdate
 from .search import SearchResult
@@ -18,6 +18,7 @@ __all__ = [
     "LogEntry",
     "LogPage",
     "LogRecord",
+    "TailFilters",
     "APIResponse",
     "ProgramStatusResponse",
     "ResponseModel",
