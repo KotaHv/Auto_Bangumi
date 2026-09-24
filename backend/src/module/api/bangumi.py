@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from module.database import Database
 from module.manager import Renamer, TorrentManager
 from module.models import APIResponse, Bangumi, BangumiUpdate
 from module.security.session import require_session
+from module.service.bangumi import BangumiService
+from module.service.torrent import TorrentService
 
 from .response import u_response
 
@@ -36,8 +39,8 @@ async def update_rule(
     bangumi_id: int,
     data: BangumiUpdate,
 ):
-    async with TorrentManager() as manager:
-        resp = await manager.update_rule(bangumi_id, data)
+    async with Database() as session:
+        resp = await TorrentService(session).update_rule(bangumi_id, data)
     return u_response(resp)
 
 
@@ -61,9 +64,9 @@ async def delete_all():
     path="/delete/{bangumi_id}",
     response_model=APIResponse,
 )
-async def delete_rule(bangumi_id: str, file: bool = False):
-    async with TorrentManager() as manager:
-        resp = await manager.delete_rule(bangumi_id, file)
+async def delete_rule(bangumi_id: int, file: bool = False):
+    async with Database() as session:
+        resp = await BangumiService(session).delete_one(bangumi_id, file)
     return u_response(resp)
 
 
@@ -71,10 +74,11 @@ async def delete_rule(bangumi_id: str, file: bool = False):
     path="/delete/many/",
     response_model=APIResponse,
 )
-async def delete_many_rule(bangumi_id: list, file: bool = False):
-    async with TorrentManager() as manager:
+async def delete_many_rule(bangumi_id: list[int], file: bool = False):
+    async with Database() as session:
+        service = BangumiService(session)
         for i in bangumi_id:
-            resp = await manager.delete_rule(i, file)
+            resp = await service.delete_one(i, file)
     return u_response(resp)
 
 
@@ -82,9 +86,9 @@ async def delete_many_rule(bangumi_id: list, file: bool = False):
     path="/disable/{bangumi_id}",
     response_model=APIResponse,
 )
-async def disable_rule(bangumi_id: str, file: bool = False):
-    async with TorrentManager() as manager:
-        resp = await manager.disable_rule(bangumi_id, file)
+async def disable_rule(bangumi_id: int, file: bool = False):
+    async with Database() as session:
+        resp = await TorrentService(session).disable_rule(bangumi_id, file)
     return u_response(resp)
 
 
@@ -92,10 +96,11 @@ async def disable_rule(bangumi_id: str, file: bool = False):
     path="/disable/many",
     response_model=APIResponse,
 )
-async def disable_many_rule(bangumi_id: list, file: bool = False):
-    async with TorrentManager() as manager:
+async def disable_many_rule(bangumi_id: list[int], file: bool = False):
+    async with Database() as session:
+        service = TorrentService(session)
         for i in bangumi_id:
-            resp = await manager.disable_rule(i, file)
+            resp = await service.disable_rule(i, file)
     return u_response(resp)
 
 
@@ -103,9 +108,9 @@ async def disable_many_rule(bangumi_id: list, file: bool = False):
     path="/enable/{bangumi_id}",
     response_model=APIResponse,
 )
-async def enable_rule(bangumi_id: str):
-    async with TorrentManager() as manager:
-        resp = await manager.enable_rule(bangumi_id)
+async def enable_rule(bangumi_id: int):
+    async with Database() as session:
+        resp = await TorrentService(session).enable_rule(bangumi_id)
     return u_response(resp)
 
 

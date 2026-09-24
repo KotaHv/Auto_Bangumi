@@ -189,7 +189,7 @@
   "rss": {
     "aggregate": "聚合",
     "delete": "删除",
-    "delete_hit": "确定删除选中的 RSS 条目吗？",
+    "delete_hit": "删除 RSS 可能会永久删除失去最后一个来源的番剧规则及其种子数据库历史记录。本地媒体文件不会被删除。确认继续？",
     "disable": "禁用",
     "disable_hit": "确定禁用选中的 RSS 条目吗？",
     "enable": "启用",

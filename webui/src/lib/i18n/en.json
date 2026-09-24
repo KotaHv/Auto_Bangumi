@@ -189,7 +189,7 @@
   "rss": {
     "aggregate": "Aggregate",
     "delete": "Delete",
-    "delete_hit": "Delete the selected RSS feeds?",
+    "delete_hit": "Deleting an RSS feed may permanently remove Bangumi rules that lose their last source and their torrent database history. Local media files will not be deleted. Continue?",
     "disable": "Disable",
     "disable_hit": "Disable the selected RSS feeds?",
     "enable": "Enable",

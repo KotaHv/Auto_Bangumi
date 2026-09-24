@@ -62,7 +62,8 @@ async def test_bangumi_database():
         assert result.official_title == "无职转生，到了异世界就拿出真本事II"
 
         # delete
-        await db.bangumi.delete_one(1)
+        assert await db.bangumi.delete_one(1)
+        await db.commit()
         assert await db.bangumi.search_id(1) is None
 
 

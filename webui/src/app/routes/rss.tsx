@@ -60,10 +60,14 @@ export default function RSSPage() {
   });
   const deleteMutation = useMutation({
     mutationFn: apiRSS.deleteMany,
-    onSuccess: (data, ids) => {
+    onSuccess: async (data, ids) => {
       message.success(returnUserLangMsg(data));
       setSelectedRSS([]);
       removeCachedRSSItems(ids);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rssKeys.list() }),
+        queryClient.invalidateQueries({ queryKey: bangumiKeys.list() }),
+      ]);
     },
     onError: recoverRSSListAfterMutationFailure,
   });

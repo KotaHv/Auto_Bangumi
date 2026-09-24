@@ -78,6 +78,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, id) => {
       message.success(returnUserLangMsg(data));
       updateCachedBangumiItem(id, (item) => ({ ...item, deleted: false }));
+      void queryClient.invalidateQueries({ queryKey: ['rss'] });
       setOpen(false);
     },
   });
@@ -87,6 +88,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
     onSuccess: (data, { id }) => {
       message.success(returnUserLangMsg(data));
       updateCachedBangumiItem(id, (item) => ({ ...item, deleted: true }));
+      void queryClient.invalidateQueries({ queryKey: ['rss'] });
       setOpen(false);
     },
   });

@@ -60,23 +60,23 @@ class RSSDatabase:
             logger.error("Update RSS enabled state failed. Because: {}", e)
             return False
 
+    async def delete_one(self, _id: int) -> bool:
+        rss_item = await self.search_id(_id)
+        if rss_item is None:
+            return False
+
+        await self.session.delete(rss_item)
+        logger.debug("[Database] Delete RSS id: {}.", _id)
+        return True
+
     async def delete_many(self, rss_ids: list[int]) -> bool:
         ids = set(rss_ids)
         if not ids:
             return True
-        try:
-            result = await self.session.exec(
-                delete(RSSItem).where(col(RSSItem.id).in_(ids))
-            )
-            if result.rowcount != len(ids):
-                await self.session.rollback()
-                return False
-            await self.session.commit()
-            return True
-        except Exception as e:
-            await self.session.rollback()
-            logger.error("Delete RSS Items failed. Because: {}", e)
-            return False
+        for rss_id in ids:
+            if not await self.delete_one(rss_id):
+                raise ValueError(f"RSS item {rss_id} does not exist")
+        return True
 
     async def enable(self, _id: int):
         statement = select(RSSItem).where(RSSItem.id == _id)
@@ -120,13 +120,16 @@ class RSSDatabase:
             await self.session.exec(select(RSSItem).where(RSSItem.url == url))
         ).first()
 
-    async def delete(self, _id: int) -> bool:
-        condition = delete(RSSItem).where(col(RSSItem.id) == _id)
-        result = await self.session.exec(condition)
-        if result.rowcount != 1:
-            return False
-        await self.session.commit()
-        return True
+    async def search_urls(self, urls: set[str]) -> list[RSSItem]:
+        if not urls:
+            return []
+        return list(
+            (
+                await self.session.exec(
+                    select(RSSItem).where(col(RSSItem.url).in_(urls))
+                )
+            ).all()
+        )
 
     async def delete_all(self):
         condition = delete(RSSItem)

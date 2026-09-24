@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from module.database import Database
 from module.downloader import DownloadClient
 from module.manager import SeasonCollector
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
 from module.rss import RSSAnalyser, RSSEngine
 from module.security.session import require_session
+from module.service.rss import RssService
 
 from .response import u_response
 
@@ -42,20 +44,9 @@ async def enable_many_rss(
     response_model=APIResponse,
 )
 async def delete_rss(rss_id: int):
-    async with RSSEngine() as engine:
-        if await engine.rss.delete(rss_id):
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "msg_en": "Delete RSS successfully.",
-                    "msg_zh": "删除 RSS 成功。",
-                },
-            )
-        else:
-            return JSONResponse(
-                status_code=406,
-                content={"msg_en": "Delete RSS failed.", "msg_zh": "删除 RSS 失败。"},
-            )
+    async with Database() as session:
+        result = await RssService(session).delete_one(rss_id)
+    return u_response(result)
 
 
 @router.post(
@@ -65,8 +56,8 @@ async def delete_rss(rss_id: int):
 async def delete_many_rss(
     rss_ids: list[int],
 ):
-    async with RSSEngine() as engine:
-        result = await engine.delete_list(rss_ids)
+    async with Database() as session:
+        result = await RssService(session).delete_many(rss_ids)
     return u_response(result)
 
 

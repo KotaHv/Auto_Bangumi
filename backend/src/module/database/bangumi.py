@@ -1,6 +1,6 @@
 from loguru import logger
 from sqlalchemy.sql import func
-from sqlmodel import and_, delete, false, select
+from sqlmodel import and_, col, delete, false, literal, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import Bangumi, BangumiUpdate
@@ -64,12 +64,19 @@ class BangumiDatabase:
         await self.session.refresh(bangumi)
         logger.debug("[Database] Update {} rss_link to {}.", title_raw, rss_set)
 
-    async def delete_one(self, _id: int):
-        statement = select(Bangumi).where(Bangumi.id == _id)
-        bangumi = (await self.session.exec(statement)).first()
-        await self.session.delete(bangumi)
-        await self.session.commit()
+    async def delete_one(self, _id: int) -> bool:
+        result = await self.session.exec(
+            delete(Bangumi).where(col(Bangumi.id) == _id).returning(col(Bangumi.id))
+        )
+        deleted_id = result.scalars().first()
+        if deleted_id is None:
+            return False
         logger.debug("[Database] Delete bangumi id: {}.", _id)
+        return True
+
+    def set_rss_link(self, bangumi: Bangumi, rss_link: str) -> None:
+        bangumi.rss_link = rss_link
+        self.session.add(bangumi)
 
     async def delete_all(self):
         statement = delete(Bangumi)
@@ -162,12 +169,10 @@ class BangumiDatabase:
     async def search_rss(self, rss_link: str) -> list[Bangumi]:
         if not rss_link:
             return []
-        bangumi_list = await self.search_all()
-        return [
-            bangumi
-            for bangumi in bangumi_list
-            if rss_link in (bangumi.rss_link or "").split(",")
-        ]
+        members = literal(",") + func.coalesce(Bangumi.rss_link, "") + literal(",")
+        target = literal(f",{rss_link},")
+        statement = select(Bangumi).where(func.instr(members, target) > 0)
+        return list((await self.session.exec(statement)).all())
 
     async def get_offset(self, _id: int) -> int:
         offset = (

@@ -92,21 +92,6 @@ class RSSEngine(Database):
             msg_zh="启用 RSS 成功。",
         )
 
-    async def delete_list(self, rss_id_list: list[int]):
-        if not await self.rss.delete_many(rss_id_list):
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="Delete RSS failed.",
-                msg_zh="删除 RSS 失败。",
-            )
-        return ResponseModel(
-            status=True,
-            status_code=200,
-            msg_en="Delete RSS successfully.",
-            msg_zh="删除 RSS 成功。",
-        )
-
     async def pull_rss(self, rss_item: RSSItem) -> list[Torrent]:
         torrents = await self._get_torrents(rss_item)
         new_torrents = await self.torrent.check_new(torrents)
