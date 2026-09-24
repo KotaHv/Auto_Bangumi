@@ -139,7 +139,13 @@ class RSSEngine(Database):
         return torrents
 
     async def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
-        bangumi = (await self.bangumi.search_rss(rss_item.url))[0]
+        bangumi_list = await self.bangumi.search_rss(rss_item.url)
+        if not bangumi_list:
+            logger.warning(
+                "[RSS] No association rule found for regular RSS {}.", rss_item.url
+            )
+            return []
+        bangumi = bangumi_list[0]
         async with RequestContent() as req:
             torrents = await req.get_torrents(
                 rss_item.url, bangumi.filter.replace(",", "|")

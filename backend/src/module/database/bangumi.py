@@ -111,9 +111,16 @@ class BangumiDatabase:
             torrent = torrent_list[i]
             for match_data in match_datas:
                 if match_data.title_raw in torrent.name:
-                    if rss_link not in match_data.rss_link:
-                        match_data.rss_link += f",{rss_link}"
-                        await self.update_rss(match_data.title_raw, match_data.rss_link)
+                    rss_members = [
+                        member
+                        for member in (match_data.rss_link or "").split(",")
+                        if member
+                    ]
+                    if rss_link and rss_link not in rss_members:
+                        rss_members.append(rss_link)
+                        await self.update_rss(
+                            match_data.title_raw, ",".join(rss_members)
+                        )
                     torrent_list.pop(i)
                     break
             else:
@@ -153,8 +160,14 @@ class BangumiDatabase:
         logger.debug("[Database] Disable rule {}.", bangumi.title_raw)
 
     async def search_rss(self, rss_link: str) -> list[Bangumi]:
-        statement = select(Bangumi).where(func.instr(rss_link, Bangumi.rss_link) > 0)
-        return list((await self.session.exec(statement)).all())
+        if not rss_link:
+            return []
+        bangumi_list = await self.search_all()
+        return [
+            bangumi
+            for bangumi in bangumi_list
+            if rss_link in (bangumi.rss_link or "").split(",")
+        ]
 
     async def get_offset(self, _id: int) -> int:
         offset = (
