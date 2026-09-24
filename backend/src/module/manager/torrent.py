@@ -1,5 +1,3 @@
-from loguru import logger
-
 from module.database import Database
 from module.models import ResponseModel
 from module.parser import TitleParser
@@ -42,19 +40,6 @@ class TorrentManager(Database):
         if not datas:
             return []
         return [data for data in datas if not data.deleted]
-
-    async def search_one(self, _id: int | str):
-        data = await self.bangumi.search_id(int(_id))
-        if not data:
-            logger.error("[Manager] Can't find data with {}", _id)
-            return ResponseModel(
-                status_code=406,
-                status=False,
-                msg_en=f"Can't find data with {_id}",
-                msg_zh=f"无法找到 id {_id} 的数据",
-            )
-        else:
-            return data
 
 
 if __name__ == "__main__":

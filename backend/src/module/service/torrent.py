@@ -13,6 +13,18 @@ class TorrentService:
         self.bangumi = BangumiDatabase(session)
         self.rss = RSSDatabase(session)
 
+    async def search_one(self, bangumi_id: int) -> Bangumi | ResponseModel:
+        data = await self.bangumi.search_id(bangumi_id)
+        if data is None:
+            logger.error("Can't find data with {}", bangumi_id)
+            return ResponseModel(
+                status_code=406,
+                status=False,
+                msg_en=f"Can't find data with {bangumi_id}",
+                msg_zh=f"无法找到 id {bangumi_id} 的数据",
+            )
+        return data
+
     @staticmethod
     async def match_torrents_list(data: Bangumi | BangumiUpdate) -> list[str]:
         async with DownloadClient() as client:

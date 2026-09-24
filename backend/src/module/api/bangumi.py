@@ -25,10 +25,9 @@ async def get_all_data():
     "/get/{bangumi_id}",
     response_model=Bangumi,
 )
-async def get_data(bangumi_id: str):
-    async with TorrentManager() as manager:
-        resp = await manager.search_one(bangumi_id)
-    return resp
+async def get_data(bangumi_id: int):
+    async with Database() as session:
+        return await TorrentService(session).search_one(bangumi_id)
 
 
 @router.patch(
