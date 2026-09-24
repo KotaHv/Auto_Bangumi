@@ -1,12 +1,7 @@
-import re
-
-from loguru import logger
-
 from module.database import Database, engine
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel, RSSItem, Torrent
 from module.network import RequestContent
-from module.utils.multi_version_filter import filter_multi_version_torrents
 
 
 class RSSEngine(Database):
@@ -96,72 +91,6 @@ class RSSEngine(Database):
         torrents = await self._get_torrents(rss_item)
         new_torrents = await self.torrent.check_new(torrents)
         return new_torrents
-
-    async def match_torrent(self, torrent: Torrent) -> Bangumi | None:
-        matched: Bangumi | None = await self.bangumi.match_torrent(torrent.name)
-        if matched:
-            if matched.filter == "":
-                return matched
-            _filter = matched.filter.replace(",", "|")
-            if not re.search(_filter, torrent.name, re.IGNORECASE):
-                torrent.bangumi_id = matched.id
-                return matched
-        return None
-
-    async def fetch_aggregate_rss(self, rss_item: RSSItem) -> list[Torrent]:
-        async with RequestContent() as req:
-            torrents = await req.get_torrents(rss_item.url)
-        torrents_to_add = await self.bangumi.match_list(torrents.copy(), rss_item.url)
-        if not torrents_to_add:
-            logger.debug("[RSS] No new title has been found.")
-            return torrents
-        from .analyser import RSSAnalyser
-
-        analyser = RSSAnalyser()
-        new_data = await analyser.torrents_to_data(torrents_to_add, rss_item)
-        if new_data:
-            await self.bangumi.add_all(new_data)
-        return torrents
-
-    async def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
-        bangumi_list = await self.bangumi.search_rss(rss_item.url)
-        if not bangumi_list:
-            logger.warning(
-                "[RSS] No association rule found for regular RSS {}.", rss_item.url
-            )
-            return []
-        bangumi = bangumi_list[0]
-        async with RequestContent() as req:
-            torrents = await req.get_torrents(
-                rss_item.url, bangumi.filter.replace(",", "|")
-            )
-        return torrents
-
-    async def refresh_rss(self, client: DownloadClient, rss_id: int | None = None):
-        # Get All RSS Items
-        if not rss_id:
-            rss_items: list[RSSItem] = await self.rss.search_active()
-        else:
-            rss_item = await self.rss.search_id(rss_id)
-            rss_items = [rss_item] if rss_item else []
-        # From RSS Items, get all torrents
-        logger.debug("[Engine] Get {} RSS items", len(rss_items))
-        for rss_item in rss_items:
-            if rss_item.aggregate:
-                torrents = await self.fetch_aggregate_rss(rss_item)
-            else:
-                torrents = await self.fetch_regular_rss(rss_item)
-            filter_multi_version_torrents(torrents)
-            new_torrents = await self.torrent.check_new(torrents)
-            # Get all enabled bangumi data
-            for torrent in new_torrents:
-                torrent.rss_id = rss_item.id
-                matched_data = await self.match_torrent(torrent)
-                if matched_data:
-                    if await client.add_torrent(torrent, matched_data):
-                        logger.debug("[Engine] Add torrent {} to client", torrent.name)
-            # Add all torrents to database
-            await self.torrent.add_all(new_torrents)
 
     async def download_bangumi(self, bangumi: Bangumi):
         async with RequestContent() as req:

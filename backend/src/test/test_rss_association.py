@@ -7,11 +7,9 @@ from sqlmodel import SQLModel
 from sqlmodel.pool import StaticPool
 
 from module.database.combine import Database
-from module.downloader.download_client import DownloadClient
 from module.manager.torrent import TorrentManager
 from module.models import Bangumi, RSSItem, Torrent
-from module.rss import engine as rss_engine_module
-from module.rss.engine import RSSEngine
+from module.service import rss as rss_service_module
 from module.service.bangumi import BangumiService
 from module.service.rss import RssService
 from module.service.torrent import TorrentService
@@ -102,14 +100,13 @@ async def test_fetch_regular_rss_keeps_single_link_network_behavior(
             calls.append((request_url, torrent_filter))
             return [torrent]
 
-    monkeypatch.setattr(rss_engine_module, "RequestContent", RequestStub)
+    monkeypatch.setattr(rss_service_module, "RequestContent", RequestStub)
 
     async with Database(database) as db:
         await db.bangumi.add(
             Bangumi(title_raw="Example Show", rss_link=url, filter="1080p,\\d+-\\d+")
         )
-        async with RSSEngine(database) as engine:
-            result = await engine.fetch_regular_rss(RSSItem(url=url))
+        result = await RssService(db).fetch_regular_rss(RSSItem(url=url))
 
     assert result == [torrent]
     assert calls == [(url, "1080p|\\d+-\\d+")]
@@ -135,10 +132,19 @@ async def test_unassociated_regular_rss_does_not_block_aggregate_refresh(
         def __init__(self) -> None:
             pytest.fail("unassociated regular RSS must not make a network request")
 
-    monkeypatch.setattr(rss_engine_module, "logger", LoggerStub())
-    monkeypatch.setattr(rss_engine_module, "RequestContent", UnexpectedRequest)
+    class DownloadClientStub:
+        async def __aenter__(self) -> DownloadClientStub:
+            return self
 
-    async with RSSEngine(database) as engine:
+        async def __aexit__(self, *args: object) -> None:
+            return None
+
+    monkeypatch.setattr(rss_service_module, "logger", LoggerStub())
+    monkeypatch.setattr(rss_service_module, "RequestContent", UnexpectedRequest)
+    monkeypatch.setattr(rss_service_module, "DownloadClient", DownloadClientStub)
+
+    async with Database(database) as db:
+        service = RssService(db)
 
         async def search_active() -> list[RSSItem]:
             return [regular, aggregate]
@@ -147,11 +153,11 @@ async def test_unassociated_regular_rss_does_not_block_aggregate_refresh(
             aggregate_calls.append(rss_item.url)
             return []
 
-        monkeypatch.setattr(engine.rss, "search_active", search_active)
-        monkeypatch.setattr(engine, "fetch_aggregate_rss", fetch_aggregate)
+        monkeypatch.setattr(service.rss, "search_active", search_active)
+        monkeypatch.setattr(service, "fetch_aggregate_rss", fetch_aggregate)
 
-        assert await engine.fetch_regular_rss(regular) == []
-        await engine.refresh_rss(DownloadClient.__new__(DownloadClient))
+        assert await service.fetch_regular_rss(regular) == []
+        await service.refresh_rss()
 
     assert any(regular.url in warning for warning in warnings)
     assert aggregate_calls == [aggregate.url]

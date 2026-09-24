@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from module.database import Database
-from module.downloader import DownloadClient
 from module.manager import SeasonCollector
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
 from module.rss import RSSAnalyser, RSSEngine
@@ -127,8 +126,8 @@ async def update_rss(
     response_model=APIResponse,
 )
 async def refresh_all():
-    async with RSSEngine() as engine, DownloadClient() as client:
-        await engine.refresh_rss(client)
+    async with Database() as session:
+        await RssService(session).refresh_rss()
     return JSONResponse(
         status_code=200,
         content={
@@ -143,8 +142,8 @@ async def refresh_all():
     response_model=APIResponse,
 )
 async def refresh_rss(rss_id: int):
-    async with RSSEngine() as engine, DownloadClient() as client:
-        await engine.refresh_rss(client, rss_id)
+    async with Database() as session:
+        await RssService(session).refresh_rss(rss_id)
     return JSONResponse(
         status_code=200,
         content={

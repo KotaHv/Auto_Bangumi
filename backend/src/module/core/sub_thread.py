@@ -1,10 +1,11 @@
 import asyncio
 
 from module.conf import settings
-from module.downloader import DownloadClient
+from module.database import Database
 from module.manager import Renamer, eps_complete
 from module.notification import PostNotification
-from module.rss import RSSAnalyser, RSSEngine
+from module.rss import RSSAnalyser
+from module.service.rss import RssService
 
 from .status import ProgramStatus
 
@@ -18,9 +19,8 @@ class RSSThread(ProgramStatus):
         await self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
 
     async def _rss_loop(self):
-        async with DownloadClient() as client, RSSEngine() as engine:
-            # Run RSS Engine
-            await engine.refresh_rss(client)
+        async with Database() as session:
+            await RssService(session).refresh_rss()
         if settings.bangumi_manage.eps_complete:
             await eps_complete()
 

@@ -6,7 +6,7 @@ from qbittorrentapi.exceptions import APIConnectionError, Forbidden403Error, Log
 from requests.exceptions import ConnectionError
 
 import module.checker.checker as checker_module
-import module.core.sub_thread as sub_thread_module
+import module.service.rss as rss_service_module
 from module.checker import Checker
 from module.core.sub_thread import RSSThread
 from module.downloader import DownloadClient
@@ -70,15 +70,15 @@ async def test_check_downloader_uses_download_client(monkeypatch):
     assert await Checker.check_downloader() is False
 
 
-def test_rss_loop_fails_before_rss_engine(monkeypatch):
+def test_rss_loop_fails_before_fetching_rss(monkeypatch):
     mock_download_client = MagicMock()
     mock_download_client.__aenter__.side_effect = LoginFailed()
     monkeypatch.setattr(
-        sub_thread_module, "DownloadClient", lambda: mock_download_client
+        rss_service_module, "DownloadClient", lambda: mock_download_client
     )
-    mock_engine = MagicMock()
-    monkeypatch.setattr(sub_thread_module, "RSSEngine", mock_engine)
+    mock_request = MagicMock()
+    monkeypatch.setattr(rss_service_module, "RequestContent", mock_request)
     rss_thread = RSSThread()
     with pytest.raises(LoginFailed):
         asyncio.run(rss_thread._rss_loop())
-    mock_engine.assert_not_called()
+    mock_request.assert_not_called()
