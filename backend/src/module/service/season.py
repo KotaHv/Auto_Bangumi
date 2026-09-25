@@ -158,5 +158,22 @@ class SeasonService:
             if not datas:
                 return
             logger.info("Start collecting full season...")
-            for data in datas:
-                await self.collect_season(data)
+            try:
+                async with SearchTorrent() as st, DownloadClient() as client:
+                    for data in datas:
+                        torrents = await st.search_season(data)
+                        filter_multi_version_torrents(torrents)
+                        if not await client.add_torrent(torrents, data):
+                            continue
+                        data.eps_collect = True
+                        self.session.add(data)
+                        await self.torrent.add_all(torrents)
+                        await self.session.commit()
+                        logger.info(
+                            "Collections of {} Season {} completed.",
+                            data.official_title,
+                            data.season,
+                        )
+            except Exception:
+                await self.session.rollback()
+                raise
