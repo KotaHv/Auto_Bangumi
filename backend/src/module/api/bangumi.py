@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from module.database import Database
-from module.manager import Renamer, TorrentManager
+from module.manager import Renamer
 from module.models import APIResponse, Bangumi, BangumiUpdate
 from module.security.session import require_session
 from module.service.bangumi import BangumiService
@@ -17,8 +17,8 @@ router = APIRouter(
 
 @router.get("/get/all", response_model=list[Bangumi])
 async def get_all_data():
-    async with TorrentManager() as manager:
-        return await manager.bangumi.search_all()
+    async with Database() as session:
+        return await BangumiService(session).search_all()
 
 
 @router.get(
@@ -48,8 +48,8 @@ async def update_rule(
     response_model=APIResponse,
 )
 async def delete_all():
-    async with TorrentManager() as manager:
-        await manager.bangumi.delete_all()
+    async with Database() as session:
+        await BangumiService(session).delete_all()
     return JSONResponse(
         status_code=200,
         content={
@@ -118,8 +118,8 @@ async def enable_rule(bangumi_id: int):
     response_model=APIResponse,
 )
 async def refresh_all_poster():
-    async with TorrentManager() as manager:
-        resp = await manager.refresh_poster()
+    async with Database() as session:
+        resp = await BangumiService(session).refresh_poster()
     return u_response(resp)
 
 
@@ -128,8 +128,8 @@ async def refresh_all_poster():
     response_model=APIResponse,
 )
 async def refresh_poster(bangumi_id: int):
-    async with TorrentManager() as manager:
-        resp = await manager.refind_poster(bangumi_id)
+    async with Database() as session:
+        resp = await BangumiService(session).refind_poster(bangumi_id)
     return u_response(resp)
 
 

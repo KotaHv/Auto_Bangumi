@@ -55,21 +55,21 @@ async def test_bulk_operations_update_all_unique_ids(
         ]
         for item in items:
             assert await engine.rss.add(item)
+            await engine.commit()
             assert item.id is not None
         item_ids = [item.id for item in items]
         assert all(item_id is not None for item_id in item_ids)
         first_id, second_id = item_ids
         assert first_id is not None and second_id is not None
 
-        if operation == "delete":
-            async with Database(async_engine) as session:
-                result = await RssService(session).delete_many(
-                    [first_id, second_id, first_id]
+        async with Database(async_engine) as session:
+            service = RssService(session)
+            if operation == "delete":
+                result = await service.delete_many([first_id, second_id, first_id])
+            else:
+                result = await service.set_enabled_many(
+                    [first_id, second_id, first_id], enabled=operation == "enable"
                 )
-        else:
-            result = await getattr(engine, f"{operation}_list")(
-                [first_id, second_id, first_id]
-            )
 
         assert result.status
         for item_id in (first_id, second_id):
@@ -77,9 +77,10 @@ async def test_bulk_operations_update_all_unique_ids(
                 async with Database(async_engine) as check:
                     assert await check.rss.search_id(item_id) is None
             else:
-                stored = await engine.rss.search_id(item_id)
-                assert stored is not None
-                assert stored.enabled is expected
+                async with Database(async_engine) as check:
+                    stored = await check.rss.search_id(item_id)
+                    assert stored is not None
+                    assert stored.enabled is expected
 
     await async_engine.dispose()
 
@@ -98,14 +99,18 @@ async def test_bulk_operation_with_missing_id_changes_nothing(
     async with RSSEngine(async_engine) as engine:
         rss = RSSItem(url="https://rss.local/existing.xml", enabled=initial)
         assert await engine.rss.add(rss)
+        await engine.commit()
         assert rss.id is not None
         rss_id = rss.id
 
-        if operation == "delete":
-            async with Database(async_engine) as session:
-                result = await RssService(session).delete_many([rss_id, 999_999])
-        else:
-            result = await getattr(engine, f"{operation}_list")([rss_id, 999_999])
+        async with Database(async_engine) as session:
+            service = RssService(session)
+            if operation == "delete":
+                result = await service.delete_many([rss_id, 999_999])
+            else:
+                result = await service.set_enabled_many(
+                    [rss_id, 999_999], enabled=operation == "enable"
+                )
 
         assert result.status is False
         assert result.status_code == 406

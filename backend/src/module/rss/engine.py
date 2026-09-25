@@ -1,6 +1,5 @@
 from module.database import Database, engine
-from module.downloader import DownloadClient
-from module.models import Bangumi, ResponseModel, RSSItem, Torrent
+from module.models import RSSItem, Torrent
 from module.network import RequestContent
 
 
@@ -24,93 +23,7 @@ class RSSEngine(Database):
         else:
             return []
 
-    async def add_rss(
-        self,
-        rss_link: str,
-        name: str | None = None,
-        aggregate: bool = True,
-        parser: str = "mikan",
-    ):
-        if not name:
-            async with RequestContent() as req:
-                name = await req.get_rss_title(rss_link)
-                if not name:
-                    return ResponseModel(
-                        status=False,
-                        status_code=406,
-                        msg_en="Failed to get RSS title.",
-                        msg_zh="无法获取 RSS 标题。",
-                    )
-        rss_data = RSSItem(name=name, url=rss_link, aggregate=aggregate, parser=parser)
-        if await self.rss.add(rss_data):
-            return ResponseModel(
-                status=True,
-                status_code=200,
-                msg_en="RSS added successfully.",
-                msg_zh="RSS 添加成功。",
-            )
-        else:
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="RSS added failed.",
-                msg_zh="RSS 添加失败。",
-            )
-
-    async def disable_list(self, rss_id_list: list[int]):
-        if not await self.rss.set_enabled_many(rss_id_list, enabled=False):
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="Disable RSS failed.",
-                msg_zh="禁用 RSS 失败。",
-            )
-        return ResponseModel(
-            status=True,
-            status_code=200,
-            msg_en="Disable RSS successfully.",
-            msg_zh="禁用 RSS 成功。",
-        )
-
-    async def enable_list(self, rss_id_list: list[int]):
-        if not await self.rss.set_enabled_many(rss_id_list, enabled=True):
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en="Enable RSS failed.",
-                msg_zh="启用 RSS 失败。",
-            )
-        return ResponseModel(
-            status=True,
-            status_code=200,
-            msg_en="Enable RSS successfully.",
-            msg_zh="启用 RSS 成功。",
-        )
-
     async def pull_rss(self, rss_item: RSSItem) -> list[Torrent]:
         torrents = await self._get_torrents(rss_item)
         new_torrents = await self.torrent.check_new(torrents)
         return new_torrents
-
-    async def download_bangumi(self, bangumi: Bangumi):
-        async with RequestContent() as req:
-            torrents = await req.get_torrents(
-                bangumi.rss_link, bangumi.filter.replace(",", "|")
-            )
-            if torrents:
-                async with DownloadClient() as client:
-                    await client.add_torrent(torrents, bangumi)
-                    await self.torrent.add_all(torrents)
-                    return ResponseModel(
-                        status=True,
-                        status_code=200,
-                        msg_en=f"[Engine] Download {bangumi.official_title} successfully.",
-                        msg_zh=f"下载 {bangumi.official_title} 成功。",
-                    )
-            else:
-                return ResponseModel(
-                    status=False,
-                    status_code=406,
-                    msg_en=f"[Engine] Download {bangumi.official_title} failed.",
-                    msg_zh=f"[Engine] 下载 {bangumi.official_title} 失败。",
-                )

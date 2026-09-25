@@ -9,19 +9,15 @@ class RSSDatabase:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, data: RSSItem):
-        # Check if exists
+    async def add(self, data: RSSItem) -> bool:
         statement = select(RSSItem).where(RSSItem.url == data.url)
         db_data = (await self.session.exec(statement)).first()
         if db_data:
             logger.debug("RSS Item {} already exists.", data.url)
             return False
-        else:
-            logger.debug("RSS Item {} not exists, adding...", data.url)
-            self.session.add(data)
-            await self.session.commit()
-            await self.session.refresh(data)
-            return True
+        logger.debug("Stage RSS item {} for insertion.", data.url)
+        self.session.add(data)
+        return True
 
     async def add_all(self, data: list[RSSItem]):
         for item in data:
@@ -38,27 +34,16 @@ class RSSDatabase:
         for key, value in dict_data.items():
             setattr(db_data, key, value)
         self.session.add(db_data)
-        await self.session.commit()
-        await self.session.refresh(db_data)
         return True
 
     async def set_enabled_many(self, rss_ids: list[int], enabled: bool) -> bool:
         ids = set(rss_ids)
         if not ids:
             return True
-        try:
-            result = await self.session.exec(
-                update(RSSItem).where(col(RSSItem.id).in_(ids)).values(enabled=enabled)
-            )
-            if result.rowcount != len(ids):
-                await self.session.rollback()
-                return False
-            await self.session.commit()
-            return True
-        except Exception as e:
-            await self.session.rollback()
-            logger.error("Update RSS enabled state failed. Because: {}", e)
-            return False
+        result = await self.session.exec(
+            update(RSSItem).where(col(RSSItem.id).in_(ids)).values(enabled=enabled)
+        )
+        return result.rowcount == len(ids)
 
     async def delete_one(self, _id: int) -> bool:
         rss_item = await self.search_id(_id)
@@ -85,8 +70,6 @@ class RSSDatabase:
             return False
         db_data.enabled = True
         self.session.add(db_data)
-        await self.session.commit()
-        await self.session.refresh(db_data)
         return True
 
     async def disable(self, _id: int):
@@ -96,8 +79,6 @@ class RSSDatabase:
             return False
         db_data.enabled = False
         self.session.add(db_data)
-        await self.session.commit()
-        await self.session.refresh(db_data)
         return True
 
     async def search_id(self, _id: int) -> RSSItem | None:
@@ -134,4 +115,3 @@ class RSSDatabase:
     async def delete_all(self):
         condition = delete(RSSItem)
         await self.session.exec(condition)
-        await self.session.commit()

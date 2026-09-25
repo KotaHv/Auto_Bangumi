@@ -115,20 +115,20 @@ async def _upgrade_to(async_engine, revision: str):
 
 
 def _patch_startup_dependencies(async_engine, monkeypatch, tmp_path):
-    import module.update.poster_cache as poster_module
+    import module.core.program as program_module
     import module.update.startup as startup_module
     import module.update.torrent_hash as hash_module
 
     real_rss_engine = startup_module.RSSEngine
+    from module.database import Database
+
     monkeypatch.setattr(
         startup_module,
         "RSSEngine",
         lambda: real_rss_engine(async_engine),
     )
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(
-        poster_module, "RSSEngine", lambda: real_rss_engine(async_engine)
-    )
+    monkeypatch.setattr(program_module, "Database", lambda: Database(async_engine))
     monkeypatch.setattr(hash_module, "RSSEngine", lambda: real_rss_engine(async_engine))
 
 
@@ -306,8 +306,9 @@ async def test_ensure_default_user_is_idempotent(tmp_path, monkeypatch):
 async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
     tmp_path, monkeypatch
 ):
-    import module.update.poster_cache as poster_module
-    from module.rss import RSSEngine
+    import module.service.bangumi as bangumi_service_module
+    from module.database import Database
+    from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(tmp_path / "posters.db", "current")
     async with async_engine.begin() as connection:
@@ -327,10 +328,10 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
             Path("data/posters/repaired.jpg").write_bytes(b"poster")
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(poster_module, "RSSEngine", lambda: RSSEngine(async_engine))
-    monkeypatch.setattr(poster_module, "TitleParser", FakeParser)
+    monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    await poster_module.ensure_poster_cache()
+    async with Database(async_engine) as session:
+        await BangumiService(session).ensure_poster_cache()
 
     assert calls == ["mikan", "tmdb"]
     assert (tmp_path / "data" / "posters" / "repaired.jpg").read_bytes() == b"poster"
@@ -345,8 +346,9 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
 async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
     tmp_path, monkeypatch
 ):
-    import module.update.poster_cache as poster_module
-    from module.rss import RSSEngine
+    import module.service.bangumi as bangumi_service_module
+    from module.database import Database
+    from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(
         tmp_path / "mikan-poster.db", "current"
@@ -370,10 +372,10 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
             calls.append(("tmdb",))
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(poster_module, "RSSEngine", lambda: RSSEngine(async_engine))
-    monkeypatch.setattr(poster_module, "TitleParser", FakeParser)
+    monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    await poster_module.ensure_poster_cache()
+    async with Database(async_engine) as session:
+        await BangumiService(session).ensure_poster_cache()
 
     assert calls == [("mikan", "https://mikan.example/torrent")]
     assert (
@@ -385,8 +387,9 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
 
 @pytest.mark.asyncio
 async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
-    import module.update.poster_cache as poster_module
-    from module.rss import RSSEngine
+    import module.service.bangumi as bangumi_service_module
+    from module.database import Database
+    from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(
         tmp_path / "existing-poster.db", "current"
@@ -406,10 +409,10 @@ async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
         async def tmdb_poster_parser(self, _bangumi):
             raise AssertionError("existing poster must not invoke TMDB parser")
 
-    monkeypatch.setattr(poster_module, "RSSEngine", lambda: RSSEngine(async_engine))
-    monkeypatch.setattr(poster_module, "TitleParser", FakeParser)
+    monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    await poster_module.ensure_poster_cache()
+    async with Database(async_engine) as session:
+        await BangumiService(session).ensure_poster_cache()
 
     assert Path("data/posters/existing.jpg").read_bytes() == b"original"
     await async_engine.dispose()

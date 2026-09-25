@@ -2,10 +2,11 @@ import asyncio
 
 from module.conf import settings
 from module.database import Database
-from module.manager import Renamer, eps_complete
+from module.manager import Renamer
 from module.notification import PostNotification
 from module.rss import RSSAnalyser
 from module.service.rss import RssService
+from module.service.season import SeasonService
 
 from .status import ProgramStatus
 
@@ -22,7 +23,8 @@ class RSSThread(ProgramStatus):
         async with Database() as session:
             await RssService(session).refresh_rss()
         if settings.bangumi_manage.eps_complete:
-            await eps_complete()
+            async with Database() as session:
+                await SeasonService(session).collect_incomplete()
 
 
 class RenameThread(ProgramStatus):

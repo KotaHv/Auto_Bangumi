@@ -7,7 +7,6 @@ from sqlmodel import SQLModel
 from sqlmodel.pool import StaticPool
 
 from module.database.combine import Database
-from module.manager.torrent import TorrentManager
 from module.models import Bangumi, RSSItem, Torrent
 from module.service import rss as rss_service_module
 from module.service.bangumi import BangumiService
@@ -54,6 +53,7 @@ async def test_match_list_appends_exact_url_once_and_ignores_empty_url(
     async with Database(database) as db:
         rule = Bangumi(title_raw="Example Show", rss_link=f"{url}-backup")
         await db.bangumi.add(rule)
+        await db.commit()
         assert rule.id is not None
 
         first = Torrent(name="Example Show S01E01", url="https://torrent.test/1")
@@ -173,6 +173,7 @@ async def test_delete_rss_keeps_rule_until_its_last_exact_source(database: Async
             assert await db.rss.add(rss)
         rule = Bangumi(title_raw="Example Show", rss_link=f"{url},{other_url}")
         assert await db.bangumi.add(rule)
+        await db.commit()
         assert rule.id is not None
         torrent = Torrent(
             bangumi_id=rule.id,
@@ -180,6 +181,7 @@ async def test_delete_rss_keeps_rule_until_its_last_exact_source(database: Async
             url="https://torrent.test/1",
         )
         await db.torrent.add(torrent)
+        await db.commit()
 
         assert rss_items[0].id is not None
         async with Database(database) as session:
@@ -212,6 +214,7 @@ async def test_delete_aggregate_rss_cascades_to_orphaned_rules(database: AsyncEn
         ]
         for rule in rules:
             assert await db.bangumi.add(rule)
+            await db.commit()
             assert rule.id is not None
             await db.torrent.add(
                 Torrent(
@@ -247,6 +250,7 @@ async def test_delete_rss_batch_with_missing_id_leaves_everything_unchanged(
             assert await db.rss.add(rss)
             rule = Bangumi(title_raw=f"Show {index}", rss_link=rss.url)
             assert await db.bangumi.add(rule)
+            await db.commit()
             assert rule.id is not None
             rules.append(rule)
             await db.torrent.add(
@@ -286,7 +290,7 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
             category_calls.append((hashes, category))
 
     monkeypatch.setattr("module.service.bangumi.DownloadClient", DownloadClientStub)
-    async with TorrentManager(database) as manager:
+    async with Database(database) as manager:
         aggregate = RSSItem(url="https://rss.example.test/shared.xml", aggregate=True)
         regular = RSSItem(url="https://rss.example.test/rule.xml")
         assert await manager.rss.add(aggregate)
@@ -297,6 +301,7 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
         second = Bangumi(title_raw="Second Show", rss_link=aggregate.url)
         assert await manager.bangumi.add(first)
         assert await manager.bangumi.add(second)
+        await manager.commit()
         assert first.id is not None
         assert second.id is not None
         await manager.torrent.add(
@@ -346,9 +351,10 @@ async def test_rule_deletion_restores_category_when_commit_fails(
 
     monkeypatch.setattr("module.service.bangumi.DownloadClient", DownloadClientStub)
 
-    async with TorrentManager(database) as manager:
+    async with Database(database) as manager:
         rule = Bangumi(title_raw="Example Show", offset=1)
         assert await manager.bangumi.add(rule)
+        await manager.commit()
         assert rule.id is not None
         rule_id = rule.id
         await manager.torrent.add(
@@ -359,6 +365,7 @@ async def test_rule_deletion_restores_category_when_commit_fails(
                 hash="hash-first",
             )
         )
+        await manager.commit()
 
         async def fail_commit() -> None:
             raise RuntimeError("commit failed")
@@ -382,7 +389,7 @@ async def test_rule_enable_disable_toggles_associated_regular_rss_only(
 ):
     regular_url = "https://rss.example.test/regular.xml"
     aggregate_url = "https://rss.example.test/aggregate.xml"
-    async with TorrentManager(database) as manager:
+    async with Database(database) as manager:
         for rss in (
             RSSItem(url=regular_url),
             RSSItem(url=aggregate_url, aggregate=True),
@@ -392,6 +399,7 @@ async def test_rule_enable_disable_toggles_associated_regular_rss_only(
             title_raw="Example Show", rss_link=f"{regular_url},{aggregate_url}"
         )
         assert await manager.bangumi.add(rule)
+        await manager.commit()
         assert rule.id is not None
 
         service = TorrentService(manager)

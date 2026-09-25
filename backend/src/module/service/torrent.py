@@ -120,7 +120,8 @@ class TorrentService:
                 if match_list:
                     await client.move_torrent(match_list, path)
             data.save_path = path
-            await self.bangumi.update(data, bangumi_id)
+            if await self.bangumi.update(data, bangumi_id):
+                await self.session.commit()
             return ResponseModel(
                 status_code=200,
                 status=True,

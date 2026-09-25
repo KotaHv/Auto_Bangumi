@@ -18,9 +18,7 @@ class TorrentDatabase:
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(result, key, value)
         self.session.add(result)
-        await self.session.commit()
-        await self.session.refresh(result)
-        logger.debug("Insert {} in database.", result.name)
+        logger.debug("Stage {} for insertion.", result.name)
 
     async def add_all(self, datas: list[Torrent]):
         for index, data in enumerate(datas):
@@ -32,18 +30,14 @@ class TorrentDatabase:
                     setattr(result, key, value)
                 datas[index] = result
         self.session.add_all(datas)
-        await self.session.commit()
-        logger.debug("Insert {} torrents in database.", len(datas))
+        logger.debug("Stage {} torrents for insertion.", len(datas))
 
     async def update(self, data: Torrent):
         self.session.add(data)
-        await self.session.commit()
-        await self.session.refresh(data)
-        logger.debug("Update {} in database.", data.name)
+        logger.debug("Stage update for {}.", data.name)
 
     async def update_all(self, datas: list[Torrent]):
         self.session.add_all(datas)
-        await self.session.commit()
 
     async def search(self, _id: int) -> Torrent | None:
         return (

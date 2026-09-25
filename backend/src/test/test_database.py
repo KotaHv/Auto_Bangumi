@@ -90,3 +90,4 @@ async def test_rss_database():
 
     async with Database(engine) as db:
         await db.rss.add(RSSItem(url=rss_url))
+        await db.commit()

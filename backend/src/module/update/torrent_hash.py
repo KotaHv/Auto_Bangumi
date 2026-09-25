@@ -30,3 +30,4 @@ async def ensure_torrent_hashes():
 
         if repaired_torrents:
             await db.torrent.update_all(repaired_torrents)
+            await db.commit()

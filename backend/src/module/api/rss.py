@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from module.database import Database
-from module.manager import SeasonCollector
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
 from module.rss import RSSAnalyser, RSSEngine
 from module.security.session import require_session
 from module.service.rss import RssService
+from module.service.season import SeasonService
 
 from .response import u_response
 
@@ -21,8 +21,10 @@ async def get_rss():
 
 @router.post(path="/add", response_model=APIResponse)
 async def add_rss(rss: RSSItem):
-    async with RSSEngine() as engine:
-        result = await engine.add_rss(rss.url, rss.name, rss.aggregate, rss.parser)
+    async with Database() as session:
+        result = await RssService(session).add_rss(
+            rss.url, rss.name, rss.aggregate, rss.parser
+        )
     return u_response(result)
 
 
@@ -33,8 +35,8 @@ async def add_rss(rss: RSSItem):
 async def enable_many_rss(
     rss_ids: list[int],
 ):
-    async with RSSEngine() as engine:
-        result = await engine.enable_list(rss_ids)
+    async with Database() as session:
+        result = await RssService(session).set_enabled_many(rss_ids, True)
     return u_response(result)
 
 
@@ -65,8 +67,8 @@ async def delete_many_rss(
     response_model=APIResponse,
 )
 async def disable_rss(rss_id: int):
-    async with RSSEngine() as engine:
-        if await engine.rss.disable(rss_id):
+    async with Database() as session:
+        if await RssService(session).set_enabled(rss_id, False):
             return JSONResponse(
                 status_code=200,
                 content={
@@ -89,8 +91,8 @@ async def disable_rss(rss_id: int):
     response_model=APIResponse,
 )
 async def disable_many_rss(rss_ids: list[int]):
-    async with RSSEngine() as engine:
-        result = await engine.disable_list(rss_ids)
+    async with Database() as session:
+        result = await RssService(session).set_enabled_many(rss_ids, False)
     return u_response(result)
 
 
@@ -102,8 +104,8 @@ async def update_rss(
     rss_id: int,
     data: RSSUpdate,
 ):
-    async with RSSEngine() as engine:
-        if await engine.rss.update(rss_id, data):
+    async with Database() as session:
+        if await RssService(session).update(rss_id, data):
             return JSONResponse(
                 status_code=200,
                 content={
@@ -179,15 +181,15 @@ async def analysis(rss: RSSItem):
 
 @router.post("/collect", response_model=APIResponse)
 async def download_collection(data: Bangumi):
-    async with SeasonCollector() as collector:
-        resp = await collector.collect_season(data, data.rss_link)
+    async with Database() as session:
+        resp = await SeasonService(session).collect_season(data, data.rss_link)
         return u_response(resp)
 
 
 @router.post("/subscribe", response_model=APIResponse)
 async def subscribe(data: Bangumi, rss: RSSItem):
-    async with SeasonCollector() as collector:
-        resp = await collector.subscribe_season(data, parser=rss.parser)
+    async with Database() as session:
+        resp = await SeasonService(session).subscribe_season(data, parser=rss.parser)
         return u_response(resp)
 
 
@@ -196,6 +198,6 @@ async def subscribe(data: Bangumi, rss: RSSItem):
     response_model=APIResponse,
 )
 async def force_collect(data: Bangumi):
-    async with SeasonCollector() as collector:
-        resp = await collector.force_collect(data)
+    async with Database() as session:
+        resp = await SeasonService(session).force_collect(data)
     return u_response(resp)

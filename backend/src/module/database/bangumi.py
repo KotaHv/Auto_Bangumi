@@ -10,21 +10,19 @@ class BangumiDatabase:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, data: Bangumi):
+    async def add(self, data: Bangumi) -> bool:
         statement = select(Bangumi).where(Bangumi.title_raw == data.title_raw)
         bangumi = (await self.session.exec(statement)).first()
         if bangumi:
             data.id = bangumi.id
             return False
         self.session.add(data)
-        await self.session.commit()
-        logger.debug("[Database] Insert {} into database.", data.official_title)
+        logger.debug("[Database] Stage {} for insertion.", data.official_title)
         return True
 
     async def add_all(self, datas: list[Bangumi]):
         self.session.add_all(datas)
-        await self.session.commit()
-        logger.debug("[Database] Insert {} bangumi into database.", len(datas))
+        logger.debug("[Database] Stage {} bangumi for insertion.", len(datas))
 
     async def update(
         self, data: Bangumi | BangumiUpdate, _id: int | None = None
@@ -35,34 +33,18 @@ class BangumiDatabase:
             db_data = await self.session.get(Bangumi, data.id)
         else:
             return False
-        if not db_data:
+        if db_data is None:
             return False
         bangumi_data = data.model_dump(exclude_unset=True)
         for key, value in bangumi_data.items():
             setattr(db_data, key, value)
         self.session.add(db_data)
-        await self.session.commit()
-        await self.session.refresh(db_data)
-        logger.debug("[Database] Update {}", data.official_title)
+        logger.debug("[Database] Stage update for {}", data.official_title)
         return True
 
     async def update_all(self, datas: list[Bangumi]):
         self.session.add_all(datas)
-        await self.session.commit()
-        logger.debug("[Database] Update {} bangumi.", len(datas))
-
-    async def update_rss(self, title_raw, rss_set: str):
-        # Update rss and added
-        statement = select(Bangumi).where(Bangumi.title_raw == title_raw)
-        bangumi = (await self.session.exec(statement)).first()
-        if bangumi is None:
-            return
-        bangumi.rss_link = rss_set
-        bangumi.added = False
-        self.session.add(bangumi)
-        await self.session.commit()
-        await self.session.refresh(bangumi)
-        logger.debug("[Database] Update {} rss_link to {}.", title_raw, rss_set)
+        logger.debug("[Database] Stage updates for {} bangumi.", len(datas))
 
     async def delete_one(self, _id: int) -> bool:
         result = await self.session.exec(
@@ -81,7 +63,6 @@ class BangumiDatabase:
     async def delete_all(self):
         statement = delete(Bangumi)
         await self.session.exec(statement)
-        await self.session.commit()
 
     async def search_all(self) -> list[Bangumi]:
         statement = select(Bangumi)
@@ -125,9 +106,8 @@ class BangumiDatabase:
                     ]
                     if rss_link and rss_link not in rss_members:
                         rss_members.append(rss_link)
-                        await self.update_rss(
-                            match_data.title_raw, ",".join(rss_members)
-                        )
+                        self.set_rss_link(match_data, ",".join(rss_members))
+                        match_data.added = False
                     torrent_list.pop(i)
                     break
             else:
@@ -162,8 +142,6 @@ class BangumiDatabase:
             return
         bangumi.deleted = True
         self.session.add(bangumi)
-        await self.session.commit()
-        await self.session.refresh(bangumi)
         logger.debug("[Database] Disable rule {}.", bangumi.title_raw)
 
     async def search_rss(self, rss_link: str) -> list[Bangumi]:
