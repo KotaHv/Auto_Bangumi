@@ -1,23 +1,29 @@
-import hashlib
-import secrets
-import time
 from typing import Annotated
 
 from fastapi import Cookie, HTTPException, Request
 from starlette.responses import Response
 
-from module.database import Database
+from module.database.deps import DatabaseDep
+from module.security.token import (
+    SESSION_TIMEOUT,
+    generate_session_token,
+    hash_session_token,
+)
+from module.service.auth import AuthService
 
 SESSION_COOKIE = "session"
-SESSION_TIMEOUT = 7 * 24 * 60 * 60
 
-
-def generate_session_token() -> str:
-    return secrets.token_urlsafe(32)
-
-
-def hash_session_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+__all__ = [
+    "SESSION_COOKIE",
+    "SESSION_TIMEOUT",
+    "clear_session",
+    "delete_session",
+    "generate_session_token",
+    "hash_session_token",
+    "require_session",
+    "set_session",
+    "unauthorized",
+]
 
 
 def set_session(response: Response, token: str, secure: bool) -> None:
@@ -42,25 +48,11 @@ def clear_session(request: Request) -> None:
 
 async def require_session(
     request: Request,
+    db: DatabaseDep,
     session_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
 ) -> None:
-    if not session_token:
+    if not session_token or not await AuthService(db).validate_session(session_token):
         raise unauthorized()
-
-    token_hash = hash_session_token(session_token)
-    async with Database() as db:
-        auth_session = await db.sessions.find_by_token_hash(token_hash)
-        if auth_session is None:
-            raise unauthorized()
-
-        now = int(time.time())
-        if auth_session.expires_at <= now:
-            await db.sessions.delete(auth_session)
-            await db.commit()
-            raise unauthorized()
-
-        auth_session.expires_at = now + SESSION_TIMEOUT
-        await db.commit()
 
     request.state.__setattr__(SESSION_COOKIE, session_token)
 

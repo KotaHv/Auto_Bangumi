@@ -7,14 +7,15 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sse_starlette.sse import EventSourceResponse
 
 from module.database import Database
+from module.database import deps as database_deps
 from module.database.alembic import upgrade_database
-from module.security import session as session_security
 from module.security.session import (
     SESSION_TIMEOUT,
     generate_session_token,
     hash_session_token,
     require_session,
 )
+from module.service import auth as auth_service
 
 
 def load_app(tmp_path, monkeypatch):
@@ -150,8 +151,8 @@ async def test_sse_auth_renews_cookie_on_final_response(tmp_path, monkeypatch):
             expires_at=1000 + SESSION_TIMEOUT,
         )
         await db.commit()
-    monkeypatch.setattr(session_security, "Database", lambda: Database(async_engine))
-    monkeypatch.setattr(session_security.time, "time", lambda: 1000)
+    monkeypatch.setattr(database_deps, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(auth_service.time, "time", lambda: 1000)
 
     @app.get("/policy-stream", dependencies=[Depends(require_session)])
     async def policy_stream():

@@ -7,7 +7,7 @@ from module.database.session import SessionDatabase
 from module.database.user import UserDatabase
 from module.models.user import User, UserUpdate
 from module.security.password import get_password_hash
-from module.security.session import (
+from module.security.token import (
     SESSION_TIMEOUT,
     generate_session_token,
     hash_session_token,
@@ -52,6 +52,23 @@ class AuthService:
         )
         await self.session.commit()
         return raw_token
+
+    async def validate_session(self, raw_token: str) -> bool:
+        auth_session = await self.sessions.find_by_token_hash(
+            hash_session_token(raw_token)
+        )
+        if auth_session is None:
+            return False
+
+        now = int(time.time())
+        if auth_session.expires_at <= now:
+            await self.sessions.delete(auth_session)
+            await self.session.commit()
+            return False
+
+        auth_session.expires_at = now + SESSION_TIMEOUT
+        await self.session.commit()
+        return True
 
     async def logout(self, raw_token: str | None) -> None:
         if raw_token:

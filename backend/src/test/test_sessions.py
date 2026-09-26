@@ -15,6 +15,7 @@ from module.security.session import (
     generate_session_token,
     hash_session_token,
 )
+from module.service import auth as auth_service
 
 
 def request_for(scheme: str = "http") -> Request:
@@ -172,10 +173,9 @@ async def test_valid_request_renews_session_on_every_activity(tmp_path, monkeypa
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 1000 + SESSION_TIMEOUT)
-    monkeypatch.setattr(security_session.time, "time", lambda: 4500)
-    monkeypatch.setattr(security_session, "Database", lambda: Database(async_engine))
-
-    await security_session.require_session(request_for(), raw_token)
+    monkeypatch.setattr(auth_service.time, "time", lambda: 4500)
+    async with Database(async_engine) as db:
+        await security_session.require_session(request_for(), db, raw_token)
 
     async with Database(async_engine) as db:
         session = await db.sessions.find_by_token_hash(hash_session_token(raw_token))
@@ -193,15 +193,14 @@ async def test_repeated_activity_survives_original_login_deadline(
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 1000 + SESSION_TIMEOUT)
-    monkeypatch.setattr(security_session, "Database", lambda: Database(async_engine))
-
-    for current_time in (4500, 8000):
-        monkeypatch.setattr(
-            security_session.time,
-            "time",
-            lambda current_time=current_time: current_time,
-        )
-        await security_session.require_session(request_for(), raw_token)
+    async with Database(async_engine) as db:
+        for current_time in (4500, 8000):
+            monkeypatch.setattr(
+                auth_service.time,
+                "time",
+                lambda current_time=current_time: current_time,
+            )
+            await security_session.require_session(request_for(), db, raw_token)
 
     async with Database(async_engine) as db:
         session = await db.sessions.find_by_token_hash(hash_session_token(raw_token))
@@ -217,11 +216,10 @@ async def test_expired_session_is_deleted_and_rejected(tmp_path, monkeypatch):
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
     await add_session(async_engine, raw_token, 1000, 2000)
-    monkeypatch.setattr(security_session.time, "time", lambda: 2000)
-    monkeypatch.setattr(security_session, "Database", lambda: Database(async_engine))
-
-    with pytest.raises(HTTPException) as error:
-        await security_session.require_session(request_for(), raw_token)
+    monkeypatch.setattr(auth_service.time, "time", lambda: 2000)
+    async with Database(async_engine) as db:
+        with pytest.raises(HTTPException) as error:
+            await security_session.require_session(request_for(), db, raw_token)
     assert error.value.status_code == 401
 
     async with Database(async_engine) as db:
@@ -242,9 +240,9 @@ async def test_session_survives_new_database_engine_context(tmp_path, monkeypatc
     await first_engine.dispose()
 
     second_engine = create_async_engine(f"sqlite+aiosqlite:///{database_path}")
-    monkeypatch.setattr(security_session.time, "time", lambda: 1500)
-    monkeypatch.setattr(security_session, "Database", lambda: Database(second_engine))
-    await security_session.require_session(request_for(), raw_token)
+    monkeypatch.setattr(auth_service.time, "time", lambda: 1500)
+    async with Database(second_engine) as db:
+        await security_session.require_session(request_for(), db, raw_token)
 
     async with Database(second_engine) as db:
         session = await db.sessions.find_by_token_hash(hash_session_token(raw_token))
