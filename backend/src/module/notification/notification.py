@@ -3,6 +3,7 @@ from loguru import logger
 from module.conf import settings
 from module.database import Database
 from module.models import Notification
+from module.service.bangumi import BangumiService
 
 from .plugin import (
     BarkNotification,
@@ -39,7 +40,7 @@ class PostNotification:
     @staticmethod
     async def _get_poster(notify: Notification):
         async with Database() as db:
-            poster_path = await db.bangumi.match_poster(notify.official_title)
+            poster_path = await BangumiService(db).match_poster(notify.official_title)
         notify.poster_path = poster_path
 
     async def send_msg(self, notify: Notification) -> bool:

@@ -25,6 +25,9 @@ class BangumiService:
     async def search_all(self) -> list[Bangumi]:
         return await self.bangumi.search_all()
 
+    async def match_poster(self, title: str) -> str | None:
+        return await self.bangumi.match_poster(title)
+
     async def delete_all(self) -> None:
         async with rss_operation_lock:
             await self.bangumi.delete_all()
