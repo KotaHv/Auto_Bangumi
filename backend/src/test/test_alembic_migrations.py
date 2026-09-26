@@ -5,6 +5,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.alembic import (
     _detect_legacy_revision,
@@ -122,8 +123,16 @@ def _patch_startup_dependencies(async_engine, monkeypatch, tmp_path):
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(program_module, "Database", lambda: Database(async_engine))
-    monkeypatch.setattr(startup_module, "Database", lambda: Database(async_engine))
-    monkeypatch.setattr(hash_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        startup_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
+    monkeypatch.setattr(
+        hash_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
 
 
 async def _insert_bangumi(connection):
@@ -283,12 +292,15 @@ async def test_default_user_retries_after_failure(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 async def test_ensure_default_user_is_idempotent(tmp_path, monkeypatch):
     import module.update.startup as startup_module
-    from module.database import Database
 
     async_engine = await _make_git_schema_fixture(tmp_path / "user.db", "current")
     async with async_engine.begin() as connection:
         await connection.execute(text("DELETE FROM user"))
-    monkeypatch.setattr(startup_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        startup_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
 
     assert await startup_module.ensure_default_user() is True
     assert await startup_module.ensure_default_user() is False
@@ -415,12 +427,15 @@ async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 async def test_ensure_torrent_hashes_noops_when_hashes_exist(tmp_path, monkeypatch):
     import module.update.torrent_hash as hash_module
-    from module.database import Database
 
     async_engine = await _make_git_schema_fixture(tmp_path / "hashes.db", "current")
     async with async_engine.begin() as connection:
         await connection.execute(text("UPDATE torrent SET hash = 'existing-hash'"))
-    monkeypatch.setattr(hash_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        hash_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
 
     await hash_module.ensure_torrent_hashes()
 
@@ -432,12 +447,15 @@ async def test_ensure_torrent_hashes_noops_when_hashes_exist(tmp_path, monkeypat
 async def test_ensure_torrent_hashes_repairs_missing_hash(tmp_path, monkeypatch):
     import module.service.torrent as service_torrent_module
     import module.update.torrent_hash as hash_module
-    from module.database import Database
 
     async_engine = await _make_git_schema_fixture(
         tmp_path / "missing-hash.db", "current"
     )
-    monkeypatch.setattr(hash_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        hash_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
     monkeypatch.setattr(
         service_torrent_module.torrent_hash,
         "from_magnet",
@@ -454,7 +472,6 @@ async def test_ensure_torrent_hashes_repairs_missing_hash(tmp_path, monkeypatch)
 async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeypatch):
     import module.service.torrent as service_torrent_module
     import module.update.torrent_hash as hash_module
-    from module.database import Database
 
     async_engine = await _make_git_schema_fixture(
         tmp_path / "mixed-hashes.db", "current"
@@ -468,7 +485,11 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
             )
         )
     resolved_urls = []
-    monkeypatch.setattr(hash_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        hash_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
     monkeypatch.setattr(
         service_torrent_module.torrent_hash,
         "from_magnet",
