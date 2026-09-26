@@ -72,9 +72,7 @@ async def test_session_database_round_trip_and_raw_token_is_not_stored(tmp_path)
 
 
 @pytest.mark.asyncio
-async def test_login_sets_opaque_cookie_and_persists_idle_deadline(
-    tmp_path, monkeypatch
-):
+async def test_login_sets_opaque_cookie_and_persists_idle_deadline(tmp_path):
     import module.api.auth as auth_module
 
     async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'login.db'}")
@@ -89,10 +87,12 @@ async def test_login_sets_opaque_cookie_and_persists_idle_deadline(
         )
         await db.commit()
 
-    monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
     before = int(time.time())
     response = Response()
-    result = await auth_module.login(request_for(), response, "admin", "adminadmin")
+    async with Database(async_engine) as db:
+        result = await auth_module.login(
+            request_for(), response, "admin", "adminadmin", db
+        )
     after = int(time.time())
 
     assert isinstance(result, dict)
@@ -122,7 +122,7 @@ async def test_login_sets_opaque_cookie_and_persists_idle_deadline(
 
 
 @pytest.mark.asyncio
-async def test_login_sets_secure_cookie_on_https(tmp_path, monkeypatch):
+async def test_login_sets_secure_cookie_on_https(tmp_path):
     import module.api.auth as auth_module
 
     async_engine = create_async_engine(
@@ -132,17 +132,18 @@ async def test_login_sets_secure_cookie_on_https(tmp_path, monkeypatch):
     async with Database(async_engine) as db:
         db.add(User(username="admin", password=get_password_hash("adminadmin")))
         await db.commit()
-    monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
-
     response = Response()
-    await auth_module.login(request_for("https"), response, "admin", "adminadmin")
+    async with Database(async_engine) as db:
+        await auth_module.login(
+            request_for("https"), response, "admin", "adminadmin", db
+        )
     assert "Secure" in response.headers["set-cookie"]
 
     await async_engine.dispose()
 
 
 @pytest.mark.asyncio
-async def test_failed_login_does_not_create_session(tmp_path, monkeypatch):
+async def test_failed_login_does_not_create_session(tmp_path):
     import module.api.auth as auth_module
 
     async_engine = create_async_engine(
@@ -152,10 +153,11 @@ async def test_failed_login_does_not_create_session(tmp_path, monkeypatch):
     async with Database(async_engine) as db:
         db.add(User(username="admin", password=get_password_hash("adminadmin")))
         await db.commit()
-    monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
-
-    with pytest.raises(HTTPException) as error:
-        await auth_module.login(request_for(), Response(), "admin", "wrong-password")
+    async with Database(async_engine) as db:
+        with pytest.raises(HTTPException) as error:
+            await auth_module.login(
+                request_for(), Response(), "admin", "wrong-password", db
+            )
     assert error.value.status_code == 401
 
     async with Database(async_engine) as db:
@@ -253,9 +255,7 @@ async def test_session_survives_new_database_engine_context(tmp_path, monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_logout_is_idempotent_and_only_deletes_current_session(
-    tmp_path, monkeypatch
-):
+async def test_logout_is_idempotent_and_only_deletes_current_session(tmp_path):
     import module.api.auth as auth_module
 
     async_engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'logout.db'}")
@@ -264,10 +264,9 @@ async def test_logout_is_idempotent_and_only_deletes_current_session(
     second_token = generate_session_token()
     await add_session(async_engine, first_token, 1000, 4600)
     await add_session(async_engine, second_token, 1000, 4600)
-    monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
-
     response = Response()
-    result = await auth_module.logout(response, first_token)
+    async with Database(async_engine) as db:
+        result = await auth_module.logout(response, db, first_token)
     assert result["status"] is True
     assert "session=" in response.headers["set-cookie"]
 
@@ -282,7 +281,8 @@ async def test_logout_is_idempotent_and_only_deletes_current_session(
         )
 
     second_response = Response()
-    await auth_module.logout(second_response, first_token)
+    async with Database(async_engine) as db:
+        await auth_module.logout(second_response, db, first_token)
     assert "session=" in second_response.headers["set-cookie"]
 
     await async_engine.dispose()
@@ -310,9 +310,7 @@ async def test_username_change_keeps_sessions(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_password_change_revokes_all_sessions_and_clears_cookie(
-    tmp_path, monkeypatch
-):
+async def test_password_change_revokes_all_sessions_and_clears_cookie(tmp_path):
     import module.api.auth as auth_module
 
     async_engine = create_async_engine(
@@ -326,12 +324,11 @@ async def test_password_change_revokes_all_sessions_and_clears_cookie(
         await db.commit()
     await add_session(async_engine, first_token, 1000, 4600)
     await add_session(async_engine, second_token, 1000, 4600)
-    monkeypatch.setattr(auth_module, "Database", lambda: Database(async_engine))
-
     response = Response()
-    result = await auth_module.update_user(
-        request_for(), response, UserUpdate(password="new-password")
-    )
+    async with Database(async_engine) as db:
+        result = await auth_module.update_user(
+            request_for(), response, UserUpdate(password="new-password"), db
+        )
     assert result == {
         "status": True,
         "msg_en": "Account updated successfully.",

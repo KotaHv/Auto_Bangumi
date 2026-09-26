@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from module.database import Database
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
 from module.rss import RSSAnalyser, RSSEngine
 from module.security.session import require_session
 from module.service.rss import RssService
 from module.service.season import SeasonService
 
+from .deps import DatabaseDep
 from .response import u_response
 
 router = APIRouter(prefix="/rss", tags=["rss"], dependencies=[Depends(require_session)])
@@ -20,11 +20,8 @@ async def get_rss():
 
 
 @router.post(path="/add", response_model=APIResponse)
-async def add_rss(rss: RSSItem):
-    async with Database() as session:
-        result = await RssService(session).add_rss(
-            rss.url, rss.name, rss.aggregate, rss.parser
-        )
+async def add_rss(rss: RSSItem, db: DatabaseDep):
+    result = await RssService(db).add_rss(rss.url, rss.name, rss.aggregate, rss.parser)
     return u_response(result)
 
 
@@ -34,9 +31,9 @@ async def add_rss(rss: RSSItem):
 )
 async def enable_many_rss(
     rss_ids: list[int],
+    db: DatabaseDep,
 ):
-    async with Database() as session:
-        result = await RssService(session).set_enabled_many(rss_ids, True)
+    result = await RssService(db).set_enabled_many(rss_ids, True)
     return u_response(result)
 
 
@@ -44,9 +41,8 @@ async def enable_many_rss(
     path="/delete/{rss_id}",
     response_model=APIResponse,
 )
-async def delete_rss(rss_id: int):
-    async with Database() as session:
-        result = await RssService(session).delete_one(rss_id)
+async def delete_rss(rss_id: int, db: DatabaseDep):
+    result = await RssService(db).delete_one(rss_id)
     return u_response(result)
 
 
@@ -56,9 +52,9 @@ async def delete_rss(rss_id: int):
 )
 async def delete_many_rss(
     rss_ids: list[int],
+    db: DatabaseDep,
 ):
-    async with Database() as session:
-        result = await RssService(session).delete_many(rss_ids)
+    result = await RssService(db).delete_many(rss_ids)
     return u_response(result)
 
 
@@ -66,33 +62,31 @@ async def delete_many_rss(
     path="/disable/{rss_id}",
     response_model=APIResponse,
 )
-async def disable_rss(rss_id: int):
-    async with Database() as session:
-        if await RssService(session).set_enabled(rss_id, False):
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "msg_en": "Disable RSS successfully.",
-                    "msg_zh": "禁用 RSS 成功。",
-                },
-            )
-        else:
-            return JSONResponse(
-                status_code=406,
-                content={
-                    "msg_en": "Disable RSS failed.",
-                    "msg_zh": "禁用 RSS 失败。",
-                },
-            )
+async def disable_rss(rss_id: int, db: DatabaseDep):
+    if await RssService(db).set_enabled(rss_id, False):
+        return JSONResponse(
+            status_code=200,
+            content={
+                "msg_en": "Disable RSS successfully.",
+                "msg_zh": "禁用 RSS 成功。",
+            },
+        )
+    else:
+        return JSONResponse(
+            status_code=406,
+            content={
+                "msg_en": "Disable RSS failed.",
+                "msg_zh": "禁用 RSS 失败。",
+            },
+        )
 
 
 @router.post(
     path="/disable/many",
     response_model=APIResponse,
 )
-async def disable_many_rss(rss_ids: list[int]):
-    async with Database() as session:
-        result = await RssService(session).set_enabled_many(rss_ids, False)
+async def disable_many_rss(rss_ids: list[int], db: DatabaseDep):
+    result = await RssService(db).set_enabled_many(rss_ids, False)
     return u_response(result)
 
 
@@ -103,33 +97,32 @@ async def disable_many_rss(rss_ids: list[int]):
 async def update_rss(
     rss_id: int,
     data: RSSUpdate,
+    db: DatabaseDep,
 ):
-    async with Database() as session:
-        if await RssService(session).update(rss_id, data):
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "msg_en": "Update RSS successfully.",
-                    "msg_zh": "更新 RSS 成功。",
-                },
-            )
-        else:
-            return JSONResponse(
-                status_code=406,
-                content={
-                    "msg_en": "Update RSS failed.",
-                    "msg_zh": "更新 RSS 失败。",
-                },
-            )
+    if await RssService(db).update(rss_id, data):
+        return JSONResponse(
+            status_code=200,
+            content={
+                "msg_en": "Update RSS successfully.",
+                "msg_zh": "更新 RSS 成功。",
+            },
+        )
+    else:
+        return JSONResponse(
+            status_code=406,
+            content={
+                "msg_en": "Update RSS failed.",
+                "msg_zh": "更新 RSS 失败。",
+            },
+        )
 
 
 @router.post(
     path="/refresh/all",
     response_model=APIResponse,
 )
-async def refresh_all():
-    async with Database() as session:
-        await RssService(session).refresh_rss()
+async def refresh_all(db: DatabaseDep):
+    await RssService(db).refresh_rss()
     return JSONResponse(
         status_code=200,
         content={
@@ -143,9 +136,8 @@ async def refresh_all():
     path="/refresh/{rss_id}",
     response_model=APIResponse,
 )
-async def refresh_rss(rss_id: int):
-    async with Database() as session:
-        await RssService(session).refresh_rss(rss_id)
+async def refresh_rss(rss_id: int, db: DatabaseDep):
+    await RssService(db).refresh_rss(rss_id)
     return JSONResponse(
         status_code=200,
         content={
@@ -180,24 +172,21 @@ async def analysis(rss: RSSItem):
 
 
 @router.post("/collect", response_model=APIResponse)
-async def download_collection(data: Bangumi):
-    async with Database() as session:
-        resp = await SeasonService(session).collect_season(data, data.rss_link)
-        return u_response(resp)
+async def download_collection(data: Bangumi, db: DatabaseDep):
+    resp = await SeasonService(db).collect_season(data, data.rss_link)
+    return u_response(resp)
 
 
 @router.post("/subscribe", response_model=APIResponse)
-async def subscribe(data: Bangumi, rss: RSSItem):
-    async with Database() as session:
-        resp = await SeasonService(session).subscribe_season(data, parser=rss.parser)
-        return u_response(resp)
+async def subscribe(data: Bangumi, rss: RSSItem, db: DatabaseDep):
+    resp = await SeasonService(db).subscribe_season(data, parser=rss.parser)
+    return u_response(resp)
 
 
 @router.post(
     "/force-collect",
     response_model=APIResponse,
 )
-async def force_collect(data: Bangumi):
-    async with Database() as session:
-        resp = await SeasonService(session).force_collect(data)
+async def force_collect(data: Bangumi, db: DatabaseDep):
+    resp = await SeasonService(db).force_collect(data)
     return u_response(resp)
