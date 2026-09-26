@@ -119,10 +119,13 @@ def _patch_startup_dependencies(async_engine, monkeypatch, tmp_path):
     import module.core.program as program_module
     import module.update.startup as startup_module
     import module.update.torrent_hash as hash_module
-    from module.database import Database
 
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(program_module, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        program_module,
+        "session_factory",
+        lambda: AsyncSession(async_engine, expire_on_commit=False),
+    )
     monkeypatch.setattr(
         startup_module,
         "session_factory",

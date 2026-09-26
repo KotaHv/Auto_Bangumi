@@ -1,7 +1,7 @@
 import asyncio
 
 from module.conf import settings
-from module.database import Database
+from module.database.factory import session_factory
 from module.downloader import DownloadClient
 from module.notification import PostNotification
 from module.rss import RSSAnalyser
@@ -21,10 +21,10 @@ class RSSThread(ProgramStatus):
         await self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
 
     async def _rss_loop(self):
-        async with Database() as session:
+        async with session_factory() as session:
             await RssService(session).refresh_rss()
         if settings.bangumi_manage.eps_complete:
-            async with Database() as session:
+            async with session_factory() as session:
                 await SeasonService(session).collect_incomplete()
 
 
@@ -33,7 +33,7 @@ class RenameThread(ProgramStatus):
         await self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
 
     async def _rename_loop(self):
-        async with Database() as session, DownloadClient() as client:
+        async with session_factory() as session, DownloadClient() as client:
             renamed_info = await RenameService(session, client).rename()
         if settings.notification.enable:
             async with PostNotification() as notifier:

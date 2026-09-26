@@ -1,7 +1,7 @@
 from loguru import logger
 
 from module.conf import settings
-from module.database import Database
+from module.database.factory import session_factory
 from module.models import Notification
 from module.service.bangumi import BangumiService
 
@@ -39,7 +39,7 @@ class PostNotification:
 
     @staticmethod
     async def _get_poster(notify: Notification):
-        async with Database() as db:
+        async with session_factory() as db:
             poster_path = await BangumiService(db).match_poster(notify.official_title)
         notify.poster_path = poster_path
 

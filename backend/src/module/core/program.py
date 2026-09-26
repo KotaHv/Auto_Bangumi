@@ -3,8 +3,8 @@ import asyncio
 from loguru import logger
 
 from module.conf import VERSION, settings
-from module.database import Database
 from module.database.alembic import upgrade_database
+from module.database.factory import session_factory
 from module.logger import skip_database_log
 from module.models import ResponseModel
 from module.service.bangumi import BangumiService
@@ -38,7 +38,7 @@ class Program(RenameThread, RSSThread):
         await upgrade_database()
         first_run = await ensure_default_user()
         await ensure_torrent_hashes()
-        async with Database() as session:
+        async with session_factory() as session:
             await BangumiService(session).ensure_poster_cache()
         if first_run:
             logger.info("[Core] Default user initialized.")
