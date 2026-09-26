@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from module.database import Database
-from module.manager import Renamer
+from module.downloader import DownloadClient
 from module.models import APIResponse, Bangumi, BangumiUpdate
 from module.security.session import require_session
 from module.service.bangumi import BangumiService
+from module.service.rename import RenameService
 from module.service.torrent import TorrentService
 
 from .response import u_response
@@ -138,17 +139,16 @@ async def refresh_poster(bangumi_id: int):
     response_model=APIResponse,
 )
 async def rename(data: Bangumi):
-    async with Renamer() as renamer:
-        if data.save_path is None:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "msg_en": "No save path provided.",
-                    "msg_zh": "缺少保存路径。",
-                },
-            )
-        bangumi_name, _ = renamer._path_to_bangumi(data.save_path)
-        await renamer.rename(bangumi_name)
+    if data.save_path is None:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "msg_en": "No save path provided.",
+                "msg_zh": "缺少保存路径。",
+            },
+        )
+    async with Database() as session, DownloadClient() as client:
+        await RenameService(session, client).rename_for_path(data.save_path)
     return JSONResponse(
         status_code=200,
         content={

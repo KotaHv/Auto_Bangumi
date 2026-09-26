@@ -9,6 +9,7 @@ from module.models import Bangumi, ResponseModel, RSSItem
 from module.searcher import SEARCH_KEY, SearchTorrent
 from module.service._locks import rss_operation_lock
 from module.utils.multi_version_filter import filter_multi_version_torrents
+from module.utils.torrent_tags import RENAME_TAG, format_offset_tag
 
 
 class SeasonService:
@@ -18,45 +19,32 @@ class SeasonService:
         self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
 
-    async def collect_season(
-        self, bangumi: Bangumi, link: str | None = None
-    ) -> ResponseModel:
+    async def collect_season(self, bangumi: Bangumi, link: str) -> ResponseModel:
         logger.info(
             "Start collecting {} Season {}...", bangumi.official_title, bangumi.season
         )
         title = bangumi.official_title
         season = bangumi.season
-        try:
-            async with SearchTorrent() as st, DownloadClient() as client:
-                if not link:
-                    torrents = await st.search_season(bangumi)
-                else:
-                    torrents = await st.get_torrents(
-                        link, bangumi.filter.replace(",", "|")
-                    )
-                filter_multi_version_torrents(torrents)
-                if await client.add_torrent(torrents, bangumi):
-                    bangumi.eps_collect = True
-                    await self.bangumi.update(bangumi)
-                    await self.torrent.add_all(torrents)
-                    await self.session.commit()
-                    logger.info("Collections of {} Season {} completed.", title, season)
-                    return ResponseModel(
-                        status=True,
-                        status_code=200,
-                        msg_en=f"Collections of {title} Season {season} completed.",
-                        msg_zh=f"收集 {title} 第 {season} 季完成。",
-                    )
-                logger.warning("Already collected {} Season {}.", title, season)
+        async with SearchTorrent() as st, DownloadClient() as client:
+            torrents = await st.get_torrents(link, bangumi.filter.replace(",", "|"))
+            filter_multi_version_torrents(torrents)
+            offset_tag = format_offset_tag(bangumi.offset)
+            tags = [RENAME_TAG, offset_tag] if offset_tag else None
+            if await client.add_torrent(torrents, bangumi, tags=tags):
+                logger.info("Collections of {} Season {} completed.", title, season)
                 return ResponseModel(
-                    status=False,
-                    status_code=406,
-                    msg_en=f"Collection of {title} Season {season} failed.",
-                    msg_zh=f"收集 {title} 第 {season} 季失败, 种子已经添加。",
+                    status=True,
+                    status_code=200,
+                    msg_en=f"Collections of {title} Season {season} completed.",
+                    msg_zh=f"收集 {title} 第 {season} 季完成。",
                 )
-        except Exception:
-            await self.session.rollback()
-            raise
+            logger.warning("Already collected {} Season {}.", title, season)
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en=f"Collection of {title} Season {season} failed.",
+                msg_zh=f"收集 {title} 第 {season} 季失败, 种子已经添加。",
+            )
 
     async def subscribe_season(
         self, data: Bangumi, parser: str = "mikan"

@@ -1,6 +1,8 @@
 import re
 from os import PathLike
 
+from qbittorrentapi.torrents import TorrentFilesList
+
 from module.conf import PLATFORM, settings
 from module.models import Bangumi, BangumiUpdate
 
@@ -15,10 +17,10 @@ class TorrentPath:
         pass
 
     @staticmethod
-    def check_files(info):
+    def check_files(files: TorrentFilesList) -> tuple[list[str], list[str]]:
         media_list = []
         subtitle_list = []
-        for f in info.files:
+        for f in files:
             if f.progress != 1:
                 continue
             file_name = f.name
@@ -30,7 +32,7 @@ class TorrentPath:
         return media_list, subtitle_list
 
     @staticmethod
-    def _path_to_bangumi(save_path: PathLike[str] | str):
+    def path_to_bangumi(save_path: PathLike[str] | str):
         # Split save path and download path
         save_parts = Path(save_path).parts
         download_parts = Path(settings.downloader.path).parts

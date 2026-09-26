@@ -2,9 +2,10 @@ import asyncio
 
 from module.conf import settings
 from module.database import Database
-from module.manager import Renamer
+from module.downloader import DownloadClient
 from module.notification import PostNotification
 from module.rss import RSSAnalyser
+from module.service.rename import RenameService
 from module.service.rss import RssService
 from module.service.season import SeasonService
 
@@ -32,8 +33,8 @@ class RenameThread(ProgramStatus):
         await self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
 
     async def _rename_loop(self):
-        async with Renamer() as renamer:
-            renamed_info = await renamer.rename()
+        async with Database() as session, DownloadClient() as client:
+            renamed_info = await RenameService(session, client).rename()
         if settings.notification.enable:
             async with PostNotification() as notifier:
                 for info in renamed_info:
