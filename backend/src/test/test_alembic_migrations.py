@@ -316,7 +316,6 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
     tmp_path, monkeypatch
 ):
     import module.service.bangumi as bangumi_service_module
-    from module.database import Database
     from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(tmp_path / "posters.db", "current")
@@ -339,7 +338,7 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_tmdb(
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    async with Database(async_engine) as session:
+    async with AsyncSession(async_engine, expire_on_commit=False) as session:
         await BangumiService(session).ensure_poster_cache()
 
     assert calls == ["mikan", "tmdb"]
@@ -356,7 +355,6 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
     tmp_path, monkeypatch
 ):
     import module.service.bangumi as bangumi_service_module
-    from module.database import Database
     from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(
@@ -383,7 +381,7 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    async with Database(async_engine) as session:
+    async with AsyncSession(async_engine, expire_on_commit=False) as session:
         await BangumiService(session).ensure_poster_cache()
 
     assert calls == [("mikan", "https://mikan.example/torrent")]
@@ -397,7 +395,6 @@ async def test_ensure_poster_cache_repairs_missing_poster_with_mikan(
 @pytest.mark.asyncio
 async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
     import module.service.bangumi as bangumi_service_module
-    from module.database import Database
     from module.service.bangumi import BangumiService
 
     async_engine = await _make_git_schema_fixture(
@@ -420,7 +417,7 @@ async def test_ensure_poster_cache_skips_existing_poster(tmp_path, monkeypatch):
 
     monkeypatch.setattr(bangumi_service_module, "TitleParser", FakeParser)
 
-    async with Database(async_engine) as session:
+    async with AsyncSession(async_engine, expire_on_commit=False) as session:
         await BangumiService(session).ensure_poster_cache()
 
     assert Path("data/posters/existing.jpg").read_bytes() == b"original"

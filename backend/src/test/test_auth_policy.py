@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
-from module.database import Database
 from module.database import deps as database_deps
 from module.database.alembic import upgrade_database
+from module.database.session import SessionDatabase
 from module.security.session import (
     SESSION_TIMEOUT,
     generate_session_token,
@@ -145,8 +145,9 @@ async def test_sse_auth_renews_cookie_on_final_response(tmp_path, monkeypatch):
     async_engine = create_async_engine(f"sqlite+aiosqlite:///{database_path}")
     await upgrade_database(async_engine)
     raw_token = generate_session_token()
-    async with Database(async_engine) as db:
-        await db.sessions.create(
+    async with AsyncSession(async_engine, expire_on_commit=False) as db:
+        sessions_repository = SessionDatabase(db)
+        await sessions_repository.create(
             token_hash=hash_session_token(raw_token),
             created_at=1000,
             expires_at=1000 + SESSION_TIMEOUT,

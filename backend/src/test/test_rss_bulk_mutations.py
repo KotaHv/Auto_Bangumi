@@ -1,4 +1,5 @@
 import pytest
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 ACTIONS = (
     ("enable", False, True),
@@ -11,11 +12,11 @@ def load_rss_dependencies(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "config").mkdir(exist_ok=True)
 
-    from module.database.combine import Database
+    from module.database.rss import RSSDatabase
     from module.models import RSSItem
     from module.service.rss import RssService
 
-    return RSSItem, Database, RssService
+    return RSSItem, RSSDatabase, RssService
 
 
 def create_test_engine():
@@ -41,17 +42,18 @@ async def create_schema(async_engine):
 async def test_bulk_operations_update_all_unique_ids(
     tmp_path, monkeypatch, operation, initial, expected
 ):
-    RSSItem, Database, RssService = load_rss_dependencies(tmp_path, monkeypatch)
+    RSSItem, RSSDatabase, RssService = load_rss_dependencies(tmp_path, monkeypatch)
     async_engine = create_test_engine()
     await create_schema(async_engine)
 
-    async with Database(async_engine) as db:
+    async with AsyncSession(async_engine, expire_on_commit=False) as db:
+        rss_repository = RSSDatabase(db)
         items = [
             RSSItem(url=f"https://rss.local/{name}.xml", enabled=initial)
             for name in ("first", "second")
         ]
         for item in items:
-            assert await db.rss.add(item)
+            assert await rss_repository.add(item)
             await db.commit()
             assert item.id is not None
         item_ids = [item.id for item in items]
@@ -59,7 +61,7 @@ async def test_bulk_operations_update_all_unique_ids(
         first_id, second_id = item_ids
         assert first_id is not None and second_id is not None
 
-        async with Database(async_engine) as session:
+        async with AsyncSession(async_engine, expire_on_commit=False) as session:
             service = RssService(session)
             if operation == "delete":
                 result = await service.delete_many([first_id, second_id, first_id])
@@ -71,11 +73,13 @@ async def test_bulk_operations_update_all_unique_ids(
         assert result.status
         for item_id in (first_id, second_id):
             if expected is None:
-                async with Database(async_engine) as check:
-                    assert await check.rss.search_id(item_id) is None
+                async with AsyncSession(async_engine, expire_on_commit=False) as check:
+                    check_rss = RSSDatabase(check)
+                    assert await check_rss.search_id(item_id) is None
             else:
-                async with Database(async_engine) as check:
-                    stored = await check.rss.search_id(item_id)
+                async with AsyncSession(async_engine, expire_on_commit=False) as check:
+                    check_rss = RSSDatabase(check)
+                    stored = await check_rss.search_id(item_id)
                     assert stored is not None
                     assert stored.enabled is expected
 
@@ -87,18 +91,19 @@ async def test_bulk_operations_update_all_unique_ids(
 async def test_bulk_operation_with_missing_id_changes_nothing(
     tmp_path, monkeypatch, operation, initial, _expected
 ):
-    RSSItem, Database, RssService = load_rss_dependencies(tmp_path, monkeypatch)
+    RSSItem, RSSDatabase, RssService = load_rss_dependencies(tmp_path, monkeypatch)
     async_engine = create_test_engine()
     await create_schema(async_engine)
 
-    async with Database(async_engine) as db:
+    async with AsyncSession(async_engine, expire_on_commit=False) as db:
+        rss_repository = RSSDatabase(db)
         rss = RSSItem(url="https://rss.local/existing.xml", enabled=initial)
-        assert await db.rss.add(rss)
+        assert await rss_repository.add(rss)
         await db.commit()
         assert rss.id is not None
         rss_id = rss.id
 
-        async with Database(async_engine) as session:
+        async with AsyncSession(async_engine, expire_on_commit=False) as session:
             service = RssService(session)
             if operation == "delete":
                 result = await service.delete_many([rss_id, 999_999])
@@ -109,7 +114,7 @@ async def test_bulk_operation_with_missing_id_changes_nothing(
 
         assert result.status is False
         assert result.status_code == 406
-        unchanged = await db.rss.search_id(rss_id)
+        unchanged = await rss_repository.search_id(rss_id)
         assert unchanged is not None
         assert unchanged.enabled is initial
 

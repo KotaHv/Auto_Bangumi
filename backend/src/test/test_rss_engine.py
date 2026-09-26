@@ -1,7 +1,7 @@
 import pytest
 from sqlmodel import SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.database import Database
 from module.service.rss import RssService
 
 from .test_database import engine as e
@@ -13,7 +13,7 @@ async def test_rss_service_pull_rss():
         await connection.run_sync(SQLModel.metadata.create_all)
 
     rss_link = "https://mikanani.me/RSS/Bangumi?bangumiId=2353&subgroupid=552"
-    async with Database(e) as session:
+    async with AsyncSession(e, expire_on_commit=False) as session:
         service = RssService(session)
         await service.add_rss(rss_link, aggregate=False)
         result = await service.rss.search_active()

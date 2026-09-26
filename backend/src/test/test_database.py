@@ -1,9 +1,12 @@
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel.pool import StaticPool
 
-from module.database.combine import Database
+from module.database.bangumi import BangumiDatabase
+from module.database.rss import RSSDatabase
+from module.database.torrent import TorrentDatabase
 from module.models import Bangumi, RSSItem, Torrent
 
 # sqlite mock engine
@@ -38,33 +41,36 @@ async def test_bangumi_database():
     )
     async with engine.begin() as connection:
         await connection.run_sync(SQLModel.metadata.create_all)
-    async with Database(engine) as db:
+    async with AsyncSession(engine, expire_on_commit=False) as db:
+        bangumi_repository = BangumiDatabase(db)
         # insert
-        await db.bangumi.add(test_data)
-        assert await db.bangumi.search_id(1) == test_data
+        await bangumi_repository.add(test_data)
+        assert await bangumi_repository.search_id(1) == test_data
 
         # update
         test_data.official_title = "无职转生，到了异世界就拿出真本事II"
-        await db.bangumi.update(test_data)
-        assert await db.bangumi.search_id(1) == test_data
+        await bangumi_repository.update(test_data)
+        assert await bangumi_repository.search_id(1) == test_data
 
         # search poster
         assert (
-            await db.bangumi.match_poster("无职转生，到了异世界就拿出真本事II (2021)")
+            await bangumi_repository.match_poster(
+                "无职转生，到了异世界就拿出真本事II (2021)"
+            )
             == "/test/test.jpg"
         )
 
         # match torrent
-        result = await db.bangumi.match_torrent(
+        result = await bangumi_repository.match_torrent(
             "[Lilith-Raws] 无职转生，到了异世界就拿出真本事 / Mushoku Tensei - 11 [Baha][WEB-DL][1080p][AVC AAC][CHT][MP4]"
         )
         assert result is not None
         assert result.official_title == "无职转生，到了异世界就拿出真本事II"
 
         # delete
-        assert await db.bangumi.delete_one(1)
+        assert await bangumi_repository.delete_one(1)
         await db.commit()
-        assert await db.bangumi.search_id(1) is None
+        assert await bangumi_repository.search_id(1) is None
 
 
 @pytest.mark.asyncio
@@ -73,21 +79,23 @@ async def test_torrent_database():
         name="[Sub Group]test S02 01 [720p].mkv",
         url="https://test.com/test.mkv",
     )
-    async with Database(engine) as db:
+    async with AsyncSession(engine, expire_on_commit=False) as db:
+        torrent_repository = TorrentDatabase(db)
         # insert
-        await db.torrent.add(test_data)
-        assert await db.torrent.search(1) == test_data
+        await torrent_repository.add(test_data)
+        assert await torrent_repository.search(1) == test_data
 
         # update
         test_data.downloaded = True
-        await db.torrent.update(test_data)
-        assert await db.torrent.search(1) == test_data
+        await torrent_repository.update(test_data)
+        assert await torrent_repository.search(1) == test_data
 
 
 @pytest.mark.asyncio
 async def test_rss_database():
     rss_url = "https://test.com/test.xml"
 
-    async with Database(engine) as db:
-        await db.rss.add(RSSItem(url=rss_url))
+    async with AsyncSession(engine, expire_on_commit=False) as db:
+        rss_repository = RSSDatabase(db)
+        await rss_repository.add(RSSItem(url=rss_url))
         await db.commit()
