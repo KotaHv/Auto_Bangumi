@@ -277,7 +277,7 @@ async def test_delete_rss_batch_with_missing_id_leaves_everything_unchanged(
 async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regular_rss(
     database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
-    category_calls: list[tuple[set[str], str]] = []
+    tag_calls: list[tuple[set[str], str]] = []
 
     class DownloadClientStub:
         async def __aenter__(self) -> DownloadClientStub:
@@ -286,8 +286,8 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
         async def __aexit__(self, *args: object) -> None:
             return None
 
-        async def set_category(self, hashes: set[str], category: str) -> None:
-            category_calls.append((hashes, category))
+        async def set_tag(self, hashes: set[str], tag: str) -> None:
+            tag_calls.append((hashes, tag))
 
     monkeypatch.setattr("module.service.bangumi.DownloadClient", DownloadClientStub)
     async with Database(database) as manager:
@@ -324,7 +324,7 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
         result = await BangumiService(manager).delete_one(first.id)
 
         assert result.status
-        assert category_calls == [({"hash-first", "hash-second"}, "BangumiFixed")]
+        assert tag_calls == [({"hash-first", "hash-second"}, "ab-offset=1")]
         assert await manager.rss.search_url(aggregate.url) is not None
         assert await manager.rss.search_url(regular.url) is None
         assert await manager.torrent.search_bangumi(first.id) == []
@@ -334,10 +334,42 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
 
 
 @pytest.mark.asyncio
-async def test_rule_deletion_restores_category_when_commit_fails(
+async def test_zero_offset_rule_deletion_skips_download_client(
     database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
-    category_calls: list[tuple[set[str], str]] = []
+    def unexpected_download_client() -> None:
+        pytest.fail("zero-offset deletion must not use the download client")
+
+    monkeypatch.setattr(
+        "module.service.bangumi.DownloadClient", unexpected_download_client
+    )
+
+    async with Database(database) as manager:
+        rule = Bangumi(title_raw="Example Show", offset=0)
+        assert await manager.bangumi.add(rule)
+        await manager.commit()
+        assert rule.id is not None
+        await manager.torrent.add(
+            Torrent(
+                bangumi_id=rule.id,
+                name="Example Show S01E01",
+                url="https://torrent.test/1",
+                hash="hash-first",
+            )
+        )
+        await manager.commit()
+
+        result = await BangumiService(manager).delete_one(rule.id)
+
+        assert result.status
+        assert await manager.torrent.search_bangumi(rule.id) == []
+
+
+@pytest.mark.asyncio
+async def test_rule_deletion_keeps_offset_tag_when_commit_fails(
+    database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+):
+    tag_calls: list[tuple[set[str], str]] = []
 
     class DownloadClientStub:
         async def __aenter__(self) -> DownloadClientStub:
@@ -346,8 +378,8 @@ async def test_rule_deletion_restores_category_when_commit_fails(
         async def __aexit__(self, *args: object) -> None:
             return None
 
-        async def set_category(self, hashes: set[str], category: str) -> None:
-            category_calls.append((hashes, category))
+        async def set_tag(self, hashes: set[str], tag: str) -> None:
+            tag_calls.append((hashes, tag))
 
     monkeypatch.setattr("module.service.bangumi.DownloadClient", DownloadClientStub)
 
@@ -375,10 +407,7 @@ async def test_rule_deletion_restores_category_when_commit_fails(
 
         assert not result.status
         assert result.status_code == 500
-        assert category_calls == [
-            ({"hash-first"}, "BangumiFixed"),
-            ({"hash-first"}, "Bangumi"),
-        ]
+        assert tag_calls == [({"hash-first"}, "ab-offset=1")]
         assert await manager.bangumi.search_id(rule_id) is not None
         assert len(await manager.torrent.search_bangumi(rule_id)) == 1
 

@@ -12,6 +12,7 @@ from module.models import Bangumi, ResponseModel
 from module.parser import TitleParser
 from module.service._locks import rss_operation_lock
 from module.service.torrent import TorrentService
+from module.utils.torrent_tags import format_offset_tag
 
 
 class BangumiService:
@@ -92,6 +93,12 @@ class BangumiService:
         async with rss_operation_lock:
             return await self._delete_one(bangumi_id, file)
 
+    async def _delete_regular_rss(self, rss_urls: set[str]) -> None:
+        for rss in await self.rss.search_urls(rss_urls):
+            if rss.aggregate or rss.id is None:
+                continue
+            await self.rss.delete_one(rss.id)
+
     async def _delete_one(self, bangumi_id: int, file: bool = False) -> ResponseModel:
         data = await self.bangumi.search_id(bangumi_id)
         if not isinstance(data, Bangumi) or data.id is None:
@@ -103,35 +110,17 @@ class BangumiService:
             )
 
         official_title = data.official_title
-        offset = data.offset
         rss_urls = set(filter(None, (data.rss_link or "").split(",")))
-        hashes: set[str] = set()
+        offset_tag = format_offset_tag(data.offset)
         try:
             hashes = await self.torrent.delete_by_bangumi_id(bangumi_id)
-            if offset != 0:
+            await self.bangumi.delete_one(bangumi_id)
+            await self._delete_regular_rss(rss_urls)
+            if offset_tag and hashes:
                 async with DownloadClient() as client:
-                    await client.set_category(hashes, "BangumiFixed")
-            if not await self.bangumi.delete_one(bangumi_id):
-                raise ValueError(
-                    f"Bangumi rule {bangumi_id} disappeared during deletion"
-                )
-            for rss in await self.rss.search_urls(rss_urls):
-                if not rss.aggregate and (
-                    rss.id is None or not await self.rss.delete_one(rss.id)
-                ):
-                    raise ValueError(f"RSS item {rss.id} disappeared during deletion")
+                    await client.set_tag(hashes, offset_tag)
             await self.session.commit()
         except Exception as e:
-            if offset != 0 and hashes:
-                try:
-                    async with DownloadClient() as client:
-                        await client.set_category(hashes, "Bangumi")
-                except Exception as compensation_error:
-                    logger.error(
-                        "Restore torrent category for rule {} failed. Because: {}",
-                        bangumi_id,
-                        compensation_error,
-                    )
             await self.session.rollback()
             logger.error("Delete rule {} failed. Because: {}", bangumi_id, e)
             return ResponseModel(
