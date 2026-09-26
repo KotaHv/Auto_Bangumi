@@ -3,8 +3,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.bangumi import BangumiDatabase
 from module.database.rss import RSSDatabase
+from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import Bangumi, BangumiUpdate, ResponseModel
+from module.network import RequestContent
+from module.utils import torrent_hash
 
 
 class TorrentService:
@@ -12,6 +15,35 @@ class TorrentService:
         self.session = session
         self.bangumi = BangumiDatabase(session)
         self.rss = RSSDatabase(session)
+        self.torrent = TorrentDatabase(session)
+
+    async def ensure_torrent_hashes(self) -> None:
+        torrents = await self.torrent.search_all()
+        missing_torrents = [
+            torrent
+            for torrent in torrents
+            if torrent.bangumi_id is not None and not torrent.hash
+        ]
+        if not missing_torrents:
+            return
+
+        repaired_torrents = []
+        async with RequestContent() as req:
+            for torrent in missing_torrents:
+                if torrent.url.startswith("magnet"):
+                    info_hash = torrent_hash.from_magnet(torrent.url)
+                else:
+                    content = await req.get_content(torrent.url)
+                    if content is None:
+                        continue
+                    info_hash = torrent_hash.from_torrent(content)
+                if info_hash is not None:
+                    torrent.hash = info_hash
+                    repaired_torrents.append(torrent)
+
+        if repaired_torrents:
+            await self.torrent.update_all(repaired_torrents)
+            await self.session.commit()
 
     async def search_one(self, bangumi_id: int) -> Bangumi | ResponseModel:
         data = await self.bangumi.search_id(bangumi_id)

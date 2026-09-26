@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
-from module.rss import RSSAnalyser, RSSEngine
+from module.rss import RSSAnalyser
 from module.security.session import require_session
 from module.service.rss import RssService
 from module.service.season import SeasonService
@@ -14,9 +14,8 @@ router = APIRouter(prefix="/rss", tags=["rss"], dependencies=[Depends(require_se
 
 
 @router.get(path="", response_model=list[RSSItem])
-async def get_rss():
-    async with RSSEngine() as engine:
-        return await engine.rss.search_all()
+async def get_rss(db: DatabaseDep):
+    return await RssService(db).search_all()
 
 
 @router.post(path="/add", response_model=APIResponse)
@@ -153,9 +152,9 @@ async def refresh_rss(rss_id: int, db: DatabaseDep):
 )
 async def get_torrent(
     rss_id: int,
+    db: DatabaseDep,
 ):
-    async with RSSEngine() as engine:
-        return await engine.get_rss_torrents(rss_id)
+    return await RssService(db).get_rss_torrents(rss_id)
 
 
 # Old API

@@ -22,6 +22,12 @@ class UserDatabase:
             return None
         return user
 
+    async def user_exists(self) -> bool:
+        return (await self.session.exec(select(User))).first() is not None
+
+    def add_user(self, user: User) -> None:
+        self.session.add(user)
+
     async def update_user(self, update_user: UserUpdate) -> User:
         user = (await self.session.exec(select(User))).first()
         if user is None:
@@ -63,23 +69,3 @@ class UserDatabase:
             lambda sync_session: SQLModel.metadata.create_all(sync_session.get_bind())
         )
         self.session.add(user)
-        await self.session.commit()
-
-    async def ensure_default_user(self) -> bool:
-        # Check if user exists
-        statement = select(User)
-        try:
-            result = (await self.session.exec(statement)).all()
-        except Exception:
-            await self.merge_old_user()
-            result = (await self.session.exec(statement)).all()
-        if len(result) != 0:
-            return False
-        # Add default user
-        user = User(
-            username="admin",
-            password=await asyncio.to_thread(get_password_hash, "adminadmin"),
-        )
-        self.session.add(user)
-        await self.session.commit()
-        return True

@@ -21,6 +21,21 @@ class RssService:
         self.bangumi = BangumiDatabase(session)
         self.torrent = TorrentDatabase(session)
 
+    async def search_all(self) -> list[RSSItem]:
+        return await self.rss.search_all()
+
+    async def get_rss_torrents(self, rss_id: int) -> list[Torrent]:
+        if await self.rss.search_id(rss_id) is None:
+            return []
+        return await self.torrent.search_rss(rss_id)
+
+    async def pull_rss(self, rss_item: RSSItem) -> list[Torrent]:
+        async with RequestContent() as req:
+            torrents = await req.get_torrents(rss_item.url)
+        for torrent in torrents:
+            torrent.rss_id = rss_item.id
+        return await self.torrent.check_new(torrents)
+
     async def add_rss(
         self,
         rss_link: str,

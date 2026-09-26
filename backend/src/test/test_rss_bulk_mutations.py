@@ -13,10 +13,9 @@ def load_rss_dependencies(tmp_path, monkeypatch):
 
     from module.database.combine import Database
     from module.models import RSSItem
-    from module.rss.engine import RSSEngine
     from module.service.rss import RssService
 
-    return RSSItem, RSSEngine, Database, RssService
+    return RSSItem, Database, RssService
 
 
 def create_test_engine():
@@ -42,20 +41,18 @@ async def create_schema(async_engine):
 async def test_bulk_operations_update_all_unique_ids(
     tmp_path, monkeypatch, operation, initial, expected
 ):
-    RSSItem, RSSEngine, Database, RssService = load_rss_dependencies(
-        tmp_path, monkeypatch
-    )
+    RSSItem, Database, RssService = load_rss_dependencies(tmp_path, monkeypatch)
     async_engine = create_test_engine()
     await create_schema(async_engine)
 
-    async with RSSEngine(async_engine) as engine:
+    async with Database(async_engine) as db:
         items = [
             RSSItem(url=f"https://rss.local/{name}.xml", enabled=initial)
             for name in ("first", "second")
         ]
         for item in items:
-            assert await engine.rss.add(item)
-            await engine.commit()
+            assert await db.rss.add(item)
+            await db.commit()
             assert item.id is not None
         item_ids = [item.id for item in items]
         assert all(item_id is not None for item_id in item_ids)
@@ -90,16 +87,14 @@ async def test_bulk_operations_update_all_unique_ids(
 async def test_bulk_operation_with_missing_id_changes_nothing(
     tmp_path, monkeypatch, operation, initial, _expected
 ):
-    RSSItem, RSSEngine, Database, RssService = load_rss_dependencies(
-        tmp_path, monkeypatch
-    )
+    RSSItem, Database, RssService = load_rss_dependencies(tmp_path, monkeypatch)
     async_engine = create_test_engine()
     await create_schema(async_engine)
 
-    async with RSSEngine(async_engine) as engine:
+    async with Database(async_engine) as db:
         rss = RSSItem(url="https://rss.local/existing.xml", enabled=initial)
-        assert await engine.rss.add(rss)
-        await engine.commit()
+        assert await db.rss.add(rss)
+        await db.commit()
         assert rss.id is not None
         rss_id = rss.id
 
@@ -114,7 +109,7 @@ async def test_bulk_operation_with_missing_id_changes_nothing(
 
         assert result.status is False
         assert result.status_code == 406
-        unchanged = await engine.rss.search_id(rss_id)
+        unchanged = await db.rss.search_id(rss_id)
         assert unchanged is not None
         assert unchanged.enabled is initial
 

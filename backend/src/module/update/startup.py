@@ -1,6 +1,7 @@
-from module.rss import RSSEngine
+from module.database import Database
+from module.service.auth import AuthService
 
 
 async def ensure_default_user() -> bool:
-    async with RSSEngine() as engine:
-        return await engine.user.ensure_default_user()
+    async with Database() as db:
+        return await AuthService(db).ensure_default_user()
