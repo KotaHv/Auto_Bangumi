@@ -2,13 +2,14 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import Depends
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.database import Database
+from module.database.factory import session_factory
 
 
-async def get_database() -> AsyncIterator[Database]:
-    async with Database() as db:
+async def get_database() -> AsyncIterator[AsyncSession]:
+    async with session_factory() as db:
         yield db
 
 
-DatabaseDep = Annotated[Database, Depends(get_database, scope="function")]
+DatabaseDep = Annotated[AsyncSession, Depends(get_database)]

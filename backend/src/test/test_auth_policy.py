@@ -3,7 +3,8 @@ import importlib
 import pytest
 from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from module.database import Database
@@ -151,7 +152,15 @@ async def test_sse_auth_renews_cookie_on_final_response(tmp_path, monkeypatch):
             expires_at=1000 + SESSION_TIMEOUT,
         )
         await db.commit()
-    monkeypatch.setattr(database_deps, "Database", lambda: Database(async_engine))
+    monkeypatch.setattr(
+        database_deps,
+        "session_factory",
+        async_sessionmaker(
+            async_engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        ),
+    )
     monkeypatch.setattr(auth_service.time, "time", lambda: 1000)
 
     @app.get("/policy-stream", dependencies=[Depends(require_session)])
