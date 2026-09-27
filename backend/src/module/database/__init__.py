@@ -1,4 +1,3 @@
-from .combine import Database
 from .engine import engine
 
-__all__ = ["Database", "engine"]
+__all__ = ["engine"]
