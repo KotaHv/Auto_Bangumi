@@ -11,7 +11,7 @@ from module.models import Bangumi, ResponseModel, RSSItem, RSSUpdate, Torrent
 from module.network import RequestContent
 from module.rss.analyser import RSSAnalyser
 from module.service._locks import rss_operation_lock
-from module.utils.multi_version_filter import filter_multi_version_torrents
+from module.utils.torrent_versions import filter_superseded_torrents
 
 
 class RssService:
@@ -120,7 +120,7 @@ class RssService:
                             torrents = await self.fetch_aggregate_rss(rss_item)
                         else:
                             torrents = await self.fetch_regular_rss(rss_item)
-                        filter_multi_version_torrents(torrents)
+                        torrents = filter_superseded_torrents(torrents)
                         new_torrents = await self.torrent.check_new(torrents)
                         for torrent in new_torrents:
                             torrent.rss_id = rss_item.id

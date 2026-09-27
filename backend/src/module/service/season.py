@@ -8,8 +8,8 @@ from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel, RSSItem
 from module.searcher import SEARCH_KEY, SearchTorrent
 from module.service._locks import rss_operation_lock
-from module.utils.multi_version_filter import filter_multi_version_torrents
 from module.utils.torrent_tags import RENAME_TAG, format_offset_tag
+from module.utils.torrent_versions import filter_superseded_torrents
 
 
 class SeasonService:
@@ -27,7 +27,7 @@ class SeasonService:
         season = bangumi.season
         async with SearchTorrent() as st, DownloadClient() as client:
             torrents = await st.get_torrents(link, bangumi.filter.replace(",", "|"))
-            filter_multi_version_torrents(torrents)
+            torrents = filter_superseded_torrents(torrents)
             offset_tag = format_offset_tag(bangumi.offset)
             tags = [RENAME_TAG, offset_tag] if offset_tag else None
             if await client.add_torrent(torrents, bangumi, tags=tags):
@@ -61,7 +61,7 @@ class SeasonService:
                     for field in SEARCH_KEY:
                         setattr(data, field, getattr(bangumi, field))
                     break
-            filter_multi_version_torrents(torrents)
+            torrents = filter_superseded_torrents(torrents)
             await self.rss.add(
                 RSSItem(
                     url=data.rss_link,
@@ -124,7 +124,7 @@ class SeasonService:
                     msg_en=f"Collection of {bangumi.official_title} Season {bangumi.season} failed, no valid rss found.",
                     msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 未找到有效rss。",
                 )
-            filter_multi_version_torrents(torrents)
+            torrents = filter_superseded_torrents(torrents)
             await client.add_torrent(torrents, bangumi)
             logger.info(
                 "Collections of {} Season {} completed.",
@@ -150,7 +150,7 @@ class SeasonService:
                 async with SearchTorrent() as st, DownloadClient() as client:
                     for data in datas:
                         torrents = await st.search_season(data)
-                        filter_multi_version_torrents(torrents)
+                        torrents = filter_superseded_torrents(torrents)
                         if not await client.add_torrent(torrents, data):
                             continue
                         data.eps_collect = True

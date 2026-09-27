@@ -12,6 +12,7 @@ from module.downloader import DownloadClient
 from module.models import EpisodeFile, Notification, SubtitleFile
 from module.parser import TitleParser
 from module.utils.torrent_tags import RENAME_TAG, parse_offset_tag
+from module.utils.torrent_versions import partition_by_revision
 
 
 @dataclass(slots=True)
@@ -141,7 +142,9 @@ class RenameService:
         torrents: list[_RenameTorrent],
         tag: str,
     ) -> list[_RenameTorrent]:
-        grouped_torrents = defaultdict(list)
+        grouped_torrents: defaultdict[
+            tuple[str, int, int | float], list[tuple[TorrentDictionary, int]]
+        ] = defaultdict(list)
         seen_hashes = set()
 
         def group_torrent(torrent: _RenameTorrent) -> None:
@@ -155,7 +158,7 @@ class RenameService:
             if ep is None:
                 return
             key = (torrent.bangumi_name, torrent.season, ep.episode)
-            grouped_torrents[key].append((torrent.info, ep))
+            grouped_torrents[key].append((torrent.info, ep.episode_revision))
 
         for torrent in torrents:
             seen_hashes.add(torrent.info.hash)
@@ -188,18 +191,11 @@ class RenameService:
 
         deleted_hashes = set()
         for (bangumi_name, season, episode), grouped in grouped_torrents.items():
-            max_revision = max(ep.episode_revision for _, ep in grouped)
-            obsolete_infos = [
-                info for info, ep in grouped if ep.episode_revision < max_revision
-            ]
+            kept_infos, obsolete_infos = partition_by_revision(grouped)
             if not obsolete_infos:
                 continue
             episode_label = f"{bangumi_name} S{season:02d}E{str(episode).zfill(2)}"
-            kept_names = "\n\t\t".join(
-                f"- {info.name}"
-                for info, ep in grouped
-                if ep.episode_revision == max_revision
-            )
+            kept_names = "\n\t\t".join(f"- {info.name}" for info in kept_infos)
             deleted_names = "\n\t\t".join(f"- {info.name}" for info in obsolete_infos)
             logger.warning(
                 "[Renamer] Detected multiple versions for '{}'.\n"
