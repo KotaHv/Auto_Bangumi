@@ -40,10 +40,7 @@ def test_state_changing_routes_use_mutation_methods(tmp_path, monkeypatch):
         "/api/v1/rss/refresh/{rss_id}": "post",
         "/api/v1/bangumi/enable/{bangumi_id}": "post",
         "/api/v1/bangumi/disable/{bangumi_id}": "post",
-        "/api/v1/bangumi/disable/many": "post",
         "/api/v1/bangumi/refresh/poster/all": "post",
-        "/api/v1/bangumi/refresh/poster/{bangumi_id}": "post",
-        "/api/v1/bangumi/delete/all": "delete",
     }
     for path, method in expected.items():
         assert method in paths[path]

@@ -16,15 +16,14 @@ export const apiRSS = {
   },
 
   async deleteMany(rss_list: number[]) {
-    const { data } = await axios.post<ApiSuccess>(
-      `api/v1/rss/delete/many`,
-      rss_list,
-    );
+    const { data } = await axios.delete<ApiSuccess>(`api/v1/rss/delete/many`, {
+      data: rss_list,
+    });
     return data!;
   },
 
   async disableMany(rss_list: number[]) {
-    const { data } = await axios.post<ApiSuccess>(
+    const { data } = await axios.patch<ApiSuccess>(
       `api/v1/rss/disable/many`,
       rss_list,
     );
@@ -32,7 +31,7 @@ export const apiRSS = {
   },
 
   async enableMany(rss_list: number[]) {
-    const { data } = await axios.post<ApiSuccess>(
+    const { data } = await axios.patch<ApiSuccess>(
       `api/v1/rss/enable/many`,
       rss_list,
     );

@@ -95,13 +95,3 @@ async def shutdown_program():
             "msg_zh": "关闭程序成功。",
         },
     )
-
-
-# Check status
-@router.get(
-    "/check/downloader",
-    tags=["check"],
-    response_model=bool,
-)
-async def check_downloader_status():
-    return await program.check_downloader()

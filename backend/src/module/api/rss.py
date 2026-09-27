@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from module.models import APIResponse, Bangumi, RSSItem, RSSUpdate, Torrent
+from module.models import APIResponse, Bangumi, RSSItem
 from module.rss import RSSAnalyser
 from module.security.session import require_session
 from module.service.rss import RssService
@@ -24,7 +24,7 @@ async def add_rss(rss: RSSItem, db: DatabaseDep):
     return u_response(result)
 
 
-@router.post(
+@router.patch(
     path="/enable/many",
     response_model=APIResponse,
 )
@@ -37,15 +37,6 @@ async def enable_many_rss(
 
 
 @router.delete(
-    path="/delete/{rss_id}",
-    response_model=APIResponse,
-)
-async def delete_rss(rss_id: int, db: DatabaseDep):
-    result = await RssService(db).delete_one(rss_id)
-    return u_response(result)
-
-
-@router.post(
     path="/delete/many",
     response_model=APIResponse,
 )
@@ -58,62 +49,12 @@ async def delete_many_rss(
 
 
 @router.patch(
-    path="/disable/{rss_id}",
-    response_model=APIResponse,
-)
-async def disable_rss(rss_id: int, db: DatabaseDep):
-    if await RssService(db).set_enabled(rss_id, False):
-        return JSONResponse(
-            status_code=200,
-            content={
-                "msg_en": "Disable RSS successfully.",
-                "msg_zh": "禁用 RSS 成功。",
-            },
-        )
-    else:
-        return JSONResponse(
-            status_code=406,
-            content={
-                "msg_en": "Disable RSS failed.",
-                "msg_zh": "禁用 RSS 失败。",
-            },
-        )
-
-
-@router.post(
     path="/disable/many",
     response_model=APIResponse,
 )
 async def disable_many_rss(rss_ids: list[int], db: DatabaseDep):
     result = await RssService(db).set_enabled_many(rss_ids, False)
     return u_response(result)
-
-
-@router.patch(
-    path="/update/{rss_id}",
-    response_model=APIResponse,
-)
-async def update_rss(
-    rss_id: int,
-    data: RSSUpdate,
-    db: DatabaseDep,
-):
-    if await RssService(db).update(rss_id, data):
-        return JSONResponse(
-            status_code=200,
-            content={
-                "msg_en": "Update RSS successfully.",
-                "msg_zh": "更新 RSS 成功。",
-            },
-        )
-    else:
-        return JSONResponse(
-            status_code=406,
-            content={
-                "msg_en": "Update RSS failed.",
-                "msg_zh": "更新 RSS 失败。",
-            },
-        )
 
 
 @router.post(
@@ -144,17 +85,6 @@ async def refresh_rss(rss_id: int, db: DatabaseDep):
             "msg_zh": "刷新 RSS 成功。",
         },
     )
-
-
-@router.get(
-    path="/torrent/{rss_id}",
-    response_model=list[Torrent],
-)
-async def get_torrent(
-    rss_id: int,
-    db: DatabaseDep,
-):
-    return await RssService(db).get_rss_torrents(rss_id)
 
 
 # Old API

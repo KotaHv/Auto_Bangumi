@@ -484,7 +484,21 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
                 "VALUES (2, 1, 1, 'Existing', 'magnet:?xt=keep', NULL, 0, 'keep-hash')"
             )
         )
+        await connection.execute(
+            text(
+                "INSERT INTO torrent "
+                "(id, bangumi_id, rss_id, name, url, homepage, downloaded, hash) "
+                "VALUES (3, 1, 1, 'Malformed', 'magnet:?xt=invalid', NULL, 0, NULL)"
+            )
+        )
     resolved_urls = []
+
+    def parse_magnet(url):
+        if url == "magnet:?xt=invalid":
+            raise ValueError("malformed magnet")
+        resolved_urls.append(url)
+        return "repaired-hash"
+
     monkeypatch.setattr(
         hash_module,
         "session_factory",
@@ -493,7 +507,7 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
     monkeypatch.setattr(
         service_torrent_module.torrent_hash,
         "from_magnet",
-        lambda url: resolved_urls.append(url) or "repaired-hash",
+        parse_magnet,
     )
 
     await hash_module.ensure_torrent_hashes()
@@ -507,6 +521,7 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
         await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 2")
         == "keep-hash"
     )
+    assert await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 3") is None
     await async_engine.dispose()
 
 

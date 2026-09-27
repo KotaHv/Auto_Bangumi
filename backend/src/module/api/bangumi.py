@@ -21,14 +21,6 @@ async def get_all_data(db: DatabaseDep):
     return await BangumiService(db).search_all()
 
 
-@router.get(
-    "/get/{bangumi_id}",
-    response_model=Bangumi,
-)
-async def get_data(bangumi_id: int, db: DatabaseDep):
-    return await TorrentService(db).search_one(bangumi_id)
-
-
 @router.patch(
     "/update/{bangumi_id}",
     response_model=APIResponse,
@@ -43,37 +35,11 @@ async def update_rule(
 
 
 @router.delete(
-    path="/delete/all",
-    response_model=APIResponse,
-)
-async def delete_all(db: DatabaseDep):
-    await BangumiService(db).delete_all()
-    return JSONResponse(
-        status_code=200,
-        content={
-            "msg_en": "Deleted all rules successfully.",
-            "msg_zh": "已删除所有规则。",
-        },
-    )
-
-
-@router.delete(
     path="/delete/{bangumi_id}",
     response_model=APIResponse,
 )
 async def delete_rule(bangumi_id: int, db: DatabaseDep, file: bool = False):
     resp = await BangumiService(db).delete_one(bangumi_id, file)
-    return u_response(resp)
-
-
-@router.delete(
-    path="/delete/many/",
-    response_model=APIResponse,
-)
-async def delete_many_rule(bangumi_id: list[int], db: DatabaseDep, file: bool = False):
-    service = BangumiService(db)
-    for i in bangumi_id:
-        resp = await service.delete_one(i, file)
     return u_response(resp)
 
 
@@ -83,17 +49,6 @@ async def delete_many_rule(bangumi_id: list[int], db: DatabaseDep, file: bool = 
 )
 async def disable_rule(bangumi_id: int, db: DatabaseDep, file: bool = False):
     resp = await TorrentService(db).disable_rule(bangumi_id, file)
-    return u_response(resp)
-
-
-@router.post(
-    path="/disable/many",
-    response_model=APIResponse,
-)
-async def disable_many_rule(bangumi_id: list[int], db: DatabaseDep, file: bool = False):
-    service = TorrentService(db)
-    for i in bangumi_id:
-        resp = await service.disable_rule(i, file)
     return u_response(resp)
 
 
@@ -112,15 +67,6 @@ async def enable_rule(bangumi_id: int, db: DatabaseDep):
 )
 async def refresh_all_poster(db: DatabaseDep):
     resp = await BangumiService(db).refresh_poster()
-    return u_response(resp)
-
-
-@router.post(
-    path="/refresh/poster/{bangumi_id}",
-    response_model=APIResponse,
-)
-async def refresh_poster(bangumi_id: int, db: DatabaseDep):
-    resp = await BangumiService(db).refind_poster(bangumi_id)
     return u_response(resp)
 
 

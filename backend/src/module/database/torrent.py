@@ -68,6 +68,17 @@ class TorrentDatabase:
             ).all()
         )
 
+    async def get_hashes_by_bangumi_id(self, bangumi_id: int) -> set[str]:
+        hashes = (
+            await self.session.exec(
+                select(Torrent.hash).where(
+                    Torrent.bangumi_id == bangumi_id,
+                    col(Torrent.hash).isnot(None),
+                )
+            )
+        ).all()
+        return {torrent_hash for torrent_hash in hashes if torrent_hash}
+
     async def check_new(self, torrents_list: list[Torrent]) -> list[Torrent]:
         new_torrents = []
         downloaded_torrents = await self.search_all_downloaded()

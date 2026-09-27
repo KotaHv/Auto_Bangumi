@@ -136,7 +136,9 @@ class BangumiService:
         torrent_message = None
         if file:
             async with DownloadClient() as client:
-                torrent_message = await TorrentService.delete_torrents(data, client)
+                torrent_message = await TorrentService.delete_torrents(
+                    data, client, hashes
+                )
 
         logger.info("[Service] Delete rule for {}", official_title)
         return ResponseModel(

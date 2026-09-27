@@ -23,41 +23,19 @@ export const apiBangumi = {
     );
     return data;
   },
-  async deleteRule(bangumiId: number | number[], file: boolean) {
-    let url = 'api/v1/bangumi/delete';
-    let ids: undefined | number[];
-
-    if (typeof bangumiId === 'number') {
-      url = `${url}/${bangumiId}`;
-    } else {
-      url = `${url}/many`;
-      ids = bangumiId;
-    }
-
-    const { data } = await axios.delete<ApiSuccess>(url, {
-      data: ids,
-      params: {
-        file,
-      },
-    });
+  async deleteRule(bangumiId: number, file: boolean) {
+    const { data } = await axios.delete<ApiSuccess>(
+      `api/v1/bangumi/delete/${bangumiId}`,
+      { params: { file } },
+    );
     return data;
   },
-  async disableRule(bangumiId: number | number[], file: boolean) {
-    let url = 'api/v1/bangumi/disable';
-    let ids: undefined | number[];
-
-    if (typeof bangumiId === 'number') {
-      url = `${url}/${bangumiId}`;
-    } else {
-      url = `${url}/many`;
-      ids = bangumiId;
-    }
-
-    const { data } = await axios.post<ApiSuccess>(url, ids, {
-      params: {
-        file,
-      },
-    });
+  async disableRule(bangumiId: number, file: boolean) {
+    const { data } = await axios.post<ApiSuccess>(
+      `api/v1/bangumi/disable/${bangumiId}`,
+      undefined,
+      { params: { file } },
+    );
     return data;
   },
   async enableRule(bangumiId: number) {

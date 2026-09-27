@@ -110,7 +110,9 @@ class Program(RenameThread, RSSThread):
 
     async def restart(self):
         await self.stop()
-        await self.start()
+        response = await self.start()
+        if not response.status:
+            return response
         return ResponseModel(
             status=True,
             status_code=200,

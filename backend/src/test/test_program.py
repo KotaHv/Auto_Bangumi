@@ -108,6 +108,14 @@ async def test_start_twice_returns_406(make_program):
 
 
 @pytest.mark.asyncio
+async def test_restart_offline_returns_failure_response(make_program):
+    program = make_program(downloader_online=False)
+    response = await program.restart()
+    assert response.status is False
+    assert response.status_code == 406
+
+
+@pytest.mark.asyncio
 async def test_connection_error_waits_and_retries(make_program, log_sink):
     calls = {"n": 0}
 

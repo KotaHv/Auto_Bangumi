@@ -30,16 +30,36 @@ class TorrentService:
         repaired_torrents = []
         async with RequestContent() as req:
             for torrent in missing_torrents:
-                if torrent.url.startswith("magnet"):
-                    info_hash = torrent_hash.from_magnet(torrent.url)
-                else:
-                    content = await req.get_content(torrent.url)
-                    if content is None:
-                        continue
-                    info_hash = torrent_hash.from_torrent(content)
-                if info_hash is not None:
-                    torrent.hash = info_hash
-                    repaired_torrents.append(torrent)
+                try:
+                    if torrent.url.startswith("magnet"):
+                        info_hash = torrent_hash.from_magnet(torrent.url)
+                    else:
+                        content = await req.get_content(torrent.url)
+                        if content is None:
+                            logger.warning(
+                                "Skipping torrent id={} name={!r}: failed to fetch torrent content",
+                                torrent.id,
+                                torrent.name,
+                            )
+                            continue
+                        info_hash = torrent_hash.from_torrent(content)
+                except Exception as error:
+                    logger.warning(
+                        "Skipping torrent id={} name={!r}: failed to resolve hash: {}",
+                        torrent.id,
+                        torrent.name,
+                        error,
+                    )
+                    continue
+                if info_hash is None:
+                    logger.warning(
+                        "Skipping torrent id={} name={!r}: hash parser returned no hash",
+                        torrent.id,
+                        torrent.name,
+                    )
+                    continue
+                torrent.hash = info_hash
+                repaired_torrents.append(torrent)
 
         if repaired_torrents:
             await self.torrent.update_all(repaired_torrents)
@@ -58,20 +78,11 @@ class TorrentService:
         return data
 
     @staticmethod
-    async def match_torrents_list(data: Bangumi | BangumiUpdate) -> list[str]:
-        async with DownloadClient() as client:
-            torrents = await client.get_torrent_info(status_filter=None)
-        return [
-            torrent.hash
-            for torrent in torrents
-            if torrent.save_path == data.save_path and torrent.hash
-        ]
-
-    @staticmethod
-    async def delete_torrents(data: Bangumi, client: DownloadClient) -> ResponseModel:
-        hash_list = await TorrentService.match_torrents_list(data)
-        if hash_list:
-            await client.delete_torrent(hash_list)
+    async def delete_torrents(
+        data: Bangumi, client: DownloadClient, hashes: set[str]
+    ) -> ResponseModel:
+        if hashes:
+            await client.delete_torrent(hashes)
             logger.info("Delete rule and torrents for {}", data.official_title)
             return ResponseModel(
                 status_code=200,
@@ -111,9 +122,10 @@ class TorrentService:
             )
 
         if file:
+            hashes = await self.torrent.get_hashes_by_bangumi_id(_id)
             async with DownloadClient() as client:
                 await self._set_rule_enabled(data, enabled=False)
-                return await self.delete_torrents(data, client)
+                return await self.delete_torrents(data, client, hashes)
 
         await self._set_rule_enabled(data, enabled=False)
         logger.info("Disable rule for {}", data.official_title)
@@ -146,11 +158,11 @@ class TorrentService:
     async def update_rule(self, bangumi_id: int, data: BangumiUpdate) -> ResponseModel:
         old_data = await self.bangumi.search_id(bangumi_id)
         if old_data:
-            match_list = await self.match_torrents_list(old_data)
+            hashes = await self.torrent.get_hashes_by_bangumi_id(bangumi_id)
             async with DownloadClient() as client:
                 path = client._gen_save_path(data)
-                if match_list:
-                    await client.move_torrent(match_list, path)
+                if hashes:
+                    await client.move_torrent(hashes, path)
             data.save_path = path
             if await self.bangumi.update(data, bangumi_id):
                 await self.session.commit()
