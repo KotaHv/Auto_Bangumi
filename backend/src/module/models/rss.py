@@ -14,7 +14,7 @@ class RSSItem(SQLModel, table=True):
 
 class RSSUpdate(SQLModel):
     name: str | None = None
-    url: str | None = ""
-    aggregate: bool | None = True
-    parser: str | None = "mikan"
-    enabled: bool | None = True
+    url: str = ""
+    aggregate: bool = True
+    parser: str = "mikan"
+    enabled: bool = True
