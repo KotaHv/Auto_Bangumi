@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -19,8 +20,17 @@ from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from module.api import v1
 from module.conf import VERSION, settings
+from module.core import Program
+from module.core.plex_refresh import PlexRefreshWorker
+from module.exceptions import (
+    PlexDiscoveryError,
+    PlexError,
+    PlexInputError,
+    PlexUpstreamError,
+)
 from module.logger import LoggerManager
 from module.middleware import enforce_same_origin, renew_session
+from module.models.plex import PlexAuthState
 
 log_manager = LoggerManager()
 log_manager.setup(debug_enabled=settings.log.debug_enable)
@@ -74,10 +84,31 @@ def _downloader_error_handler(msg_en: str, msg_zh: str):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    wake_event = asyncio.Event()
+    program = Program(wake_event)
+    worker: asyncio.Task | None = None
     try:
+        await program.startup()
+        app.state.program = program
+        app.state.plex_refresh_event = wake_event
+        app.state.plex_auth_state = PlexAuthState()
+        refresh_worker = PlexRefreshWorker(wake_event=wake_event)
+        worker = asyncio.create_task(refresh_worker.run(), name="plex-refresh-worker")
         yield
     finally:
-        await app.state.log_manager.shutdown()
+        if worker is not None:
+            worker.cancel()
+            try:
+                await worker
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                logger.exception("Plex refresh worker failed during shutdown")
+
+        try:
+            await program.stop()
+        finally:
+            await app.state.log_manager.shutdown()
 
 
 def create_app() -> FastAPI:
@@ -91,6 +122,25 @@ def create_app() -> FastAPI:
         else:
             content = {"msg_en": str(exc.detail), "msg_zh": str(exc.detail)}
         return JSONResponse(status_code=exc.status_code, content=content)
+
+    @app.exception_handler(PlexError)
+    async def _plex_error_handler(_request: Request, exc: PlexError):
+        if isinstance(exc, PlexInputError):
+            status_code = 400
+            content = {"msg_en": str(exc), "msg_zh": str(exc)}
+        elif isinstance(exc, PlexDiscoveryError):
+            status_code = 502
+            content = {"code": exc.code}
+        elif isinstance(exc, PlexUpstreamError):
+            status_code = 502
+            content = {"code": "plex_unavailable"}
+        else:
+            status_code = 500
+            content = {
+                "msg_en": "An internal Plex error occurred.",
+                "msg_zh": "Plex 内部错误。",
+            }
+        return JSONResponse(status_code=status_code, content=content)
 
     for exc_type, msg_en, msg_zh in ERROR_MESSAGES:
         app.add_exception_handler(exc_type, _downloader_error_handler(msg_en, msg_zh))

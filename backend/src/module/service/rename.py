@@ -1,5 +1,6 @@
+import asyncio
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from loguru import logger
 from qbittorrentapi.torrents import TorrentDictionary
@@ -7,10 +8,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.conf import settings
 from module.database.bangumi import BangumiDatabase
+from module.database.factory import session_factory
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import EpisodeFile, Notification, SubtitleFile
 from module.parser import TitleParser
+from module.service.plex import PlexService
 from module.utils.torrent_tags import RENAME_TAG, parse_offset_tag
 from module.utils.torrent_versions import partition_by_revision
 
@@ -24,8 +27,15 @@ class _RenameTorrent:
     season: int
 
 
+@dataclass(slots=True)
+class _RenameChanges:
+    changed_paths: set[str] = field(default_factory=set)
+    deleted_hashes: set[str] = field(default_factory=set)
+
+
 class RenameService:
     def __init__(self, session: AsyncSession, client: DownloadClient):
+        self.session = session
         self.bangumi = BangumiDatabase(session)
         self.torrent = TorrentDatabase(session)
         self.client = client
@@ -64,7 +74,10 @@ class RenameService:
         return f"{title} S{season}E{episode}{subtitle}{file_info.suffix}"
 
     async def _rename_file(
-        self, torrent: _RenameTorrent, offset: int
+        self,
+        torrent: _RenameTorrent,
+        offset: int,
+        changes: _RenameChanges,
     ) -> tuple[bool, Notification | None]:
         media_path = torrent.media_paths[0]
         ep = self._parser.torrent_parser(
@@ -83,6 +96,7 @@ class RenameService:
                 if not renamed:
                     logger.warning("[Renamer] {} rename failed", media_path)
                     return False, None
+                changes.changed_paths.add(torrent.info.save_path)
                 return True, Notification(
                     official_title=torrent.bangumi_name,
                     season=ep.season,
@@ -92,9 +106,15 @@ class RenameService:
         logger.warning("[Renamer] {} parse failed", media_path)
         if settings.bangumi_manage.remove_bad_torrent:
             await self.client.delete_torrent(torrent.info.hash)
+            changes.deleted_hashes.add(torrent.info.hash)
         return False, None
 
-    async def _rename_collection(self, torrent: _RenameTorrent, offset: int) -> bool:
+    async def _rename_collection(
+        self,
+        torrent: _RenameTorrent,
+        offset: int,
+        changes: _RenameChanges,
+    ) -> bool:
         for media_path in torrent.media_paths:
             if self.client.is_ep(media_path):
                 ep = self._parser.torrent_parser(
@@ -113,10 +133,14 @@ class RenameService:
                             logger.warning("[Renamer] {} rename failed", media_path)
                             if settings.bangumi_manage.remove_bad_torrent:
                                 await self.client.delete_torrent(torrent.info.hash)
+                                changes.deleted_hashes.add(torrent.info.hash)
                             return False
+                        changes.changed_paths.add(torrent.info.save_path)
         return True
 
-    async def _rename_subtitles(self, torrent: _RenameTorrent, offset: int) -> bool:
+    async def _rename_subtitles(
+        self, torrent: _RenameTorrent, offset: int, changes: _RenameChanges
+    ) -> bool:
         for subtitle_path in torrent.subtitle_paths:
             sub = self._parser.torrent_parser(
                 torrent_path=subtitle_path,
@@ -135,12 +159,14 @@ class RenameService:
                     if not renamed:
                         logger.warning("[Renamer] {} rename failed", subtitle_path)
                         return False
+                    changes.changed_paths.add(torrent.info.save_path)
         return True
 
     async def _prune_superseded_torrents(
         self,
         torrents: list[_RenameTorrent],
         tag: str,
+        changes: _RenameChanges,
     ) -> list[_RenameTorrent]:
         grouped_torrents: defaultdict[
             tuple[str, int, int | float], list[tuple[TorrentDictionary, int]]
@@ -189,7 +215,6 @@ class RenameService:
                     )
                 )
 
-        deleted_hashes = set()
         for (bangumi_name, season, episode), grouped in grouped_torrents.items():
             kept_infos, obsolete_infos = partition_by_revision(grouped)
             if not obsolete_infos:
@@ -209,12 +234,16 @@ class RenameService:
             )
             obsolete_hashes = [info.hash for info in obsolete_infos]
             await self.client.delete_torrent(obsolete_hashes)
-            deleted_hashes.update(obsolete_hashes)
+            changes.deleted_hashes.update(obsolete_hashes)
         return [
-            torrent for torrent in torrents if torrent.info.hash not in deleted_hashes
+            torrent
+            for torrent in torrents
+            if torrent.info.hash not in changes.deleted_hashes
         ]
 
-    async def rename(self, tag: str = "") -> list[Notification]:
+    async def rename(
+        self, tag: str = "", *, wake_event: asyncio.Event | None = None
+    ) -> list[Notification]:
         logger.debug("[Renamer] Start rename process.")
         if tag:
             candidates = await self.client.get_torrent_info(tag=tag)
@@ -251,48 +280,77 @@ class RenameService:
 
         if not torrents:
             return []
-        if settings.bangumi_manage.retain_latest_media_version:
-            torrents = await self._prune_superseded_torrents(torrents, tag)
         renamed_info: list[Notification] = []
+        changes = _RenameChanges()
         offset_cache: dict[int, int] = {}
-        for torrent in torrents:
-            tags = {
-                item.strip()
-                for item in (torrent.info.tags or "").split(",")
-                if item.strip()
-            }
+        try:
+            if settings.bangumi_manage.retain_latest_media_version:
+                torrents = await self._prune_superseded_torrents(torrents, tag, changes)
+            for torrent in torrents:
+                tags = {
+                    item.strip()
+                    for item in (torrent.info.tags or "").split(",")
+                    if item.strip()
+                }
 
-            bangumi_id = await self.torrent.get_bangumi_id(torrent.info.hash)
-            if bangumi_id is None:
-                offset = parse_offset_tag(torrent.info.tags or "") or 0
-            else:
-                if bangumi_id not in offset_cache:
-                    offset_cache[bangumi_id] = await self.bangumi.get_offset(bangumi_id)
-                offset = offset_cache[bangumi_id]
+                bangumi_id = await self.torrent.get_bangumi_id(torrent.info.hash)
+                if bangumi_id is None:
+                    offset = parse_offset_tag(torrent.info.tags or "") or 0
+                else:
+                    if bangumi_id not in offset_cache:
+                        offset_cache[bangumi_id] = await self.bangumi.get_offset(
+                            bangumi_id
+                        )
+                    offset = offset_cache[bangumi_id]
 
-            if len(torrent.media_paths) == 1:
-                success, notify_info = await self._rename_file(torrent, offset)
-            else:
-                logger.info("[Renamer] Start rename collection")
-                success = await self._rename_collection(torrent, offset)
-                notify_info = None
+                if len(torrent.media_paths) == 1:
+                    success, notify_info = await self._rename_file(
+                        torrent, offset, changes
+                    )
+                else:
+                    logger.info("[Renamer] Start rename collection")
+                    success = await self._rename_collection(torrent, offset, changes)
+                    notify_info = None
 
-            if success and torrent.subtitle_paths:
-                success = await self._rename_subtitles(torrent, offset)
+                if success and torrent.subtitle_paths:
+                    success = await self._rename_subtitles(torrent, offset, changes)
 
-            if not success:
-                continue
+                if not success:
+                    continue
 
-            await self.client.set_tag(torrent.info.hash, torrent.bangumi_name)
-            if len(torrent.media_paths) > 1:
-                await self.client.set_category(torrent.info.hash, "BangumiCollection")
+                await self.client.set_tag(torrent.info.hash, torrent.bangumi_name)
+                if len(torrent.media_paths) > 1:
+                    await self.client.set_category(
+                        torrent.info.hash, "BangumiCollection"
+                    )
 
-            if RENAME_TAG in tags:
-                await self.client.remove_tag(torrent.info.hash, RENAME_TAG)
-            if notify_info:
-                renamed_info.append(notify_info)
+                if RENAME_TAG in tags:
+                    await self.client.remove_tag(torrent.info.hash, RENAME_TAG)
+                if notify_info:
+                    renamed_info.append(notify_info)
+        finally:
+            try:
+                async with session_factory() as session:
+                    plex_service = PlexService(session)
+                    queued = False
+                    if changes.deleted_hashes:
+                        queued = await plex_service.queue_library_refresh()
+                    elif changes.changed_paths:
+                        queued = await plex_service.queue_refresh(changes.changed_paths)
+                    if queued and wake_event is not None:
+                        wake_event.set()
+            except Exception as exc:
+                logger.error(
+                    "[Renamer] Plex refresh enqueue failed after external file changes (error_type={}, error={})",
+                    type(exc).__name__,
+                    exc,
+                )
         logger.debug("[Renamer] Rename process finished.")
         return renamed_info
 
-    async def rename_for_path(self, save_path: str) -> list[Notification]:
-        return await self.rename(tag=self.client.path_to_bangumi(save_path)[0])
+    async def rename_for_path(
+        self, save_path: str, *, wake_event: asyncio.Event | None = None
+    ) -> list[Notification]:
+        return await self.rename(
+            tag=self.client.path_to_bangumi(save_path)[0], wake_event=wake_event
+        )

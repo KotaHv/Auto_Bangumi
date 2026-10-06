@@ -5,12 +5,13 @@
  * 406 Not Acceptable
  * 500 Internal Server Error
  */
-export type StatusCode = 400 | 401 | 404 | 406 | 500;
+export type StatusCode = 400 | 401 | 404 | 406 | 500 | 502;
 
 export interface ApiError {
   status: StatusCode;
   msg_en: string;
   msg_zh: string;
+  code?: string;
 }
 
 export interface ApiSuccess {

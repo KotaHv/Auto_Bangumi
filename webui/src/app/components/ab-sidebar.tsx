@@ -1,7 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FileClock, House, LogOut, Rss, Settings } from 'lucide-react';
+import {
+  Clapperboard,
+  FileClock,
+  House,
+  LogOut,
+  Rss,
+  Settings,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AbBrand } from '@/app/components/ab-brand';
 import {
@@ -75,6 +82,13 @@ export function AbSidebar() {
       icon: Settings,
       label: t('sidebar.config'),
       path: '/config',
+      hidden: false,
+    },
+    {
+      id: 5,
+      icon: Clapperboard,
+      label: t('sidebar.plex'),
+      path: '/plex',
       hidden: false,
     },
   ];

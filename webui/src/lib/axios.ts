@@ -1,5 +1,11 @@
 import Axios from 'axios';
 import type { AxiosError, AxiosResponse } from 'axios';
+
+declare module 'axios' {
+  interface AxiosRequestConfig<D = any, P = any> {
+    suppressGlobalErrorToast?: boolean;
+  }
+}
 import type { ApiError, ApiSuccess } from '@/types/api';
 import { message } from '@/lib/message';
 import { returnUserLangText } from '@/lib/i18n';
@@ -11,10 +17,11 @@ export const axios = Axios.create({
 
 axios.interceptors.response.use(
   (res: AxiosResponse) => res,
-  (err: AxiosError<ApiSuccess>) => {
+  (err: AxiosError<ApiSuccess & { code?: unknown }>) => {
     const status = err.response?.status as ApiError['status'];
     const msg_en = err.response?.data.msg_en ?? '';
     const msg_zh = err.response?.data.msg_zh ?? '';
+    const code = err.response?.data.code;
 
     const errorMsg = returnUserLangText({
       en: msg_en,
@@ -30,16 +37,19 @@ axios.interceptors.response.use(
         break;
       case 400:
       case 406:
-        if (errorMsg) message.error(errorMsg);
+        if (errorMsg && !err.config?.suppressGlobalErrorToast)
+          message.error(errorMsg);
         break;
       case 500:
-        message.error(
-          errorMsg ||
-            returnUserLangText({
-              en: 'Server error!',
-              'zh-CN': '服务器错误！',
-            }),
-        );
+        if (!err.config?.suppressGlobalErrorToast) {
+          message.error(
+            errorMsg ||
+              returnUserLangText({
+                en: 'Server error!',
+                'zh-CN': '服务器错误！',
+              }),
+          );
+        }
         break;
     }
 
@@ -47,6 +57,7 @@ axios.interceptors.response.use(
       status,
       msg_en,
       msg_zh,
+      ...(typeof code === 'string' ? { code } : {}),
     };
 
     return Promise.reject(error);

@@ -29,12 +29,18 @@ class RSSThread(ProgramStatus):
 
 
 class RenameThread(ProgramStatus):
+    def __init__(self, wake_event: asyncio.Event | None = None):
+        super().__init__()
+        self.wake_event = wake_event
+
     async def _rename_async_loop(self):
         await self._run_loop(self._rename_loop, settings.program.rename_time, "Renamer")
 
     async def _rename_loop(self):
         async with session_factory() as session, DownloadClient() as client:
-            renamed_info = await RenameService(session, client).rename()
+            renamed_info = await RenameService(session, client).rename(
+                wake_event=self.wake_event
+            )
         if settings.notification.enable:
             async with PostNotification() as notifier:
                 for info in renamed_info:

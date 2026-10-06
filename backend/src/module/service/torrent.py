@@ -1,12 +1,16 @@
+import asyncio
+
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.bangumi import BangumiDatabase
+from module.database.factory import session_factory
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import Bangumi, BangumiUpdate, ResponseModel
 from module.network import RequestContent
+from module.service.plex import PlexService
 from module.utils import torrent_hash
 
 
@@ -111,7 +115,13 @@ class TorrentService:
             await self.session.rollback()
             raise
 
-    async def disable_rule(self, _id: int, file: bool = False) -> ResponseModel:
+    async def disable_rule(
+        self,
+        _id: int,
+        file: bool = False,
+        *,
+        wake_event: asyncio.Event | None = None,
+    ) -> ResponseModel:
         data = await self.bangumi.search_id(_id)
         if not isinstance(data, Bangumi):
             return ResponseModel(
@@ -125,7 +135,20 @@ class TorrentService:
             hashes = await self.torrent.get_hashes_by_bangumi_id(_id)
             async with DownloadClient() as client:
                 await self._set_rule_enabled(data, enabled=False)
-                return await self.delete_torrents(data, client, hashes)
+                response = await self.delete_torrents(data, client, hashes)
+            if hashes and response.status:
+                try:
+                    async with session_factory() as session:
+                        queued = await PlexService(session).queue_library_refresh()
+                        if queued and wake_event is not None:
+                            wake_event.set()
+                except Exception as exc:
+                    logger.error(
+                        "[Service] Plex refresh enqueue failed after torrent deletion (error_type={}, error={})",
+                        type(exc).__name__,
+                        exc,
+                    )
+            return response
 
         await self._set_rule_enabled(data, enabled=False)
         logger.info("Disable rule for {}", data.official_title)
@@ -155,14 +178,31 @@ class TorrentService:
             msg_zh=f"启用 {data.official_title} 规则",
         )
 
-    async def update_rule(self, bangumi_id: int, data: BangumiUpdate) -> ResponseModel:
+    async def update_rule(
+        self,
+        bangumi_id: int,
+        data: BangumiUpdate,
+        *,
+        wake_event: asyncio.Event | None = None,
+    ) -> ResponseModel:
         old_data = await self.bangumi.search_id(bangumi_id)
         if old_data:
             hashes = await self.torrent.get_hashes_by_bangumi_id(bangumi_id)
-            async with DownloadClient() as client:
-                path = client._gen_save_path(data)
-                if hashes:
+            path = DownloadClient._gen_save_path(data)
+            if hashes and path != old_data.save_path:
+                async with DownloadClient() as client:
                     await client.move_torrent(hashes, path)
+                try:
+                    async with session_factory() as session:
+                        queued = await PlexService(session).queue_library_refresh()
+                        if queued and wake_event is not None:
+                            wake_event.set()
+                except Exception as exc:
+                    logger.error(
+                        "[Service] Plex refresh enqueue failed after torrent move (error_type={}, error={})",
+                        type(exc).__name__,
+                        exc,
+                    )
             data.save_path = path
             if await self.bangumi.update(data, bangumi_id):
                 await self.session.commit()

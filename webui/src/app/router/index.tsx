@@ -49,6 +49,13 @@ export const router = createHashRouter([
                 Component,
               })),
           },
+          {
+            path: 'plex',
+            lazy: () =>
+              import('@/app/routes/plex').then(({ default: Component }) => ({
+                Component,
+              })),
+          },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

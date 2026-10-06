@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, Response
 
+from module.database.deps import DatabaseDep
 from module.models import APIResponse
 from module.models.user import UserUpdate
 from module.security.session import (
@@ -12,8 +13,6 @@ from module.security.session import (
     set_session,
 )
 from module.service.auth import AuthService
-
-from .deps import DatabaseDep
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

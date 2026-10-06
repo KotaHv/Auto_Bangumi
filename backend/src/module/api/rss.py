@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from module.database.deps import DatabaseDep
 from module.models import APIResponse, Bangumi, RSSItem
 from module.rss import RSSAnalyser
 from module.security.session import require_session
 from module.service.rss import RssService
 from module.service.season import SeasonService
 
-from .deps import DatabaseDep
 from .response import u_response
 
 router = APIRouter(prefix="/rss", tags=["rss"], dependencies=[Depends(require_session)])

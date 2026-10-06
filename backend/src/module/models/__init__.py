@@ -1,6 +1,7 @@
 from .bangumi import Bangumi, BangumiUpdate, Episode, Notification
 from .config import Config
 from .log import ClearLogResult, LogEntry, LogPage, LogRecord, TailFilters
+from .plex import PlexConnection, PlexRefreshJob
 from .response import APIResponse, ProgramStatusResponse, ResponseModel
 from .rss import RSSItem, RSSUpdate
 from .search import SearchResult
@@ -24,6 +25,8 @@ __all__ = [
     "ResponseModel",
     "RSSItem",
     "RSSUpdate",
+    "PlexConnection",
+    "PlexRefreshJob",
     "SearchResult",
     "AuthSession",
     "EpisodeFile",

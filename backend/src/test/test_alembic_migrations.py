@@ -1,8 +1,6 @@
 from pathlib import Path
 
 import pytest
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,8 +12,7 @@ from module.database.alembic import (
 )
 from module.update.startup import ensure_default_user
 
-ALEMBIC_CONFIG = Path(__file__).resolve().parents[2] / "pyproject.toml"
-CURRENT_REVISION = "0004_add_session"
+CURRENT_REVISION = "0006_add_plex_refresh_queue"
 
 
 def _async_url(path: Path) -> str:
@@ -59,7 +56,15 @@ async def _schema_info(async_engine):
                         for foreign_key in inspect(conn).get_foreign_keys(table)
                     },
                 }
-                for table in {"bangumi", "rssitem", "torrent", "user", "session"}
+                for table in {
+                    "bangumi",
+                    "rssitem",
+                    "torrent",
+                    "user",
+                    "session",
+                    "plexconnection",
+                    "plexrefreshjob",
+                }
             }
         )
 
@@ -92,6 +97,25 @@ async def _assert_current_schema(async_engine):
         "expires_at",
     }
     assert schema["session"]["primary_key"] == ("id",)
+    assert schema["plexconnection"]["columns"] == {
+        "id",
+        "client_identifier",
+        "token",
+        "account_reauth_required",
+        "server_token",
+        "server_identifier",
+        "url",
+        "section_id",
+        "path",
+        "enabled",
+    }
+    assert schema["plexrefreshjob"]["columns"] == {
+        "path",
+        "revision",
+        "created_at",
+        "updated_at",
+    }
+    assert schema["plexrefreshjob"]["primary_key"] == ("path",)
     assert schema["session"]["foreign_keys"] == set()
     assert schema["user"]["primary_key"] == ("id",)
     assert schema["torrent"]["primary_key"] == ("id",)
@@ -102,17 +126,6 @@ async def _assert_current_schema(async_engine):
     assert "item_path" not in schema["rssitem"]["columns"]
     assert "combine" not in schema["rssitem"]["columns"]
     assert "refer_id" not in schema["torrent"]["columns"]
-
-
-async def _upgrade_to(async_engine, revision: str):
-    alembic_config = Config(toml_file=str(ALEMBIC_CONFIG))
-
-    def upgrade(connection):
-        alembic_config.attributes["connection"] = connection
-        command.upgrade(alembic_config, revision)
-
-    async with async_engine.begin() as connection:
-        await connection.run_sync(upgrade)
 
 
 def _patch_startup_dependencies(async_engine, monkeypatch, tmp_path):

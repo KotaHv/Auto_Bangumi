@@ -1,35 +1,22 @@
 import os
 import signal
-from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from loguru import logger
 
 from module.conf import VERSION
-from module.core import Program
 from module.models import APIResponse, ProgramStatusResponse
 from module.security.session import require_session
 
+from .deps import ProgramDep
 from .response import u_response
 
-program = Program()
-
-
-@asynccontextmanager
-async def lifespan(_router: APIRouter):
-    await program.startup()
-    yield
-    await program.stop()
-
-
-router = APIRouter(
-    tags=["program"], lifespan=lifespan, dependencies=[Depends(require_session)]
-)
+router = APIRouter(tags=["program"], dependencies=[Depends(require_session)])
 
 
 @router.post("/restart", response_model=APIResponse)
-async def restart():
+async def restart(program: ProgramDep):
     try:
         resp = await program.restart()
         return u_response(resp)
@@ -46,7 +33,7 @@ async def restart():
 
 
 @router.post("/start", response_model=APIResponse)
-async def start():
+async def start(program: ProgramDep):
     try:
         resp = await program.start()
         return u_response(resp)
@@ -63,12 +50,12 @@ async def start():
 
 
 @router.post("/stop", response_model=APIResponse)
-async def stop():
+async def stop(program: ProgramDep):
     return u_response(await program.stop())
 
 
 @router.get("/status", response_model=ProgramStatusResponse)
-async def program_status():
+async def program_status(program: ProgramDep):
     if not program.is_running:
         return {
             "status": False,
@@ -84,7 +71,7 @@ async def program_status():
 
 
 @router.post("/shutdown", response_model=APIResponse)
-async def shutdown_program():
+async def shutdown_program(program: ProgramDep):
     await program.stop()
     logger.info("Shutting down program...")
     os.kill(os.getpid(), signal.SIGINT)

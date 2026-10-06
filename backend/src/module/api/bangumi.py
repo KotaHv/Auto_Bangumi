@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from module.database.deps import DatabaseDep
 from module.downloader import DownloadClient
 from module.models import APIResponse, Bangumi, BangumiUpdate
 from module.security.session import require_session
@@ -8,7 +9,7 @@ from module.service.bangumi import BangumiService
 from module.service.rename import RenameService
 from module.service.torrent import TorrentService
 
-from .deps import DatabaseDep
+from .deps import PlexRefreshEventDep
 from .response import u_response
 
 router = APIRouter(
@@ -29,8 +30,9 @@ async def update_rule(
     bangumi_id: int,
     data: BangumiUpdate,
     db: DatabaseDep,
+    wake_event: PlexRefreshEventDep,
 ):
-    resp = await TorrentService(db).update_rule(bangumi_id, data)
+    resp = await TorrentService(db).update_rule(bangumi_id, data, wake_event=wake_event)
     return u_response(resp)
 
 
@@ -38,8 +40,13 @@ async def update_rule(
     path="/delete/{bangumi_id}",
     response_model=APIResponse,
 )
-async def delete_rule(bangumi_id: int, db: DatabaseDep, file: bool = False):
-    resp = await BangumiService(db).delete_one(bangumi_id, file)
+async def delete_rule(
+    bangumi_id: int,
+    db: DatabaseDep,
+    wake_event: PlexRefreshEventDep,
+    file: bool = False,
+):
+    resp = await BangumiService(db).delete_one(bangumi_id, file, wake_event=wake_event)
     return u_response(resp)
 
 
@@ -47,8 +54,15 @@ async def delete_rule(bangumi_id: int, db: DatabaseDep, file: bool = False):
     path="/disable/{bangumi_id}",
     response_model=APIResponse,
 )
-async def disable_rule(bangumi_id: int, db: DatabaseDep, file: bool = False):
-    resp = await TorrentService(db).disable_rule(bangumi_id, file)
+async def disable_rule(
+    bangumi_id: int,
+    db: DatabaseDep,
+    wake_event: PlexRefreshEventDep,
+    file: bool = False,
+):
+    resp = await TorrentService(db).disable_rule(
+        bangumi_id, file, wake_event=wake_event
+    )
     return u_response(resp)
 
 
@@ -74,7 +88,7 @@ async def refresh_all_poster(db: DatabaseDep):
     "/rename",
     response_model=APIResponse,
 )
-async def rename(data: Bangumi, db: DatabaseDep):
+async def rename(data: Bangumi, db: DatabaseDep, wake_event: PlexRefreshEventDep):
     if data.save_path is None:
         return JSONResponse(
             status_code=400,
@@ -84,7 +98,9 @@ async def rename(data: Bangumi, db: DatabaseDep):
             },
         )
     async with DownloadClient() as client:
-        await RenameService(db, client).rename_for_path(data.save_path)
+        await RenameService(db, client).rename_for_path(
+            data.save_path, wake_event=wake_event
+        )
     return JSONResponse(
         status_code=200,
         content={

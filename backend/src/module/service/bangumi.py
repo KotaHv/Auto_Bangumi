@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from loguru import logger
@@ -5,12 +6,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.conf import POSTERS_PATH
 from module.database.bangumi import BangumiDatabase
+from module.database.factory import session_factory
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel
 from module.parser import TitleParser
 from module.service._locks import rss_operation_lock
+from module.service.plex import PlexService
 from module.service.torrent import TorrentService
 from module.utils.torrent_tags import format_offset_tag
 
@@ -92,9 +95,15 @@ class BangumiService:
             await self.bangumi.update_all(changed)
             await self.session.commit()
 
-    async def delete_one(self, bangumi_id: int, file: bool = False) -> ResponseModel:
+    async def delete_one(
+        self,
+        bangumi_id: int,
+        file: bool = False,
+        *,
+        wake_event: asyncio.Event | None = None,
+    ) -> ResponseModel:
         async with rss_operation_lock:
-            return await self._delete_one(bangumi_id, file)
+            return await self._delete_one(bangumi_id, file, wake_event=wake_event)
 
     async def _delete_regular_rss(self, rss_urls: set[str]) -> None:
         for rss in await self.rss.search_urls(rss_urls):
@@ -102,7 +111,13 @@ class BangumiService:
                 continue
             await self.rss.delete_one(rss.id)
 
-    async def _delete_one(self, bangumi_id: int, file: bool = False) -> ResponseModel:
+    async def _delete_one(
+        self,
+        bangumi_id: int,
+        file: bool = False,
+        *,
+        wake_event: asyncio.Event | None = None,
+    ) -> ResponseModel:
         data = await self.bangumi.search_id(bangumi_id)
         if not isinstance(data, Bangumi) or data.id is None:
             return ResponseModel(
@@ -139,6 +154,18 @@ class BangumiService:
                 torrent_message = await TorrentService.delete_torrents(
                     data, client, hashes
                 )
+            if hashes and torrent_message.status:
+                try:
+                    async with session_factory() as session:
+                        queued = await PlexService(session).queue_library_refresh()
+                        if queued and wake_event is not None:
+                            wake_event.set()
+                except Exception as exc:
+                    logger.error(
+                        "[Service] Plex refresh enqueue failed after file deletion (error_type={}, error={})",
+                        type(exc).__name__,
+                        exc,
+                    )
 
         logger.info("[Service] Delete rule for {}", official_title)
         return ResponseModel(
