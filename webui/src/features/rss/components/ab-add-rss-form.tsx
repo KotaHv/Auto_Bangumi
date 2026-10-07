@@ -38,73 +38,70 @@ export function AbAddRssForm({
 
   return (
     <form
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
       }}
     >
-      <div className="space-y-4">
-        <Field>
-          <FieldLabel htmlFor={fieldIds.url}>
-            {t('topbar.add.rss_link')}
-          </FieldLabel>
-          <Input
-            id={fieldIds.url}
-            variant="large"
-            value={rss.url}
-            onChange={(e) => onChange({ url: e.target.value })}
-            placeholder={t('topbar.add.placeholder_link')}
-          />
-        </Field>
+      <Field>
+        <FieldLabel htmlFor={fieldIds.url}>
+          {t('topbar.add.rss_link')}
+        </FieldLabel>
+        <Input
+          id={fieldIds.url}
+          variant="large"
+          value={rss.url}
+          onChange={(e) => onChange({ url: e.target.value })}
+          placeholder={t('topbar.add.placeholder_link')}
+        />
+      </Field>
 
-        <Field>
-          <FieldLabel htmlFor={fieldIds.name}>
-            {t('topbar.add.name')}
-          </FieldLabel>
-          <Input
-            id={fieldIds.name}
-            variant="large"
-            value={rss.name}
-            onChange={(e) => onChange({ name: e.target.value })}
-            placeholder={t('topbar.add.placeholder_name')}
-          />
-        </Field>
+      <Field>
+        <FieldLabel htmlFor={fieldIds.name}>{t('topbar.add.name')}</FieldLabel>
+        <Input
+          id={fieldIds.name}
+          variant="large"
+          value={rss.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder={t('topbar.add.placeholder_name')}
+        />
+      </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2 sm:items-center">
-          <div className="sm:justify-self-start">
-            <Field
-              orientation="horizontal"
-              className="min-h-9 w-full items-center justify-between gap-3 sm:w-fit sm:justify-start sm:gap-2"
-            >
-              <FieldLabel htmlFor={fieldIds.aggregate}>
-                {t('topbar.add.aggregate')}
-              </FieldLabel>
-              <Switch
-                id={fieldIds.aggregate}
-                checked={rss.aggregate}
-                onCheckedChange={(aggregate) => onChange({ aggregate })}
-                size="lg"
-              />
-            </Field>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2 sm:items-center">
+        <div className="sm:justify-self-start">
+          <Field
+            orientation="horizontal"
+            className="min-h-9 w-full items-center justify-between gap-3 sm:w-fit sm:justify-start sm:gap-2"
+          >
+            <FieldLabel htmlFor={fieldIds.aggregate}>
+              {t('topbar.add.aggregate')}
+            </FieldLabel>
+            <Switch
+              id={fieldIds.aggregate}
+              checked={rss.aggregate}
+              onCheckedChange={(aggregate) => onChange({ aggregate })}
+              size="lg"
+            />
+          </Field>
+        </div>
 
-          <div className="sm:justify-self-end">
-            <Field
-              orientation="horizontal"
-              className="min-h-9 items-center justify-between gap-2 sm:w-fit sm:justify-start"
-            >
-              <FieldLabel id={fieldIds.parserLabel}>
-                {t('topbar.add.parser')}
-              </FieldLabel>
-              <AbSelect
-                aria-labelledby={fieldIds.parserLabel}
-                value={rss.parser}
-                items={PARSER_TYPE}
-                triggerClassName="w-24 sm:w-24"
-                onValueChange={(parser) => onChange({ parser })}
-              />
-            </Field>
-          </div>
+        <div className="sm:justify-self-end">
+          <Field
+            orientation="horizontal"
+            className="min-h-9 items-center justify-between gap-2 sm:w-fit sm:justify-start"
+          >
+            <FieldLabel id={fieldIds.parserLabel}>
+              {t('topbar.add.parser')}
+            </FieldLabel>
+            <AbSelect
+              aria-labelledby={fieldIds.parserLabel}
+              value={rss.parser}
+              items={PARSER_TYPE}
+              triggerClassName="w-24 sm:w-24"
+              onValueChange={(parser) => onChange({ parser })}
+            />
+          </Field>
         </div>
       </div>
 
