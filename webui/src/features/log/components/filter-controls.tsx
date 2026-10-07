@@ -49,8 +49,6 @@ export function LogLevelFilter({
             <Activity aria-hidden="true" className="text-muted-foreground" />
           ) : undefined
         }
-        contentAlign="start"
-        alignItemWithTrigger={false}
         aria-labelledby={labelId}
         onValueChange={(value) =>
           setFilters({ ...filters, level: value === 'ALL' ? null : value })

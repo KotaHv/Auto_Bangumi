@@ -24,8 +24,6 @@ export interface AbSelectProps<T extends string = string> {
   size?: 'sm' | 'default';
   disabled?: boolean;
   icon?: ReactNode;
-  contentAlign?: 'start' | 'center' | 'end';
-  alignItemWithTrigger?: boolean;
   'aria-labelledby'?: string;
   name?: string;
   required?: boolean;
@@ -41,8 +39,6 @@ export function AbSelect<T extends string = string>({
   size = 'default',
   disabled = false,
   icon,
-  contentAlign,
-  alignItemWithTrigger,
   'aria-labelledby': ariaLabelledBy,
   name,
   required = false,
@@ -67,11 +63,7 @@ export function AbSelect<T extends string = string>({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
 
-      <SelectContent
-        className={contentClassName}
-        align={contentAlign}
-        alignItemWithTrigger={alignItemWithTrigger}
-      >
+      <SelectContent className={contentClassName}>
         <SelectGroup>
           {items.map((item) => (
             <SelectItem
