@@ -11,10 +11,12 @@ from sqlmodel import Field, SQLModel
 from module.exceptions import PlexDiscoveryCode, PlexInputError
 from module.utils.log_time import to_microseconds
 
+NonEmptyString = Annotated[str, StringConstraints(min_length=1)]
+
 
 class PinData(BaseModel):
     pin_id: int = PydanticField(validation_alias="id")
-    code: str = PydanticField(min_length=1)
+    code: NonEmptyString
     expires_in: int = PydanticField(default=300, validation_alias="expiresIn")
 
     @field_validator("pin_id")
@@ -37,9 +39,9 @@ class PinAuthResponse(BaseModel):
 
 
 class PlexLibraryResponse(BaseModel):
-    id: int = PydanticField(gt=0)
+    id: Annotated[int, PydanticField(gt=0)]
     title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-    paths: list[str] = PydanticField(min_length=1)
+    paths: Annotated[list[str], PydanticField(min_length=1)]
 
 
 class PlexResourceConnection(BaseModel):
@@ -54,8 +56,8 @@ class PlexResource(BaseModel):
     provides: str
     client_identifier: str = PydanticField(validation_alias="clientIdentifier")
     name: str
-    access_token: str = PydanticField(
-        validation_alias="accessToken", min_length=1, repr=False
+    access_token: NonEmptyString = PydanticField(
+        validation_alias="accessToken", repr=False
     )
     connections: list[PlexResourceConnection]
 
@@ -120,8 +122,8 @@ class PlexAuthState:
 
 
 class PlexServerAddress(BaseModel):
-    host: str = Field(min_length=1)
-    port: int = Field(ge=1, le=65535)
+    host: NonEmptyString
+    port: Annotated[int, PydanticField(ge=1, le=65535)]
     ssl: bool
 
 
