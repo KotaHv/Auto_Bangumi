@@ -3,7 +3,12 @@ from .config import Config
 from .log import ClearLogResult, LogEntry, LogPage, LogRecord, TailFilters
 from .plex import PlexConnection, PlexRefreshJob
 from .response import APIResponse, ProgramStatusResponse, ResponseModel
-from .rss import RSSItem, RSSUpdate
+from .rss import (
+    RSSAnalysisOption,
+    RSSAnalysisResult,
+    RSSItem,
+    RSSUpdate,
+)
 from .search import SearchResult
 from .session import AuthSession
 from .torrent import EpisodeFile, SubtitleFile, Torrent, TorrentInfo
@@ -23,6 +28,8 @@ __all__ = [
     "APIResponse",
     "ProgramStatusResponse",
     "ResponseModel",
+    "RSSAnalysisOption",
+    "RSSAnalysisResult",
     "RSSItem",
     "RSSUpdate",
     "PlexConnection",

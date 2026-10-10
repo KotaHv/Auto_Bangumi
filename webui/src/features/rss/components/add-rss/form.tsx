@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import type { RSSDraft } from '../types/rss';
+import type { RSSDraft } from '../../types/rss.ts';
 import { AbSelect } from '@/components/shared/ab-select';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';

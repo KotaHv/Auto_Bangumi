@@ -64,7 +64,7 @@ class Episode(BaseModel):
     season_raw: str
     episode: int | float
     sub: str | None
-    group: str
+    group: str | None
     resolution: str | None
     source: str | None
 

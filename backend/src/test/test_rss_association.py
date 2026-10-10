@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from typing import cast
 
 import pytest
 import pytest_asyncio
@@ -7,11 +8,18 @@ from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel.pool import StaticPool
 
+import module.service.rss as rss_service_module
 from module.database.bangumi import BangumiDatabase
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
-from module.models import Bangumi, RSSItem, Torrent
-from module.service import rss as rss_service_module
+from module.downloader import DownloadClient
+from module.models import (
+    Bangumi,
+    RSSAnalysisOption,
+    RSSAnalysisResult,
+    RSSItem,
+    Torrent,
+)
 from module.service.bangumi import BangumiService
 from module.service.rss import RssService
 from module.service.torrent import TorrentService
@@ -50,47 +58,138 @@ async def test_search_rss_matches_exact_url_members(database: AsyncEngine):
 
 
 @pytest.mark.asyncio
-async def test_match_list_appends_exact_url_once_and_ignores_empty_url(
-    database: AsyncEngine,
+async def test_analyze_feed_returns_exact_match(
+    database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
-    url = "https://rss.example.test/show.xml"
     async with AsyncSession(database, expire_on_commit=False) as db:
-        bangumi_repository = BangumiDatabase(db)
-        rule = Bangumi(title_raw="Example Show", rss_link=f"{url}-backup")
-        await bangumi_repository.add(rule)
-        await db.commit()
-        assert rule.id is not None
-
-        first = Torrent(name="Example Show S01E01", url="https://torrent.test/1")
-        assert await bangumi_repository.match_list([first], url) == []
-        stored = await bangumi_repository.search_id(rule.id)
-        assert stored is not None
-        assert stored.rss_link == f"{url}-backup,{url}"
-
-        second = Torrent(name="Example Show S01E02", url="https://torrent.test/2")
-        assert await bangumi_repository.match_list([second], url) == []
-        stored = await bangumi_repository.search_id(rule.id)
-        assert stored is not None
-        assert stored.rss_link.split(",").count(url) == 1
-
-        assert (
-            await bangumi_repository.match_list(
-                [Torrent(name="Example Show S01E03", url="https://torrent.test/3")], ""
-            )
-            == []
+        repository = BangumiDatabase(db)
+        exact = Bangumi(
+            title_raw="Example Show",
+            season=1,
+            season_raw="S01",
+            group_name="Group A",
         )
-        stored = await bangumi_repository.search_id(rule.id)
-        assert stored is not None
-        assert "" not in stored.rss_link.split(",")
+        other = Bangumi(
+            title_raw="Example Show",
+            season=1,
+            group_name="Group B",
+        )
+        await repository.add_all([exact, other])
+        await db.commit()
+
+        service = RssService(db)
+        parsed = Bangumi(
+            title_raw="Example Show",
+            season=1,
+            season_raw="S01",
+            group_name="Group A",
+        )
+
+        async def link_to_data(_rss_item: RSSItem) -> Bangumi:
+            return parsed
+
+        monkeypatch.setattr(service.analyser, "link_to_data", link_to_data)
+        result = await service.analyze_feed(RSSItem(url="https://rss.example.test/a"))
+
+        assert isinstance(result, RSSAnalysisResult)
+        assert result.options == [RSSAnalysisOption(type="exact_match", bangumi=exact)]
 
 
 @pytest.mark.asyncio
-async def test_fetch_regular_rss_keeps_single_link_network_behavior(
+async def test_analyze_feed_offers_candidates_for_other_groups(
+    database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+):
+    candidates = [
+        Bangumi(title_raw="Example Show", season=1, group_name=group)
+        for group in ("Group A", "Group B")
+    ]
+    parsed = Bangumi(
+        title_raw="Example Show",
+        season=1,
+        season_raw="S01",
+        group_name="Group C",
+    )
+
+    async with AsyncSession(database, expire_on_commit=False) as db:
+        await BangumiDatabase(db).add_all(candidates)
+        await db.commit()
+        service = RssService(db)
+
+        async def link_to_data(_rss_item: RSSItem) -> Bangumi:
+            return parsed
+
+        monkeypatch.setattr(service.analyser, "link_to_data", link_to_data)
+        result = await service.analyze_feed(
+            RSSItem(url="https://rss.example.test/candidates")
+        )
+
+    assert isinstance(result, RSSAnalysisResult)
+    assert {
+        option.bangumi.group_name
+        for option in result.options
+        if option.type == "candidate"
+    } == {"Group A", "Group B"}
+    assert result.options[-1] == RSSAnalysisOption(type="create", bangumi=parsed)
+
+
+@pytest.mark.asyncio
+async def test_aggregate_refresh_links_torrent_to_created_rule(
+    database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+):
+    torrent = Torrent(name="Example Show S01E01", url="https://torrent.test/1")
+    parsed = Bangumi(title_raw="Example Show", season=1, group_name="Example Group")
+    downloads: list[tuple[str, int | None]] = []
+
+    class RequestStub:
+        async def __aenter__(self) -> RequestStub:
+            return self
+
+        async def __aexit__(self, *args: object) -> None:
+            return None
+
+        async def get_torrents(self, _url: str) -> list[Torrent]:
+            return [torrent]
+
+    class DownloadClientStub:
+        async def add_torrent(self, torrent: Torrent, bangumi: Bangumi) -> bool:
+            downloads.append((torrent.url, bangumi.id))
+            return True
+
+    monkeypatch.setattr(rss_service_module, "RequestContent", RequestStub)
+
+    async with AsyncSession(database, expire_on_commit=False) as db:
+        service = RssService(db)
+
+        async def raw_parser(*, raw: str) -> Bangumi:
+            assert raw == torrent.name
+            return parsed
+
+        monkeypatch.setattr(service.analyser, "raw_parser", raw_parser)
+        await service.refresh_aggregate_rss(
+            RSSItem(
+                url="https://rss.example.test/aggregate.xml",
+                aggregate=True,
+                parser="custom",
+            ),
+            cast(DownloadClient, DownloadClientStub()),
+        )
+        rules = await service.bangumi.search_all()
+        saved_torrents = await service.torrent.search_all()
+
+    assert len(rules) == 1
+    assert torrent.bangumi_id == rules[0].id
+    assert saved_torrents == [torrent]
+    assert downloads == [(torrent.url, rules[0].id)]
+
+
+@pytest.mark.asyncio
+async def test_regular_refresh_uses_rule_and_filter(
     database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
     url = "https://rss.example.test/show.xml"
     torrent = Torrent(name="Example Show S01E01", url="https://torrent.test/1")
     calls: list[tuple[str, str | None]] = []
+    downloads: list[str] = []
 
     class RequestStub:
         async def __aenter__(self) -> RequestStub:
@@ -105,17 +204,34 @@ async def test_fetch_regular_rss_keeps_single_link_network_behavior(
             calls.append((request_url, torrent_filter))
             return [torrent]
 
+    class DownloadClientStub:
+        async def add_torrent(self, torrent: Torrent, _bangumi: Bangumi) -> bool:
+            downloads.append(torrent.url)
+            return True
+
     monkeypatch.setattr(rss_service_module, "RequestContent", RequestStub)
 
     async with AsyncSession(database, expire_on_commit=False) as db:
-        bangumi_repository = BangumiDatabase(db)
-        await bangumi_repository.add(
-            Bangumi(title_raw="Example Show", rss_link=url, filter="1080p,\\d+-\\d+")
+        rule = Bangumi(
+            title_raw="Example Show",
+            season=1,
+            group_name="Example Group",
+            rss_link=url,
+            filter="1080p,\\d+-\\d+",
         )
-        result = await RssService(db).fetch_regular_rss(RSSItem(url=url))
+        rss_item = RSSItem(url=url)
+        await BangumiDatabase(db).add(rule)
+        assert await RSSDatabase(db).add(rss_item)
+        await db.commit()
+        service = RssService(db)
+        await service.refresh_regular_rss(
+            rss_item, cast(DownloadClient, DownloadClientStub())
+        )
 
-    assert result == [torrent]
+    assert torrent.bangumi_id == rule.id
+    assert torrent.rss_id == rss_item.id
     assert calls == [(url, "1080p|\\d+-\\d+")]
+    assert downloads == [torrent.url]
 
 
 @pytest.mark.asyncio
@@ -128,7 +244,7 @@ async def test_unassociated_regular_rss_does_not_block_aggregate_refresh(
     aggregate_calls: list[str] = []
 
     class LoggerStub:
-        def debug(self, *args: object) -> None:
+        def debug(self, *_args: object) -> None:
             return None
 
         def warning(self, message: str, *args: object) -> None:
@@ -155,14 +271,12 @@ async def test_unassociated_regular_rss_does_not_block_aggregate_refresh(
         async def search_active() -> list[RSSItem]:
             return [regular, aggregate]
 
-        async def fetch_aggregate(rss_item: RSSItem) -> list[Torrent]:
+        async def refresh_aggregate(rss_item: RSSItem, _client: object) -> None:
             aggregate_calls.append(rss_item.url)
-            return []
 
         monkeypatch.setattr(service.rss, "search_active", search_active)
-        monkeypatch.setattr(service, "fetch_aggregate_rss", fetch_aggregate)
+        monkeypatch.setattr(service, "refresh_aggregate_rss", refresh_aggregate)
 
-        assert await service.fetch_regular_rss(regular) == []
         await service.refresh_rss()
 
     assert any(regular.url in warning for warning in warnings)
@@ -181,7 +295,7 @@ async def test_delete_rss_keeps_rule_until_its_last_exact_source(database: Async
         for rss in rss_items:
             assert await rss_repository.add(rss)
         rule = Bangumi(title_raw="Example Show", rss_link=f"{url},{other_url}")
-        assert await bangumi_repository.add(rule)
+        await bangumi_repository.add(rule)
         await db.commit()
         assert rule.id is not None
         torrent = Torrent(
@@ -229,7 +343,7 @@ async def test_delete_aggregate_rss_cascades_to_orphaned_rules(database: AsyncEn
             Bangumi(title_raw="Second Show", rss_link=url),
         ]
         for rule in rules:
-            assert await bangumi_repository.add(rule)
+            await bangumi_repository.add(rule)
             await db.commit()
             assert rule.id is not None
             await torrent_repository.add(
@@ -271,7 +385,7 @@ async def test_delete_rss_batch_with_missing_id_leaves_everything_unchanged(
         for index, rss in enumerate(rss_items):
             assert await rss_repository.add(rss)
             rule = Bangumi(title_raw=f"Show {index}", rss_link=rss.url)
-            assert await bangumi_repository.add(rule)
+            await bangumi_repository.add(rule)
             await db.commit()
             assert rule.id is not None
             rules.append(rule)
@@ -324,8 +438,8 @@ async def test_manual_rule_deletion_preserves_shared_aggregate_and_deletes_regul
             title_raw="First Show", rss_link=f"{aggregate.url},{regular.url}", offset=1
         )
         second = Bangumi(title_raw="Second Show", rss_link=aggregate.url)
-        assert await bangumi_repository.add(first)
-        assert await bangumi_repository.add(second)
+        await bangumi_repository.add(first)
+        await bangumi_repository.add(second)
         await manager.commit()
         assert first.id is not None
         assert second.id is not None
@@ -373,7 +487,7 @@ async def test_zero_offset_rule_deletion_skips_download_client(
         bangumi_repository = BangumiDatabase(manager)
         torrent_repository = TorrentDatabase(manager)
         rule = Bangumi(title_raw="Example Show", offset=0)
-        assert await bangumi_repository.add(rule)
+        await bangumi_repository.add(rule)
         await manager.commit()
         assert rule.id is not None
         await torrent_repository.add(
@@ -414,7 +528,7 @@ async def test_rule_deletion_keeps_offset_tag_when_commit_fails(
         bangumi_repository = BangumiDatabase(manager)
         torrent_repository = TorrentDatabase(manager)
         rule = Bangumi(title_raw="Example Show", offset=1)
-        assert await bangumi_repository.add(rule)
+        await bangumi_repository.add(rule)
         await manager.commit()
         assert rule.id is not None
         rule_id = rule.id
@@ -458,7 +572,7 @@ async def test_rule_enable_disable_toggles_associated_regular_rss_only(
         rule = Bangumi(
             title_raw="Example Show", rss_link=f"{regular_url},{aggregate_url}"
         )
-        assert await bangumi_repository.add(rule)
+        await bangumi_repository.add(rule)
         await manager.commit()
         assert rule.id is not None
 

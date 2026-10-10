@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 
 from module.database.deps import DatabaseDep
-from module.models import APIResponse, Bangumi, RSSItem
-from module.rss import RSSAnalyser
+from module.models import (
+    APIResponse,
+    Bangumi,
+    ResponseModel,
+    RSSAnalysisResult,
+    RSSItem,
+)
 from module.security.session import require_session
 from module.service.rss import RssService
 from module.service.season import SeasonService
@@ -87,17 +94,12 @@ async def refresh_rss(rss_id: int, db: DatabaseDep):
     )
 
 
-# Old API
-analyser = RSSAnalyser()
-
-
-@router.post("/analysis", response_model=Bangumi)
-async def analysis(rss: RSSItem):
-    data = await analyser.link_to_data(rss)
-    if isinstance(data, Bangumi):
-        return data
-    else:
-        return u_response(data)
+@router.post("/analysis", response_model=RSSAnalysisResult)
+async def analysis(rss: RSSItem, db: DatabaseDep):
+    result = await RssService(db).analyze_feed(rss)
+    if isinstance(result, ResponseModel):
+        return u_response(result)
+    return result
 
 
 @router.post("/collect", response_model=APIResponse)
@@ -106,9 +108,17 @@ async def download_collection(data: Bangumi, db: DatabaseDep):
     return u_response(resp)
 
 
-@router.post("/subscribe", response_model=APIResponse)
+@router.post("/subscribe/new", response_model=APIResponse)
 async def subscribe(data: Bangumi, rss: RSSItem, db: DatabaseDep):
     resp = await SeasonService(db).subscribe_season(data, parser=rss.parser)
+    return u_response(resp)
+
+
+@router.post("/subscribe/existing", response_model=APIResponse)
+async def add_to_bangumi(
+    rss: RSSItem, bangumi_id: Annotated[int, Body()], db: DatabaseDep
+):
+    resp = await SeasonService(db).subscribe_existing(rss, bangumi_id)
     return u_response(resp)
 
 

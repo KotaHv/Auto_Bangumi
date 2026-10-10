@@ -60,13 +60,6 @@ async def test_bangumi_database():
             == "/test/test.jpg"
         )
 
-        # match torrent
-        result = await bangumi_repository.match_torrent(
-            "[Lilith-Raws] 无职转生，到了异世界就拿出真本事 / Mushoku Tensei - 11 [Baha][WEB-DL][1080p][AVC AAC][CHT][MP4]"
-        )
-        assert result is not None
-        assert result.official_title == "无职转生，到了异世界就拿出真本事II"
-
         # delete
         assert await bangumi_repository.delete_one(1)
         await db.commit()
@@ -89,6 +82,14 @@ async def test_torrent_database():
         test_data.downloaded = True
         await torrent_repository.update(test_data)
         assert await torrent_repository.search(1) == test_data
+
+        new_torrents = await torrent_repository.check_new(
+            [
+                Torrent(name="Downloaded again", url=test_data.url),
+                Torrent(name="New", url="https://test.com/new.mkv"),
+            ]
+        )
+        assert [torrent.url for torrent in new_torrents] == ["https://test.com/new.mkv"]
 
 
 @pytest.mark.asyncio

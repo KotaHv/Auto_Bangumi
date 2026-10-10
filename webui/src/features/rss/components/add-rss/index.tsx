@@ -2,17 +2,19 @@ import { CirclePlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRSS } from '../api';
+import { apiRSS } from '../../api.ts';
 import { message } from '@/lib/message';
 import { bangumiKeys } from '@/features/bangumi/queries';
-import { rssKeys } from '../queries';
+import { rssKeys } from '../../queries.ts';
 import { returnUserLangMsg } from '@/lib/i18n';
-import { initialRss } from '../constants';
-import type { RSSDraft } from '../types/rss';
+import { initialRss } from '../../constants.ts';
+import type { RSSDraft } from '../../types/rss.ts';
 import { AbPopup } from '@/components/shared/ab-popup';
-import { AbBangumiReview } from './ab-bangumi-review';
 import { Button } from '@/components/ui/button';
-import { AbAddRssForm } from './ab-add-rss-form';
+import { AbAddRssForm } from './form.tsx';
+import { AbBangumiReview } from '../review/bangumi-review.tsx';
+import { AbRssCandidateSelection } from '../review/candidate-selection.tsx';
+import { AbRssExactMatch } from '../review/exact-match.tsx';
 
 export function AbAddRss() {
   const queryClient = useQueryClient();
@@ -31,9 +33,11 @@ export function AbAddRss() {
       setOpen(false);
     },
   });
-  const analysisMutation = useMutation({
-    mutationFn: apiRSS.analysis,
-  });
+  const analysisMutation = useMutation({ mutationFn: apiRSS.analysis });
+
+  function backToRssForm() {
+    analysisMutation.reset();
+  }
 
   function addRss() {
     if (rss.url === '') {
@@ -49,6 +53,57 @@ export function AbAddRss() {
     }
   }
 
+  function renderReviewView() {
+    const analysis = analysisMutation.data;
+    if (!analysis) {
+      return (
+        <AbAddRssForm
+          rss={rss}
+          loading={addMutation.isPending || analysisMutation.isPending}
+          onChange={(patch) =>
+            setRss((rss) => ({
+              ...rss,
+              ...patch,
+            }))
+          }
+          onSubmit={addRss}
+        />
+      );
+    }
+
+    const firstOption = analysis.options[0];
+    if (firstOption.type === 'exact_match') {
+      return (
+        <AbRssExactMatch
+          rule={firstOption.bangumi}
+          rss={rss}
+          onBack={backToRssForm}
+          onComplete={() => setOpen(false)}
+        />
+      );
+    }
+
+    if (firstOption.type === 'create') {
+      return (
+        <AbBangumiReview
+          rule={firstOption.bangumi}
+          rss={rss}
+          onBack={backToRssForm}
+          onComplete={() => setOpen(false)}
+        />
+      );
+    }
+
+    return (
+      <AbRssCandidateSelection
+        options={analysis.options}
+        rss={rss}
+        onBack={backToRssForm}
+        onComplete={() => setOpen(false)}
+      />
+    );
+  }
+
   return (
     <AbPopup
       trigger={
@@ -61,11 +116,7 @@ export function AbAddRss() {
           <CirclePlus />
         </Button>
       }
-      title={
-        analysisMutation.data
-          ? t('homepage.rule.edit_rule')
-          : t('topbar.add.title')
-      }
+      title={t('topbar.add.title')}
       open={open}
       onOpenChange={setOpen}
       onOpenChangeComplete={(open) => {
@@ -78,26 +129,7 @@ export function AbAddRss() {
       width="xl"
       className="shadow-2xl"
     >
-      {analysisMutation.data ? (
-        <AbBangumiReview
-          rule={analysisMutation.data}
-          rss={rss}
-          onBack={() => analysisMutation.reset()}
-          onComplete={() => setOpen(false)}
-        />
-      ) : (
-        <AbAddRssForm
-          rss={rss}
-          loading={addMutation.isPending || analysisMutation.isPending}
-          onChange={(patch) =>
-            setRss((rss) => ({
-              ...rss,
-              ...patch,
-            }))
-          }
-          onSubmit={addRss}
-        />
-      )}
+      {renderReviewView()}
     </AbPopup>
   );
 }

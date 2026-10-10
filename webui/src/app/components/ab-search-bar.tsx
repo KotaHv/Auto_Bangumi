@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { AbSearch } from '@/features/search/components/ab-search';
 import { AbBangumiCard } from '@/features/bangumi/components/ab-bangumi-card';
-import { AbBangumiReview } from '@/features/rss/components/ab-bangumi-review';
+import { AbBangumiReview } from '@/features/rss/components/review/bangumi-review';
 import { AbPopup } from '@/components/shared/ab-popup';
 import { cn } from 'cn';
 import { searchProviderOptions } from '@/features/search/queries';
@@ -130,7 +130,7 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
 
       {selectedResult && (
         <AbPopup
-          title={t('homepage.rule.edit_rule')}
+          title={t('topbar.add.new_bangumi')}
           open={reviewOpen}
           onOpenChange={setReviewOpen}
           onOpenChangeComplete={(open) => {

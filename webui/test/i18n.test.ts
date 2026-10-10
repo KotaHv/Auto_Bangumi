@@ -109,6 +109,14 @@ describe('i18n language selection', () => {
     },
   );
 
+  test('interpolates RSS rule identity details', async () => {
+    const { module } = await loadI18n('zh-CN', null);
+
+    expect(module.i18n.t('topbar.add.season_value', { season: 1 })).toBe(
+      '第 1 季',
+    );
+  });
+
   test('toggles only between supported languages and persists the selection', async () => {
     const { module, storage } = await loadI18n('en-US', null);
 

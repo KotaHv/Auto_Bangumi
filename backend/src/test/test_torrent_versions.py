@@ -13,10 +13,10 @@ def test_partition_by_revision_keeps_highest_ties_in_order():
 
 def test_filter_superseded_torrents_preserves_input_and_unparseable(monkeypatch):
     torrents = [
-        Torrent(name="old"),
-        Torrent(name="latest one"),
-        Torrent(name="unparseable"),
-        Torrent(name="latest tie"),
+        Torrent(name="old", url="https://torrent.test/old"),
+        Torrent(name="latest one", url="https://torrent.test/latest-one"),
+        Torrent(name="unparseable", url="https://torrent.test/unparseable"),
+        Torrent(name="latest tie", url="https://torrent.test/latest-tie"),
     ]
     revisions = {
         "old": TorrentInfo(title="Series", episode=1, episode_revision=1),

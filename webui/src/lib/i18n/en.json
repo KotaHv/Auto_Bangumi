@@ -302,14 +302,21 @@
       "aggregate": "Aggregate RSS",
       "back": "Back",
       "button": "Add",
+      "choose_bangumi": "Choose anime",
       "collect": "Collect",
+      "group_label": "Release group",
       "name": "Name",
+      "new_bangumi": "New anime",
+      "next": "Next",
       "parser": "Parser",
       "placeholder_link": "Please enter the RSS link",
       "placeholder_name": "Optional",
       "rss_link": "RSS",
+      "season_label": "Season",
+      "season_value": "Season {season}",
       "subscribe": "Subscribe",
-      "title": "Add RSS"
+      "title": "Add RSS",
+      "unknown_group": "Not specified"
     },
     "pause": "Pause",
     "profile": {

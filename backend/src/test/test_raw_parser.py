@@ -109,3 +109,13 @@ def test_raw_parser():
     assert info.resolution == "1080p"
     assert info.episode == 2
     assert info.season == 1
+
+
+def test_raw_parser_without_release_group():
+    info = raw_parser("Example Show S01E01 [1080p]")
+
+    assert info is not None
+    assert info.title_en == "Example Show"
+    assert info.group is None
+    assert info.season == 1
+    assert info.season_raw == "S01"

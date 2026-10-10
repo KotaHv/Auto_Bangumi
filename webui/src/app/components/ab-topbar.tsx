@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router';
-import { AbAddRss } from '@/features/rss/components/ab-add-rss';
+import { AbAddRss } from '@/features/rss/components/add-rss';
 import { AbSearchBar } from './ab-search-bar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { AbMobileSearch } from './ab-mobile-search';

@@ -1,17 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
 import type { BangumiRule } from '@/features/bangumi/types';
-import type { RSSAPI } from '../types/rss';
-import { apiRSS } from '../api';
-import { message } from '@/lib/message';
-import { bangumiKeys } from '@/features/bangumi/queries';
-import { rssKeys } from '../queries';
-import { returnUserLangMsg } from '@/lib/i18n';
+import type { RSSAPI } from '../../types/rss.ts';
 import { AbRule } from '@/features/bangumi/components/rule/ab-rule';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useRssReviewMutations } from './use-rss-review-mutations.ts';
 
 interface AbBangumiReviewProps {
   rule: BangumiRule;
@@ -26,32 +21,16 @@ export function AbBangumiReview({
   onComplete,
   onBack,
 }: AbBangumiReviewProps) {
-  const [draftRule, setDraftRule] = useState(() => rule);
-  const queryClient = useQueryClient();
   const { t } = useTranslation();
-
-  const collectMutation = useMutation({
-    mutationFn: () => apiRSS.collection(draftRule),
-    onSuccess: async (data) => {
-      message.success(returnUserLangMsg(data));
-      onComplete();
-    },
-  });
-  const subscribeMutation = useMutation({
-    mutationFn: () => apiRSS.subscribe(draftRule, rss),
-    onSuccess: async (data) => {
-      message.success(returnUserLangMsg(data));
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: bangumiKeys.list() }),
-        queryClient.invalidateQueries({ queryKey: rssKeys.list() }),
-      ]);
-      onComplete();
-    },
+  const [editedRule, setEditedRule] = useState(() => rule);
+  const { collect, subscribe, isPending } = useRssReviewMutations({
+    rss,
+    onComplete,
   });
 
   return (
     <>
-      <AbRule rule={draftRule} onChange={setDraftRule} />
+      <AbRule rule={editedRule} onChange={setEditedRule} />
 
       <Separator />
 
@@ -60,15 +39,13 @@ export function AbBangumiReview({
           <Button
             variant="outline"
             className="col-start-1 row-start-1 h-10 w-full sm:col-auto sm:row-auto sm:mr-auto sm:h-8 sm:w-auto"
-            onClick={() => {
-              onBack();
-            }}
+            disabled={isPending}
+            onClick={onBack}
           >
             <ArrowLeft />
             {t('topbar.add.back')}
           </Button>
         )}
-
         <Button
           variant="outline"
           className={
@@ -76,12 +53,12 @@ export function AbBangumiReview({
               ? 'col-start-2 row-start-1 h-10 w-full sm:col-auto sm:row-auto sm:h-8 sm:w-auto sm:min-w-20'
               : 'h-10 w-full sm:h-8 sm:w-auto sm:min-w-20'
           }
-          loading={collectMutation.isPending}
-          onClick={() => collectMutation.mutate()}
+          loading={collect.isPending}
+          disabled={isPending}
+          onClick={() => collect.mutate(editedRule)}
         >
           {t('topbar.add.collect')}
         </Button>
-
         <Button
           variant="brand"
           className={
@@ -89,8 +66,9 @@ export function AbBangumiReview({
               ? 'col-span-2 row-start-2 h-10 w-full sm:col-auto sm:row-auto sm:h-8 sm:w-auto sm:min-w-20'
               : 'h-10 w-full sm:h-8 sm:w-auto sm:min-w-20'
           }
-          loading={subscribeMutation.isPending}
-          onClick={() => subscribeMutation.mutate()}
+          loading={subscribe.isPending}
+          disabled={isPending}
+          onClick={() => subscribe.mutate(editedRule)}
         >
           {t('topbar.add.subscribe')}
         </Button>

@@ -1,8 +1,23 @@
 import { axios } from '@/lib/axios';
 import { toBangumiAPI, toBangumiRule } from '@/features/bangumi/mapper';
-import type { BangumiAPI, BangumiRule } from '@/features/bangumi/types';
-import type { RSS, RSSAPI, RSSDraft } from './types/rss';
+import type { BangumiRule } from '@/features/bangumi/types';
+import type {
+  RSS,
+  RSSAnalysis,
+  RSSAnalysisAPI,
+  RSSAnalysisOption,
+  RSSAnalysisOptionAPI,
+  RSSAPI,
+  RSSDraft,
+} from './types/rss';
 import type { ApiSuccess } from '@/types/api';
+
+function mapAnalysisOption(option: RSSAnalysisOptionAPI): RSSAnalysisOption {
+  const bangumi = toBangumiRule(option.bangumi);
+  return option.type === 'exact_match'
+    ? { type: option.type, bangumi: { ...bangumi, id: option.bangumi.id } }
+    : { type: option.type, bangumi };
+}
 
 export const apiRSS = {
   async get(signal?: AbortSignal) {
@@ -50,13 +65,15 @@ export const apiRSS = {
     return data!;
   },
 
-  async analysis(rss_item: RSSDraft) {
-    const { data } = await axios.post<BangumiAPI>(
+  async analysis(rss_item: RSSDraft): Promise<RSSAnalysis> {
+    const { data } = await axios.post<RSSAnalysisAPI>(
       'api/v1/rss/analysis',
       rss_item,
     );
 
-    return toBangumiRule(data);
+    return {
+      options: data.options.map(mapAnalysisOption) as RSSAnalysis['options'],
+    };
   },
   async collection(bangumiData: BangumiRule) {
     const postData = toBangumiAPI(bangumiData);
@@ -66,14 +83,18 @@ export const apiRSS = {
     );
     return data;
   },
-  async subscribe(bangumiData: BangumiRule, rss: RSSAPI) {
-    const bangumi = toBangumiAPI(bangumiData);
-    const postData = {
-      data: bangumi,
-      rss,
-    };
+  async subscribe(bangumi: BangumiRule, rss: RSSAPI) {
+    const postData = { data: toBangumiAPI(bangumi), rss };
     const { data } = await axios.post<ApiSuccess>(
-      'api/v1/rss/subscribe',
+      'api/v1/rss/subscribe/new',
+      postData,
+    );
+    return data;
+  },
+  async addToBangumi(rss: RSSAPI, bangumiId: number) {
+    const postData = { rss, bangumi_id: bangumiId };
+    const { data } = await axios.post<ApiSuccess>(
+      'api/v1/rss/subscribe/existing',
       postData,
     );
     return data;

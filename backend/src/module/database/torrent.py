@@ -47,11 +47,6 @@ class TorrentDatabase:
     async def search_all(self) -> list[Torrent]:
         return list((await self.session.exec(select(Torrent))).all())
 
-    async def search_all_downloaded(self) -> list[Torrent]:
-        return list(
-            (await self.session.exec(select(Torrent).where(Torrent.downloaded))).all()
-        )
-
     async def search_rss(self, rss_id: int) -> list[Torrent]:
         return list(
             (
@@ -80,13 +75,20 @@ class TorrentDatabase:
         return {torrent_hash for torrent_hash in hashes if torrent_hash}
 
     async def check_new(self, torrents_list: list[Torrent]) -> list[Torrent]:
-        new_torrents = []
-        downloaded_torrents = await self.search_all_downloaded()
-        downloaded_url = [t.url for t in downloaded_torrents]
-        for torrent in torrents_list:
-            if torrent.url not in downloaded_url:
-                new_torrents.append(torrent)
-        return new_torrents
+        if not torrents_list:
+            return []
+
+        downloaded_urls = (
+            await self.session.exec(
+                select(Torrent.url).where(
+                    col(Torrent.url).in_([torrent.url for torrent in torrents_list]),
+                    Torrent.downloaded,
+                )
+            )
+        ).all()
+        return [
+            torrent for torrent in torrents_list if torrent.url not in downloaded_urls
+        ]
 
     async def get_bangumi_id(self, torrent_hash: str) -> int | None:
         return (

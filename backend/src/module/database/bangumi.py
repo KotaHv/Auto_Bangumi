@@ -1,6 +1,6 @@
 from loguru import logger
 from sqlalchemy.sql import func
-from sqlmodel import and_, col, delete, false, literal, select
+from sqlmodel import and_, col, delete, false, literal, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.models import Bangumi, BangumiUpdate
@@ -10,15 +10,10 @@ class BangumiDatabase:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, data: Bangumi) -> bool:
-        statement = select(Bangumi).where(Bangumi.title_raw == data.title_raw)
-        bangumi = (await self.session.exec(statement)).first()
-        if bangumi:
-            data.id = bangumi.id
-            return False
+    async def add(self, data: Bangumi) -> None:
         self.session.add(data)
-        logger.debug("[Database] Stage {} for insertion.", data.official_title)
-        return True
+        await self.session.flush()
+        logger.debug("[Database] Insert {}.", data.official_title)
 
     async def add_all(self, datas: list[Bangumi]):
         self.session.add_all(datas)
@@ -68,6 +63,38 @@ class BangumiDatabase:
         statement = select(Bangumi)
         return list((await self.session.exec(statement)).all())
 
+    async def find_by_raw_title_season_group(
+        self, title_raw: str, season: int, group_name: str | None
+    ) -> list[Bangumi]:
+        statement = select(Bangumi).where(
+            Bangumi.title_raw == title_raw,
+            Bangumi.season == season,
+            Bangumi.group_name == group_name,
+        )
+        return list((await self.session.exec(statement)).all())
+
+    async def find_for_rss_analysis(self, bangumi: Bangumi) -> Bangumi | None:
+        statement = select(Bangumi).where(
+            Bangumi.title_raw == bangumi.title_raw,
+            Bangumi.season_raw == bangumi.season_raw,
+            Bangumi.season == bangumi.season,
+            Bangumi.group_name == bangumi.group_name,
+        )
+        return (await self.session.exec(statement)).first()
+
+    async def find_by_official_or_raw_title(
+        self, official_title: str, title_raw: str
+    ) -> list[Bangumi]:
+        conditions = []
+        if official_title:
+            conditions.append(Bangumi.official_title == official_title)
+        if title_raw:
+            conditions.append(Bangumi.title_raw == title_raw)
+        if not conditions:
+            return []
+        statement = select(Bangumi).where(or_(*conditions))
+        return list((await self.session.exec(statement)).all())
+
     async def search_id(self, _id: int) -> Bangumi | None:
         statement = select(Bangumi).where(Bangumi.id == _id)
         bangumi = (await self.session.exec(statement)).first()
@@ -88,42 +115,6 @@ class BangumiDatabase:
             return data.poster_link
         else:
             return ""
-
-    async def match_list(self, torrent_list: list, rss_link: str) -> list:
-        match_datas = await self.search_all()
-        if not match_datas:
-            return torrent_list
-        # Match title
-        i = 0
-        while i < len(torrent_list):
-            torrent = torrent_list[i]
-            for match_data in match_datas:
-                if match_data.title_raw in torrent.name:
-                    rss_members = [
-                        member
-                        for member in (match_data.rss_link or "").split(",")
-                        if member
-                    ]
-                    if rss_link and rss_link not in rss_members:
-                        rss_members.append(rss_link)
-                        self.set_rss_link(match_data, ",".join(rss_members))
-                        match_data.added = False
-                    torrent_list.pop(i)
-                    break
-            else:
-                i += 1
-        return torrent_list
-
-    async def match_torrent(self, torrent_name: str) -> Bangumi | None:
-        statement = select(Bangumi).where(
-            and_(
-                func.instr(torrent_name, Bangumi.title_raw) > 0,
-                # use `false()` to avoid E712 checking
-                # see: https://docs.astral.sh/ruff/rules/true-false-comparison/
-                Bangumi.deleted == false(),
-            )
-        )
-        return (await self.session.exec(statement)).first()
 
     async def not_complete(self) -> list[Bangumi]:
         # Find eps_complete = False

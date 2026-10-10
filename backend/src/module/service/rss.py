@@ -7,7 +7,15 @@ from module.database.bangumi import BangumiDatabase
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
-from module.models import Bangumi, ResponseModel, RSSItem, RSSUpdate, Torrent
+from module.models import (
+    Bangumi,
+    ResponseModel,
+    RSSAnalysisOption,
+    RSSAnalysisResult,
+    RSSItem,
+    RSSUpdate,
+    Torrent,
+)
 from module.network import RequestContent
 from module.rss.analyser import RSSAnalyser
 from module.service._locks import rss_operation_lock
@@ -20,6 +28,7 @@ class RssService:
         self.rss = RSSDatabase(session)
         self.bangumi = BangumiDatabase(session)
         self.torrent = TorrentDatabase(session)
+        self.analyser = RSSAnalyser()
 
     async def search_all(self) -> list[RSSItem]:
         return await self.rss.search_all()
@@ -43,6 +52,13 @@ class RssService:
         aggregate: bool = True,
         parser: str = "mikan",
     ) -> ResponseModel:
+        if await self.rss.search_url(rss_link) is not None:
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="RSS already exists.",
+                msg_zh="RSS 已存在。",
+            )
         if not name:
             async with RequestContent() as req:
                 name = await req.get_rss_title(rss_link)
@@ -69,41 +85,141 @@ class RssService:
             msg_zh="RSS 添加失败。",
         )
 
-    async def match_torrent(self, torrent: Torrent) -> Bangumi | None:
-        matched = await self.bangumi.match_torrent(torrent.name)
-        if matched:
-            if matched.filter == "":
-                return matched
-            torrent_filter = matched.filter.replace(",", "|")
-            if not re.search(torrent_filter, torrent.name, re.IGNORECASE):
-                torrent.bangumi_id = matched.id
-                return matched
-        return None
+    async def analyze_feed(
+        self, rss_item: RSSItem
+    ) -> RSSAnalysisResult | ResponseModel:
+        if await self.rss.search_url(rss_item.url) is not None:
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="RSS already exists.",
+                msg_zh="RSS 已存在。",
+            )
 
-    async def fetch_aggregate_rss(self, rss_item: RSSItem) -> list[Torrent]:
+        data = await self.analyser.link_to_data(rss_item)
+        if not isinstance(data, Bangumi):
+            return data
+
+        if data.season_raw:
+            exact_match = await self.bangumi.find_for_rss_analysis(data)
+            if exact_match is not None:
+                return RSSAnalysisResult(
+                    options=[RSSAnalysisOption(type="exact_match", bangumi=exact_match)]
+                )
+
+        candidates = await self.bangumi.find_by_official_or_raw_title(
+            official_title=data.official_title,
+            title_raw=data.title_raw,
+        )
+        options = [
+            RSSAnalysisOption(type="candidate", bangumi=rule) for rule in candidates
+        ]
+        options.append(RSSAnalysisOption(type="create", bangumi=data))
+        return RSSAnalysisResult(options=options)
+
+    async def _filter_new_torrents(self, torrents: list[Torrent]) -> list[Torrent]:
+        return await self.torrent.check_new(filter_superseded_torrents(torrents))
+
+    async def refresh_aggregate_rss(
+        self, rss_item: RSSItem, client: DownloadClient
+    ) -> None:
         async with RequestContent() as req:
             torrents = await req.get_torrents(rss_item.url)
-        torrents_to_add = await self.bangumi.match_list(torrents.copy(), rss_item.url)
-        if not torrents_to_add:
-            logger.debug("[RSS] No new title has been found.")
-            return torrents
-        new_data = await RSSAnalyser().torrents_to_data(torrents_to_add, rss_item)
-        if new_data:
-            await self.bangumi.add_all(new_data)
-        return torrents
+        for torrent in torrents:
+            torrent.rss_id = rss_item.id
 
-    async def fetch_regular_rss(self, rss_item: RSSItem) -> list[Torrent]:
+        new_torrents = await self._filter_new_torrents(torrents)
+        bangumi_cache: dict[
+            tuple[str, int, str | None], tuple[Bangumi, re.Pattern[str] | None]
+        ] = {}
+        for torrent in new_torrents:
+            bangumi = await self.analyser.raw_parser(raw=torrent.name)
+            if bangumi is None:
+                logger.warning(
+                    "[RSS] Skip unparseable torrent {} from aggregate feed {}.",
+                    torrent.name,
+                    rss_item.url,
+                )
+                continue
+            if not bangumi.title_raw:
+                logger.warning(
+                    "[RSS] Skip torrent {} with no parsed title from aggregate feed {}.",
+                    torrent.name,
+                    rss_item.url,
+                )
+                continue
+
+            key = (bangumi.title_raw, bangumi.season, bangumi.group_name)
+            if key not in bangumi_cache:
+                matches = await self.bangumi.find_by_raw_title_season_group(*key)
+                if matches:
+                    bangumi = matches[0]
+                    rss_links = (bangumi.rss_link or "").split(",")
+                    if rss_item.url not in rss_links:
+                        bangumi.rss_link = (
+                            f"{bangumi.rss_link},{rss_item.url}"
+                            if bangumi.rss_link
+                            else rss_item.url
+                        )
+                        bangumi.added = False
+                    bangumi.deleted = False
+                    self.bangumi.set_rss_link(bangumi, bangumi.rss_link)
+                else:
+                    bangumi.rss_link = rss_item.url
+                    await self.analyser.official_title_parser(
+                        bangumi, rss_item, torrent
+                    )
+                    await self.bangumi.add(bangumi)
+
+                torrent_filter = (
+                    re.compile(bangumi.filter.replace(",", "|"), re.IGNORECASE)
+                    if bangumi.filter
+                    else None
+                )
+                bangumi_cache[key] = (bangumi, torrent_filter)
+
+            bangumi, torrent_filter = bangumi_cache[key]
+            torrent.bangumi_id = bangumi.id
+            if torrent_filter is None or not torrent_filter.search(torrent.name):
+                if await client.add_torrent(torrent, bangumi):
+                    logger.debug("[RSS] Add torrent {} to client", torrent.name)
+
+        await self.torrent.add_all(new_torrents)
+        await self.session.commit()
+
+    async def refresh_regular_rss(
+        self, rss_item: RSSItem, client: DownloadClient
+    ) -> None:
         bangumi_list = await self.bangumi.search_rss(rss_item.url)
         if not bangumi_list:
             logger.warning(
                 "[RSS] No association rule found for regular RSS {}.", rss_item.url
             )
-            return []
+            await self.session.commit()
+            return
+
         bangumi = bangumi_list[0]
+        if bangumi.deleted:
+            logger.info(
+                "[RSS] Skip regular RSS {} because its Bangumi rule is deleted.",
+                rss_item.url,
+            )
+            return
+
         async with RequestContent() as req:
-            return await req.get_torrents(
+            torrents = await req.get_torrents(
                 rss_item.url, bangumi.filter.replace(",", "|")
             )
+
+        new_torrents = await self._filter_new_torrents(torrents)
+        for torrent in new_torrents:
+            torrent.rss_id = rss_item.id
+            torrent.bangumi_id = bangumi.id
+            if await client.add_torrent(torrent, bangumi):
+                logger.debug("[RSS] Add torrent {} to client", torrent.name)
+
+        await self.torrent.add_all(new_torrents)
+        await self.session.commit()
 
     async def refresh_rss(self, rss_id: int | None = None) -> None:
         async with rss_operation_lock:
@@ -117,22 +233,9 @@ class RssService:
                     logger.debug("[RSS] Get {} RSS items", len(rss_items))
                     for rss_item in rss_items:
                         if rss_item.aggregate:
-                            torrents = await self.fetch_aggregate_rss(rss_item)
+                            await self.refresh_aggregate_rss(rss_item, client)
                         else:
-                            torrents = await self.fetch_regular_rss(rss_item)
-                        torrents = filter_superseded_torrents(torrents)
-                        new_torrents = await self.torrent.check_new(torrents)
-                        for torrent in new_torrents:
-                            torrent.rss_id = rss_item.id
-                            matched_data = await self.match_torrent(torrent)
-                            if matched_data and await client.add_torrent(
-                                torrent, matched_data
-                            ):
-                                logger.debug(
-                                    "[RSS] Add torrent {} to client", torrent.name
-                                )
-                        await self.torrent.add_all(new_torrents)
-                        await self.session.commit()
+                            await self.refresh_regular_rss(rss_item, client)
             except Exception:
                 await self.session.rollback()
                 raise

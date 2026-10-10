@@ -29,12 +29,14 @@ CHINESE_NUMBER_MAP = {
 }
 
 
-def get_group(name: str) -> str:
-    return re.split(r"[\[\]]", name)[1]
+def get_group(name: str) -> str | None:
+    match = re.match(r"^\[([^\]]+)\]", name)
+    return match.group(1) if match else None
 
 
-def prefix_process(raw: str, group: str) -> str:
-    raw = re.sub(f".{group}.", "", raw)
+def prefix_process(raw: str, group: str | None) -> str:
+    if group:
+        raw = raw.removeprefix(f"[{group}]")
     raw_process = PREFIX_RE.sub("/", raw)
     arg_group = raw_process.split("/")
     while "" in arg_group:

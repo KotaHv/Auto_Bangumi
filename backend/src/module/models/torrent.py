@@ -10,7 +10,7 @@ class Torrent(SQLModel, table=True):
     bangumi_id: Annotated[int | None, SQLField(foreign_key="bangumi.id")] = None
     rss_id: int | None = None
     name: str = ""
-    url: str = ""
+    url: Annotated[str, SQLField(unique=True)]
     homepage: str | None = None
     downloaded: bool = False
     hash: str | None = None

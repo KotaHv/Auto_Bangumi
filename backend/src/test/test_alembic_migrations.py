@@ -12,7 +12,7 @@ from module.database.alembic import (
 )
 from module.update.startup import ensure_default_user
 
-CURRENT_REVISION = "0006_add_plex_refresh_queue"
+CURRENT_REVISION = "0007_unique_torrent_url"
 
 
 def _async_url(path: Path) -> str:
@@ -30,6 +30,13 @@ async def _columns(async_engine, table_name: str):
             lambda conn: {
                 column["name"] for column in inspect(conn).get_columns(table_name)
             }
+        )
+
+
+async def _indexes(async_engine, table_name: str):
+    async with async_engine.connect() as connection:
+        return await connection.run_sync(
+            lambda conn: inspect(conn).get_indexes(table_name)
         )
 
 
@@ -122,6 +129,10 @@ async def _assert_current_schema(async_engine):
     assert schema["torrent"]["foreign_keys"] == {
         (("bangumi_id",), "bangumi", ("id",)),
     }
+    indexes = await _indexes(async_engine, "torrent")
+    assert any(
+        index["name"] == "uq_torrent_url" and index["unique"] for index in indexes
+    )
     assert "save_path" not in schema["torrent"]["columns"]
     assert "item_path" not in schema["rssitem"]["columns"]
     assert "combine" not in schema["rssitem"]["columns"]
@@ -535,6 +546,65 @@ async def test_ensure_torrent_hashes_repairs_only_missing_rows(tmp_path, monkeyp
         == "keep-hash"
     )
     assert await _scalar(async_engine, "SELECT hash FROM torrent WHERE id = 3") is None
+    await async_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_torrent_url_migration_keeps_complete_rows_and_removes_invalid_rows(
+    tmp_path,
+):
+    database_path = tmp_path / "torrent-url-cleanup.db"
+    async_engine = await _make_git_schema_fixture(database_path, "current")
+    async with async_engine.begin() as connection:
+        await connection.execute(
+            text(
+                "INSERT INTO torrent "
+                "(id, bangumi_id, rss_id, name, url, homepage, downloaded, hash) "
+                "VALUES "
+                "(2, 1, 1, 'Complete', 'magnet:?xt=test', "
+                "'https://torrent.test/home', 1, 'complete-hash'), "
+                "(3, 1, 1, 'Tie first', 'magnet:?xt=tie', NULL, 0, NULL), "
+                "(4, 1, 1, 'Tie second', 'magnet:?xt=tie', NULL, 0, NULL), "
+                "(5, 1, 1, 'More complete', 'magnet:?xt=merge', NULL, 1, 'merge-hash'), "
+                "(6, 1, 1, 'Less complete', 'magnet:?xt=merge', "
+                "'https://torrent.test/merge', 0, NULL), "
+                "(7, 1, 1, 'Empty', '', NULL, 0, NULL), "
+                "(8, 1, 1, 'Whitespace', '   ', NULL, 0, NULL), "
+                "(9, NULL, 1, 'Missing Bangumi', 'magnet:?xt=missing-bangumi', NULL, 0, NULL), "
+                "(10, 1, NULL, 'Missing RSS', 'magnet:?xt=missing-rss', NULL, 0, NULL)"
+            )
+        )
+
+    await upgrade_database(async_engine)
+
+    async with async_engine.connect() as connection:
+        rows = (
+            (
+                await connection.execute(
+                    text(
+                        "SELECT id, bangumi_id, rss_id, name, url, homepage, downloaded, hash "
+                        "FROM torrent ORDER BY id"
+                    )
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+    assert [(row["id"], row["name"], row["url"]) for row in rows] == [
+        (2, "Complete", "magnet:?xt=test"),
+        (3, "Tie first", "magnet:?xt=tie"),
+        (5, "More complete", "magnet:?xt=merge"),
+    ]
+    winner = rows[-1]
+    assert winner["rss_id"] == 1
+    assert winner["homepage"] is None
+    assert bool(winner["downloaded"])
+    assert winner["hash"] == "merge-hash"
+    assert any(
+        index["name"] == "uq_torrent_url" and index["unique"]
+        for index in await _indexes(async_engine, "torrent")
+    )
     await async_engine.dispose()
 
 

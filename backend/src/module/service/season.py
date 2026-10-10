@@ -99,6 +99,58 @@ class SeasonService:
                 msg_zh=f"[Engine] 下载 {data.official_title} 失败。",
             )
 
+    async def subscribe_existing(self, rss: RSSItem, bangumi_id: int) -> ResponseModel:
+        bangumi = await self.bangumi.search_id(bangumi_id)
+        if bangumi is None:
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="The selected Bangumi rule no longer exists.",
+                msg_zh="所选番剧规则已不存在。",
+            )
+
+        rss_item = RSSItem(
+            url=rss.url,
+            name=rss.name or bangumi.official_title,
+            aggregate=False,
+            parser=rss.parser,
+        )
+        await self.rss.add(rss_item)
+        bangumi.rss_link = (
+            f"{bangumi.rss_link},{rss.url}" if bangumi.rss_link else rss.url
+        )
+        bangumi.deleted = False
+        self.bangumi.set_rss_link(bangumi, bangumi.rss_link)
+        await self.session.commit()
+
+        async with SearchTorrent() as search:
+            torrents = await search.get_torrents(
+                rss.url, bangumi.filter.replace(",", "|")
+            )
+        torrents = filter_superseded_torrents(torrents)
+        if torrents:
+            for torrent in torrents:
+                torrent.rss_id = rss_item.id
+                torrent.bangumi_id = bangumi.id
+            try:
+                async with DownloadClient() as client:
+                    await client.add_torrent(torrents, bangumi)
+            except Exception:
+                logger.exception(
+                    "RSS for {} was subscribed, but torrent download failed.",
+                    bangumi.official_title,
+                )
+            else:
+                await self.torrent.add_all(torrents)
+                await self.session.commit()
+
+        return ResponseModel(
+            status=True,
+            status_code=200,
+            msg_en=f"RSS for {bangumi.official_title} was subscribed successfully.",
+            msg_zh=f"已成功订阅 {bangumi.official_title} 的 RSS。",
+        )
+
     async def force_collect(self, bangumi: Bangumi) -> ResponseModel:
         logger.info(
             "Force collecting {} Season {}...", bangumi.official_title, bangumi.season

@@ -302,14 +302,21 @@
       "aggregate": "聚合 RSS",
       "back": "返回",
       "button": "添加",
+      "choose_bangumi": "选择番剧",
       "collect": "收集",
+      "group_label": "字幕组",
       "name": "名称",
+      "new_bangumi": "新建番剧",
+      "next": "下一步",
       "parser": "解析器",
       "placeholder_link": "请输入 RSS 链接",
       "placeholder_name": "可选",
       "rss_link": "RSS",
+      "season_label": "季度",
+      "season_value": "第 {season} 季",
       "subscribe": "订阅",
-      "title": "添加 RSS"
+      "title": "添加 RSS",
+      "unknown_group": "未指定"
     },
     "pause": "暂停",
     "profile": {
