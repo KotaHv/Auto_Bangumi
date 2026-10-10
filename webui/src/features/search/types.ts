@@ -1,13 +1,13 @@
-import type { BangumiAPI, BangumiRule } from '@/features/bangumi/types';
+import type { BangumiData } from '@/features/bangumi/types';
 import type { RSSAPI } from '@/features/rss/types/rss';
 
 export interface SearchResultResponse {
-  bangumi: BangumiAPI;
+  bangumi: BangumiData;
   rss: RSSAPI;
 }
 
 export interface SearchResult {
-  bangumi: BangumiRule;
+  bangumi: BangumiData;
   rss: RSSAPI;
 }
 

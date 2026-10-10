@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { BangumiRule } from '@/features/bangumi/types';
+import type { PersistedBangumi } from '@/features/bangumi/types';
 import type { RSSAPI } from '../../types/rss.ts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { RuleMetadata } from './rule-metadata.tsx';
 import { useRssReviewMutations } from './use-rss-review-mutations.ts';
 
 interface AbRssExactMatchProps {
-  rule: BangumiRule & { id: number };
+  rule: PersistedBangumi;
   rss: RSSAPI;
   onBack: () => void;
   onComplete: () => void;

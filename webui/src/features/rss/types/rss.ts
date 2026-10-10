@@ -1,8 +1,4 @@
-import type {
-  BangumiAPI,
-  BangumiRule,
-  PersistedBangumiRule,
-} from '@/features/bangumi/types';
+import type { BangumiData, PersistedBangumi } from '@/features/bangumi/types';
 
 /** Wire response from `backend/src/module/models/rss.py`. */
 export interface RSSAPI {
@@ -25,9 +21,9 @@ export interface RSS extends RSSAPI {
 export type RSSAnalysisOptionType = 'exact_match' | 'candidate' | 'create';
 
 export type RSSAnalysisOptionAPI =
-  | { type: 'exact_match'; bangumi: BangumiAPI & { id: number } }
-  | { type: 'candidate'; bangumi: BangumiAPI }
-  | { type: 'create'; bangumi: BangumiAPI };
+  | { type: 'exact_match'; bangumi: PersistedBangumi }
+  | { type: 'candidate'; bangumi: PersistedBangumi }
+  | { type: 'create'; bangumi: BangumiData };
 
 export type NonEmptyArray<T> = [T, ...T[]];
 
@@ -35,11 +31,5 @@ export interface RSSAnalysisAPI {
   options: NonEmptyArray<RSSAnalysisOptionAPI>;
 }
 
-export type RSSAnalysisOption =
-  | { type: 'exact_match'; bangumi: PersistedBangumiRule }
-  | { type: 'candidate'; bangumi: BangumiRule }
-  | { type: 'create'; bangumi: BangumiRule };
-
-export interface RSSAnalysis {
-  options: NonEmptyArray<RSSAnalysisOption>;
-}
+export type RSSAnalysisOption = RSSAnalysisOptionAPI;
+export type RSSAnalysis = RSSAnalysisAPI;

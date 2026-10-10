@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs';
 
 import { axios } from '@/lib/axios';
-import { toBangumiRule } from '@/features/bangumi/mapper';
 import type {
   SearchFailureCode,
   SearchResultResponse,
@@ -32,7 +31,7 @@ export const apiSearch = {
           observer.next({
             type: 'result',
             result: {
-              bangumi: toBangumiRule(apiData.bangumi),
+              bangumi: apiData.bangumi,
               rss: apiData.rss,
             },
           });

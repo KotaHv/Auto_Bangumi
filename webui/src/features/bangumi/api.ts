@@ -1,25 +1,19 @@
 import { axios } from '@/lib/axios';
-import { omit } from 'radash';
-import { toBangumiAPI, toBangumiRule } from './mapper';
-import type { BangumiAPI, BangumiRule } from './types';
+import type { BangumiData, PersistedBangumi } from './types';
 import type { ApiSuccess } from '@/types/api';
 
 export const apiBangumi = {
   async getAll(signal?: AbortSignal) {
-    const { data } = await axios.get<Array<BangumiAPI & { id: number }>>(
+    const { data } = await axios.get<PersistedBangumi[]>(
       'api/v1/bangumi/get/all',
       { signal },
     );
-    return data.map((bangumi) => ({
-      ...toBangumiRule(bangumi),
-      id: bangumi.id,
-    }));
+    return data;
   },
-  async updateRule(bangumiId: number, bangumiRule: BangumiRule) {
-    const post = omit(toBangumiAPI(bangumiRule), ['id']);
+  async updateRule(bangumi: PersistedBangumi) {
     const { data } = await axios.patch<ApiSuccess>(
-      `api/v1/bangumi/update/${bangumiId}`,
-      post,
+      'api/v1/bangumi/update',
+      bangumi,
     );
     return data;
   },
@@ -50,19 +44,17 @@ export const apiBangumi = {
     );
     return data;
   },
-  async rename(bangumiData: BangumiRule) {
-    const postData = toBangumiAPI(bangumiData);
+  async rename(bangumiData: BangumiData) {
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/bangumi/rename',
-      postData,
+      bangumiData,
     );
     return data;
   },
-  async forceCollect(bangumiData: BangumiRule) {
-    const postData = toBangumiAPI(bangumiData);
+  async forceCollect(bangumiData: BangumiData) {
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/rss/force-collect',
-      postData,
+      bangumiData,
     );
     return data;
   },

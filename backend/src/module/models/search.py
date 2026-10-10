@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from .bangumi import Bangumi
+from .bangumi import BangumiData
 from .rss import RSSItem
 
 
 class SearchResult(BaseModel):
-    bangumi: Bangumi
+    bangumi: BangumiData
     rss: RSSItem

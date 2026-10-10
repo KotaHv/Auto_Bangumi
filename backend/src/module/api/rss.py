@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from module.database.deps import DatabaseDep
 from module.models import (
     APIResponse,
-    Bangumi,
+    BangumiData,
     ResponseModel,
     RSSAnalysisResult,
     RSSItem,
@@ -103,14 +103,15 @@ async def analysis(rss: RSSItem, db: DatabaseDep):
 
 
 @router.post("/collect", response_model=APIResponse)
-async def download_collection(data: Bangumi, db: DatabaseDep):
-    resp = await SeasonService(db).collect_season(data, data.rss_link)
+async def download_collection(data: BangumiData, db: DatabaseDep):
+    bangumi = data.to_bangumi()
+    resp = await SeasonService(db).collect_season(bangumi, bangumi.rss_link)
     return u_response(resp)
 
 
 @router.post("/subscribe/new", response_model=APIResponse)
-async def subscribe(data: Bangumi, rss: RSSItem, db: DatabaseDep):
-    resp = await SeasonService(db).subscribe_season(data, rss)
+async def subscribe(data: BangumiData, rss: RSSItem, db: DatabaseDep):
+    resp = await SeasonService(db).subscribe_season(data.to_bangumi(), rss)
     return u_response(resp)
 
 
@@ -126,6 +127,6 @@ async def add_to_bangumi(
     "/force-collect",
     response_model=APIResponse,
 )
-async def force_collect(data: Bangumi, db: DatabaseDep):
-    resp = await SeasonService(db).force_collect(data)
+async def force_collect(data: BangumiData, db: DatabaseDep):
+    resp = await SeasonService(db).force_collect(data.to_bangumi())
     return u_response(resp)

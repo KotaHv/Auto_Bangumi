@@ -1,18 +1,15 @@
-/**
- * Wire response from `backend/src/module/models/bangumi.py`.
- */
-export interface BangumiAPI {
+export interface BangumiData {
   added: boolean;
   deleted: boolean;
   dpi: string | null;
   eps_collect: boolean;
-  filter: string;
+  filter: string[];
   group_name: string | null;
   id: number | null;
   official_title: string;
   offset: number;
   poster_link: string | null;
-  rss_link: string;
+  rss_links: string[];
   rule_name: string | null;
   save_path: string | null;
   season: number;
@@ -23,8 +20,4 @@ export interface BangumiAPI {
   year: string | null;
 }
 
-export interface BangumiRule extends Omit<BangumiAPI, 'filter'> {
-  filter: string[];
-}
-
-export type PersistedBangumiRule = BangumiRule & { id: number };
+export type PersistedBangumi = Omit<BangumiData, 'id'> & { id: number };

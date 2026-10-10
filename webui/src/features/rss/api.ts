@@ -1,23 +1,13 @@
 import { axios } from '@/lib/axios';
-import { toBangumiAPI, toBangumiRule } from '@/features/bangumi/mapper';
-import type { BangumiRule } from '@/features/bangumi/types';
+import type { BangumiData } from '@/features/bangumi/types';
 import type {
   RSS,
   RSSAnalysis,
   RSSAnalysisAPI,
-  RSSAnalysisOption,
-  RSSAnalysisOptionAPI,
   RSSAPI,
   RSSDraft,
 } from './types/rss';
 import type { ApiSuccess } from '@/types/api';
-
-function mapAnalysisOption(option: RSSAnalysisOptionAPI): RSSAnalysisOption {
-  const bangumi = toBangumiRule(option.bangumi);
-  return option.type === 'exact_match'
-    ? { type: option.type, bangumi: { ...bangumi, id: option.bangumi.id } }
-    : { type: option.type, bangumi };
-}
 
 export const apiRSS = {
   async get(signal?: AbortSignal) {
@@ -71,20 +61,17 @@ export const apiRSS = {
       rss_item,
     );
 
-    return {
-      options: data.options.map(mapAnalysisOption) as RSSAnalysis['options'],
-    };
+    return data;
   },
-  async collection(bangumiData: BangumiRule) {
-    const postData = toBangumiAPI(bangumiData);
+  async collection(bangumiData: BangumiData) {
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/rss/collect',
-      postData,
+      bangumiData,
     );
     return data;
   },
-  async subscribe(bangumi: BangumiRule, rss: RSSAPI) {
-    const postData = { data: toBangumiAPI(bangumi), rss };
+  async subscribe(bangumi: BangumiData, rss: RSSAPI) {
+    const postData = { data: bangumi, rss };
     const { data } = await axios.post<ApiSuccess>(
       'api/v1/rss/subscribe/new',
       postData,

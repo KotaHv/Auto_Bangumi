@@ -1,22 +1,25 @@
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { BangumiRule } from '../../types';
+import type { BangumiData } from '../../types';
 import { message } from '@/lib/message';
 import { copyText } from '@/lib/clipboard';
 import { AbRuleMobile } from './rule-mobile';
 import { AbRuleDesktop } from './rule-desktop';
 
-interface AbRuleProps {
-  rule: BangumiRule;
-  onChange?: (rule: BangumiRule) => void;
+interface AbRuleProps<T extends BangumiData> {
+  rule: T;
+  onChange: (rule: T) => void;
 }
 
-export function AbRule({ rule, onChange }: AbRuleProps) {
+export function AbRule<T extends BangumiData>({
+  rule,
+  onChange,
+}: AbRuleProps<T>) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
-  function patch(key: keyof BangumiRule, value: unknown) {
-    onChange?.({ ...rule, [key]: value });
+  function patch<K extends keyof T>(key: K, value: T[K]) {
+    onChange({ ...rule, [key]: value });
   }
 
   function patchNumber(key: 'season' | 'offset', value: string) {
@@ -24,8 +27,8 @@ export function AbRule({ rule, onChange }: AbRuleProps) {
     patch(key, Number.isNaN(n) ? 0 : n);
   }
 
-  async function copyRssLink() {
-    if (await copyText(rule.rss_link)) {
+  async function copyRssLink(url: string) {
+    if (await copyText(url)) {
       message.success(t('notify.copy_success'));
     } else {
       message.error(t('notify.copy_failed'));

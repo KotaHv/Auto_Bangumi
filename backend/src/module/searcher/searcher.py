@@ -2,7 +2,7 @@ import xml.etree.ElementTree
 from collections.abc import AsyncIterator
 
 from module.conf import settings
-from module.models import Bangumi, RSSItem, SearchResult, Torrent
+from module.models import Bangumi, BangumiData, RSSItem, SearchResult, Torrent
 from module.network import RequestContent, UpstreamUnavailableError
 from module.rss import RSSAnalyser
 
@@ -72,7 +72,9 @@ class SearchTorrent(RequestContent, RSSAnalyser):
                 bangumi.poster_link,
             ) = preview
             bangumi.rss_link = rss.url
-            yield SearchResult(bangumi=bangumi, rss=rss).model_dump_json()
+            yield SearchResult(
+                bangumi=BangumiData.from_bangumi(bangumi), rss=rss
+            ).model_dump_json()
 
     @staticmethod
     def special_url(data: Bangumi, site: str) -> RSSItem:

@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BangumiRule } from '@/features/bangumi/types';
+import type { BangumiData } from '@/features/bangumi/types';
 import type { RSSAnalysis, RSSAPI } from '../../types/rss.ts';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -20,11 +20,11 @@ interface AbRssCandidateSelectionProps {
 }
 
 interface CandidateSelectionViewProps extends AbRssCandidateSelectionProps {
-  onCreate: (rule: BangumiRule) => void;
+  onCreate: (rule: BangumiData) => void;
 }
 
 export function AbRssCandidateSelection(props: AbRssCandidateSelectionProps) {
-  const [ruleToCreate, setRuleToCreate] = useState<BangumiRule>();
+  const [ruleToCreate, setRuleToCreate] = useState<BangumiData>();
 
   if (ruleToCreate) {
     return (

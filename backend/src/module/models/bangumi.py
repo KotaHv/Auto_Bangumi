@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Self
 
 from pydantic import BaseModel, Field
 from sqlmodel import Field as SQLField
@@ -28,25 +28,46 @@ class Bangumi(SQLModel, table=True):
     deleted: Annotated[bool, SQLField(title="是否已删除")] = False
 
 
-class BangumiUpdate(SQLModel):
-    official_title: Annotated[str, SQLField(title="番剧中文名")] = "official_title"
-    year: Annotated[str | None, SQLField(title="番剧年份")] = None
-    title_raw: Annotated[str, SQLField(title="番剧原名")] = ""
-    season: Annotated[int, SQLField(title="番剧季度")] = 1
-    season_raw: Annotated[str | None, SQLField(title="番剧季度原名")] = None
-    group_name: Annotated[str | None, SQLField(title="字幕组")] = None
-    dpi: Annotated[str | None, SQLField(title="分辨率")] = None
-    source: Annotated[str | None, SQLField(title="来源")] = None
-    subtitle: Annotated[str | None, SQLField(title="字幕")] = None
-    eps_collect: Annotated[bool, SQLField(title="是否已收集")] = False
-    offset: Annotated[int, SQLField(title="番剧偏移量")] = 0
-    filter: Annotated[str, SQLField(title="番剧过滤器")] = "720,\\d+-\\d+"
-    rss_link: Annotated[str, SQLField(title="番剧RSS链接")] = ""
-    poster_link: Annotated[str | None, SQLField(title="番剧海报链接")] = None
-    added: Annotated[bool, SQLField(title="是否已添加")] = False
-    rule_name: Annotated[str | None, SQLField(title="番剧规则名")] = None
-    save_path: Annotated[str | None, SQLField(title="番剧保存路径")] = None
-    deleted: Annotated[bool, SQLField(title="是否已删除")] = False
+class BangumiData(BaseModel):
+    id: int | None
+    official_title: str = ""
+    year: str | None = None
+    title_raw: str = ""
+    season: int = 1
+    season_raw: str | None = None
+    group_name: str | None = None
+    dpi: str | None = None
+    source: str | None = None
+    subtitle: str | None = None
+    eps_collect: bool = False
+    offset: int = 0
+    filter: list[str] = Field(default_factory=lambda: ["720", r"\d+-\d+"])
+    rss_links: list[str] = Field(default_factory=list)
+    poster_link: str | None = None
+    added: bool = False
+    rule_name: str | None = None
+    save_path: str | None = None
+    deleted: bool = False
+
+    @classmethod
+    def from_bangumi(cls, bangumi: Bangumi) -> Self:
+        return cls(
+            **bangumi.model_dump(exclude={"filter", "rss_link"}),
+            filter=bangumi.filter.split(",") if bangumi.filter else [],
+            rss_links=[link for link in bangumi.rss_link.split(",") if link],
+        )
+
+    def to_bangumi(self) -> Bangumi:
+        data = self.model_dump(exclude_unset=True, exclude={"filter", "rss_links"})
+        if "filter" in self.model_fields_set:
+            data["filter"] = ",".join(self.filter)
+        if "rss_links" in self.model_fields_set:
+            data["rss_link"] = ",".join(self.rss_links)
+        return Bangumi.model_validate(data)
+
+
+class BangumiResponse(BangumiData):
+    id: int
 
 
 class Notification(BaseModel):

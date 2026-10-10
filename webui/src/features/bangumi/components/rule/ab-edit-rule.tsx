@@ -11,10 +11,10 @@ import { AbPopup } from '@/components/shared/ab-popup';
 import { AbRule } from './ab-rule';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import type { BangumiRule, PersistedBangumiRule } from '../../types';
+import type { PersistedBangumi } from '../../types';
 
 interface AbEditRuleProps {
-  rule: PersistedBangumiRule;
+  rule: PersistedBangumi;
   onClose: () => void;
 }
 
@@ -22,7 +22,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(true);
-  const [draftRule, setDraftRule] = useState<BangumiRule>(() => rule);
+  const [draftRule, setDraftRule] = useState<PersistedBangumi>(() => rule);
 
   const [deleteFileDialog, setDeleteFileDialog] = useState<{
     open: boolean;
@@ -34,9 +34,9 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
 
   function updateCachedBangumiItem(
     id: number,
-    update: (item: PersistedBangumiRule) => PersistedBangumiRule,
+    update: (item: PersistedBangumi) => PersistedBangumi,
   ) {
-    queryClient.setQueryData<PersistedBangumiRule[]>(
+    queryClient.setQueryData<PersistedBangumi[]>(
       bangumiKeys.list(),
       (current) =>
         current?.map((item) => (item.id === id ? update(item) : item)),
@@ -44,18 +44,17 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   }
 
   function removeCachedBangumiItem(id: number) {
-    queryClient.setQueryData<PersistedBangumiRule[]>(
+    queryClient.setQueryData<PersistedBangumi[]>(
       bangumiKeys.list(),
       (current) => current?.filter((item) => item.id !== id),
     );
   }
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, rule }: { id: number; rule: BangumiRule }) =>
-      apiBangumi.updateRule(id, rule),
-    onSuccess: (data, { id, rule }) => {
+    mutationFn: apiBangumi.updateRule,
+    onSuccess: (data, bangumi) => {
       message.success(returnUserLangMsg(data));
-      updateCachedBangumiItem(id, () => ({ ...rule, id }));
+      updateCachedBangumiItem(bangumi.id, () => bangumi);
       setOpen(false);
     },
   });
@@ -189,9 +188,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
           variant="brand"
           className="order-first h-10 w-full sm:order-last sm:h-8 sm:w-auto sm:min-w-20"
           loading={updateMutation.isPending}
-          onClick={() =>
-            updateMutation.mutate({ id: rule.id, rule: draftRule })
-          }
+          onClick={() => updateMutation.mutate(draftRule)}
         >
           {t('homepage.rule.apply')}
         </Button>

@@ -4,14 +4,15 @@ import { FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { AbExcludeField } from './exclude-field';
+import type { BangumiData } from '../../types';
 import type { AbRuleLayoutProps } from './types';
 
-export function AbRuleMobile({
+export function AbRuleMobile<T extends BangumiData>({
   rule,
   patch,
   patchNumber,
   copyRssLink,
-}: AbRuleLayoutProps) {
+}: AbRuleLayoutProps<T>) {
   const { t } = useTranslation();
 
   return (
@@ -96,25 +97,33 @@ export function AbRuleMobile({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <span className="w-14 shrink-0">{t('homepage.rule.rss_link')}</span>
-          <span
-            className="block min-w-0 flex-1 truncate"
-            title={rule.rss_link || '—'}
-          >
-            {rule.rss_link || '—'}
-          </span>
-          {rule.rss_link && (
-            <button
-              type="button"
-              aria-label={t('notify.copy')}
-              title={t('notify.copy')}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/40 flex size-4 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-2"
-              onClick={copyRssLink}
-            >
-              <Copy className="size-3.5" />
-            </button>
-          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            {rule.rss_links.length === 0 ? (
+              <span>—</span>
+            ) : (
+              rule.rss_links.map((url, index) => (
+                <div
+                  key={`${url}:${index}`}
+                  className="flex min-w-0 items-center gap-2"
+                >
+                  <span className="block min-w-0 flex-1 truncate" title={url}>
+                    {url}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={t('notify.copy')}
+                    title={t('notify.copy')}
+                    className="text-muted-foreground hover:text-foreground focus-visible:ring-brand/40 flex size-4 shrink-0 items-center justify-center rounded-md outline-none focus-visible:ring-2"
+                    onClick={() => copyRssLink(url)}
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </>

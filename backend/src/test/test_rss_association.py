@@ -15,6 +15,7 @@ from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import (
     Bangumi,
+    BangumiData,
     RSSAnalysisOption,
     RSSAnalysisResult,
     RSSItem,
@@ -92,7 +93,11 @@ async def test_analyze_feed_returns_exact_match(
         result = await service.analyze_feed(RSSItem(url="https://rss.example.test/a"))
 
         assert isinstance(result, RSSAnalysisResult)
-        assert result.options == [RSSAnalysisOption(type="exact_match", bangumi=exact)]
+        assert result.options == [
+            RSSAnalysisOption(
+                type="exact_match", bangumi=BangumiData.from_bangumi(exact)
+            )
+        ]
 
 
 @pytest.mark.asyncio
@@ -129,7 +134,9 @@ async def test_analyze_feed_offers_candidates_for_other_groups(
         for option in result.options
         if option.type == "candidate"
     } == {"Group A", "Group B"}
-    assert result.options[-1] == RSSAnalysisOption(type="create", bangumi=parsed)
+    assert result.options[-1] == RSSAnalysisOption(
+        type="create", bangumi=BangumiData.from_bangumi(parsed)
+    )
 
 
 @pytest.mark.asyncio

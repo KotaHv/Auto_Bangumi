@@ -9,6 +9,7 @@ from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import (
     Bangumi,
+    BangumiData,
     ResponseModel,
     RSSAnalysisOption,
     RSSAnalysisResult,
@@ -104,7 +105,12 @@ class RssService:
             exact_match = await self.bangumi.find_for_rss_analysis(data)
             if exact_match is not None:
                 return RSSAnalysisResult(
-                    options=[RSSAnalysisOption(type="exact_match", bangumi=exact_match)]
+                    options=[
+                        RSSAnalysisOption(
+                            type="exact_match",
+                            bangumi=BangumiData.from_bangumi(exact_match),
+                        )
+                    ]
                 )
 
         candidates = await self.bangumi.find_by_official_or_raw_title(
@@ -112,9 +118,12 @@ class RssService:
             title_raw=data.title_raw,
         )
         options = [
-            RSSAnalysisOption(type="candidate", bangumi=rule) for rule in candidates
+            RSSAnalysisOption(type="candidate", bangumi=BangumiData.from_bangumi(rule))
+            for rule in candidates
         ]
-        options.append(RSSAnalysisOption(type="create", bangumi=data))
+        options.append(
+            RSSAnalysisOption(type="create", bangumi=BangumiData.from_bangumi(data))
+        )
         return RSSAnalysisResult(options=options)
 
     async def _filter_new_torrents(self, torrents: list[Torrent]) -> list[Torrent]:

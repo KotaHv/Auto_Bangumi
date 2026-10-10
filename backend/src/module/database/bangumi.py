@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from sqlmodel import and_, col, delete, false, literal, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.models import Bangumi, BangumiUpdate
+from module.models import Bangumi
 
 
 class BangumiDatabase:
@@ -19,22 +19,16 @@ class BangumiDatabase:
         self.session.add_all(datas)
         logger.debug("[Database] Stage {} bangumi for insertion.", len(datas))
 
-    async def update(
-        self, data: Bangumi | BangumiUpdate, _id: int | None = None
-    ) -> bool:
-        if _id and isinstance(data, BangumiUpdate):
-            db_data = await self.session.get(Bangumi, _id)
-        elif isinstance(data, Bangumi):
-            db_data = await self.session.get(Bangumi, data.id)
-        else:
+    async def update(self, data: Bangumi) -> bool:
+        if data.id is None:
             return False
+        db_data = await self.session.get(Bangumi, data.id)
         if db_data is None:
             return False
-        bangumi_data = data.model_dump(exclude_unset=True)
-        for key, value in bangumi_data.items():
+        for key, value in data.model_dump(exclude_unset=True).items():
             setattr(db_data, key, value)
         self.session.add(db_data)
-        logger.debug("[Database] Stage update for {}", data.official_title)
+        logger.debug("[Database] Stage update for {}", db_data.official_title)
         return True
 
     async def update_all(self, datas: list[Bangumi]):

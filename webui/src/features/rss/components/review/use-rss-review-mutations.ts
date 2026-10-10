@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { BangumiRule } from '@/features/bangumi/types';
+import type { BangumiData } from '@/features/bangumi/types';
 import { bangumiKeys } from '@/features/bangumi/queries';
 import { message } from '@/lib/message';
 import { returnUserLangMsg } from '@/lib/i18n';
@@ -18,7 +18,7 @@ export function useRssReviewMutations({
 }: UseRssReviewMutationsOptions) {
   const queryClient = useQueryClient();
   const collect = useMutation({
-    mutationFn: (rule: BangumiRule) => apiRSS.collection(rule),
+    mutationFn: (rule: BangumiData) => apiRSS.collection(rule),
     onSuccess: (data) => {
       message.success(returnUserLangMsg(data));
       onComplete();
@@ -35,7 +35,7 @@ export function useRssReviewMutations({
     onComplete();
   };
   const subscribe = useMutation({
-    mutationFn: (rule: BangumiRule) => apiRSS.subscribe(rule, rss),
+    mutationFn: (rule: BangumiData) => apiRSS.subscribe(rule, rss),
     onSuccess: onSubscriptionSuccess,
   });
   const addToBangumi = useMutation({

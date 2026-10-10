@@ -4,7 +4,7 @@ from os import PathLike
 from qbittorrentapi.torrents import TorrentFilesList
 
 from module.conf import PLATFORM, settings
-from module.models import Bangumi, BangumiUpdate
+from module.models import Bangumi
 
 if PLATFORM == "Windows":
     from pathlib import PureWindowsPath as Path
@@ -54,7 +54,7 @@ class TorrentPath:
         return self._file_depth(file_path) <= 2
 
     @staticmethod
-    def _gen_save_path(data: Bangumi | BangumiUpdate):
+    def _gen_save_path(data: Bangumi):
         folder = (
             f"{data.official_title} ({data.year})" if data.year else data.official_title
         )

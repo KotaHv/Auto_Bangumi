@@ -3,7 +3,11 @@ from fastapi.responses import JSONResponse
 
 from module.database.deps import DatabaseDep
 from module.downloader import DownloadClient
-from module.models import APIResponse, Bangumi, BangumiUpdate
+from module.models import (
+    APIResponse,
+    BangumiData,
+    BangumiResponse,
+)
 from module.security.session import require_session
 from module.service.bangumi import BangumiService
 from module.service.rename import RenameService
@@ -17,22 +21,21 @@ router = APIRouter(
 )
 
 
-@router.get("/get/all", response_model=list[Bangumi])
+@router.get("/get/all", response_model=list[BangumiResponse])
 async def get_all_data(db: DatabaseDep):
-    return await BangumiService(db).search_all()
+    bangumis = await BangumiService(db).search_all()
+    return [BangumiResponse.from_bangumi(bangumi) for bangumi in bangumis]
 
 
-@router.patch(
-    "/update/{bangumi_id}",
-    response_model=APIResponse,
-)
+@router.patch("/update", response_model=APIResponse)
 async def update_rule(
-    bangumi_id: int,
-    data: BangumiUpdate,
+    data: BangumiData,
     db: DatabaseDep,
     wake_event: PlexRefreshEventDep,
 ):
-    resp = await TorrentService(db).update_rule(bangumi_id, data, wake_event=wake_event)
+    resp = await TorrentService(db).update_rule(
+        data.to_bangumi(), wake_event=wake_event
+    )
     return u_response(resp)
 
 
@@ -88,7 +91,7 @@ async def refresh_all_poster(db: DatabaseDep):
     "/rename",
     response_model=APIResponse,
 )
-async def rename(data: Bangumi, db: DatabaseDep, wake_event: PlexRefreshEventDep):
+async def rename(data: BangumiData, db: DatabaseDep, wake_event: PlexRefreshEventDep):
     if data.save_path is None:
         return JSONResponse(
             status_code=400,

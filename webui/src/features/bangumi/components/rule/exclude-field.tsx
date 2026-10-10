@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import type { BangumiRule } from '../../types';
+import type { BangumiData } from '../../types';
 import { AbDynamicTags } from '@/components/shared/ab-dynamic-tags';
 import { Field, FieldLabel } from '@/components/ui/field';
 
 interface AbExcludeFieldProps {
-  value: BangumiRule['filter'];
-  onChange: (value: BangumiRule['filter']) => void;
+  value: BangumiData['filter'];
+  onChange: (value: BangumiData['filter']) => void;
   layout: 'mobile' | 'desktop';
 }
 

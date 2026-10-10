@@ -1,12 +1,12 @@
 import { ImageOff, Pencil, Plus } from 'lucide-react';
-import type { BangumiRule } from '../types';
+import type { BangumiData } from '../types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
 interface AbBangumiCardProps {
   type?: 'primary' | 'search' | 'mobile';
-  bangumi: BangumiRule;
+  bangumi: BangumiData;
   onClick?: () => void;
 }
 

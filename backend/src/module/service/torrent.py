@@ -8,7 +8,7 @@ from module.database.factory import session_factory
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
-from module.models import Bangumi, BangumiUpdate, ResponseModel
+from module.models import Bangumi, ResponseModel
 from module.network import RequestContent
 from module.service.plex import PlexService
 from module.utils import torrent_hash
@@ -180,11 +180,18 @@ class TorrentService:
 
     async def update_rule(
         self,
-        bangumi_id: int,
-        data: BangumiUpdate,
+        data: Bangumi,
         *,
         wake_event: asyncio.Event | None = None,
     ) -> ResponseModel:
+        if data.id is None:
+            return ResponseModel(
+                status_code=422,
+                status=False,
+                msg_en="Bangumi ID is required",
+                msg_zh="必须提供番剧 ID",
+            )
+        bangumi_id = data.id
         old_data = await self.bangumi.search_id(bangumi_id)
         if old_data:
             hashes = await self.torrent.get_hashes_by_bangumi_id(bangumi_id)
@@ -204,7 +211,7 @@ class TorrentService:
                         exc,
                     )
             data.save_path = path
-            if await self.bangumi.update(data, bangumi_id):
+            if await self.bangumi.update(data):
                 await self.session.commit()
             return ResponseModel(
                 status_code=200,

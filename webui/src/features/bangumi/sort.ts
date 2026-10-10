@@ -1,6 +1,6 @@
 import { sortActiveFirstByIdDesc } from '@/lib/sort';
-import type { PersistedBangumiRule } from './types';
+import type { PersistedBangumi } from './types';
 
-export function sortBangumiActiveFirst(items: PersistedBangumiRule[]) {
+export function sortBangumiActiveFirst(items: PersistedBangumi[]) {
   return sortActiveFirstByIdDesc(items, (item) => !item.deleted);
 }

@@ -4,7 +4,7 @@ from pydantic import AnyHttpUrl, BaseModel, Field, TypeAdapter, field_validator
 from sqlmodel import Field as SQLField
 from sqlmodel import SQLModel
 
-from .bangumi import Bangumi
+from .bangumi import BangumiData
 
 
 class RSSItem(SQLModel, table=True):
@@ -32,7 +32,7 @@ class RSSUpdate(SQLModel):
 
 class RSSAnalysisOption(BaseModel):
     type: Literal["exact_match", "candidate", "create"]
-    bangumi: Bangumi
+    bangumi: BangumiData
 
 
 class RSSAnalysisResult(BaseModel):

@@ -1,4 +1,10 @@
-from .bangumi import Bangumi, BangumiUpdate, Episode, Notification
+from .bangumi import (
+    Bangumi,
+    BangumiData,
+    BangumiResponse,
+    Episode,
+    Notification,
+)
 from .config import Config
 from .log import ClearLogResult, LogEntry, LogPage, LogRecord, TailFilters
 from .plex import PlexConnection, PlexRefreshJob
@@ -16,7 +22,8 @@ from .user import User, UserUpdate
 
 __all__ = [
     "Bangumi",
-    "BangumiUpdate",
+    "BangumiData",
+    "BangumiResponse",
     "Episode",
     "Notification",
     "Config",
