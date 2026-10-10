@@ -110,7 +110,7 @@ async def download_collection(data: Bangumi, db: DatabaseDep):
 
 @router.post("/subscribe/new", response_model=APIResponse)
 async def subscribe(data: Bangumi, rss: RSSItem, db: DatabaseDep):
-    resp = await SeasonService(db).subscribe_season(data, parser=rss.parser)
+    resp = await SeasonService(db).subscribe_season(data, rss)
     return u_response(resp)
 
 

@@ -46,58 +46,48 @@ class SeasonService:
                 msg_zh=f"收集 {title} 第 {season} 季失败, 种子已经添加。",
             )
 
-    async def subscribe_season(
-        self, data: Bangumi, parser: str = "mikan"
-    ) -> ResponseModel:
-        async with SearchTorrent() as st, DownloadClient() as client:
-            data.added = True
-            data.eps_collect = True
-            torrents = await st.get_torrents(
+    async def subscribe_season(self, data: Bangumi, rss_item: RSSItem) -> ResponseModel:
+        data.added = True
+        data.eps_collect = True
+        async with SearchTorrent() as search:
+            torrents = await search.get_torrents(
                 data.rss_link, data.filter.replace(",", "|")
             )
             for torrent in torrents:
-                bangumi = await st.raw_parser(raw=torrent.name)
+                bangumi = await search.raw_parser(raw=torrent.name)
                 if bangumi:
                     for field in SEARCH_KEY:
                         setattr(data, field, getattr(bangumi, field))
                     break
-            torrents = filter_superseded_torrents(torrents)
-            await self.rss.add(
-                RSSItem(
-                    url=data.rss_link,
-                    name=data.official_title,
-                    aggregate=False,
-                    parser=parser,
+
+        torrents = filter_superseded_torrents(torrents)
+        rss_item.name = rss_item.name or data.official_title
+        rss_item.enabled = True
+        await self.rss.add(rss_item)
+        await self.bangumi.add(data)
+        await self.session.commit()
+
+        if torrents:
+            for torrent in torrents:
+                torrent.rss_id = rss_item.id
+            try:
+                async with DownloadClient() as client:
+                    await client.add_torrent(torrents, data)
+            except Exception:
+                logger.exception(
+                    "RSS for {} was subscribed, but torrent download failed.",
+                    data.official_title,
                 )
-            )
-            await self.bangumi.add(data)
-            await self.session.commit()
-            if torrents:
-                rss_item = await self.rss.search_url(data.rss_link)
-                if rss_item is None:
-                    return ResponseModel(
-                        status=False,
-                        status_code=406,
-                        msg_en=f"[Engine] RSS {data.rss_link} not found.",
-                        msg_zh=f"[Engine] 未找到 RSS {data.rss_link}。",
-                    )
-                for torrent in torrents:
-                    torrent.rss_id = rss_item.id
-                await client.add_torrent(torrents, data)
+            else:
                 await self.torrent.add_all(torrents)
                 await self.session.commit()
-                return ResponseModel(
-                    status=True,
-                    status_code=200,
-                    msg_en=f"[Engine] Download {data.official_title} successfully.",
-                    msg_zh=f"下载 {data.official_title} 成功。",
-                )
-            return ResponseModel(
-                status=False,
-                status_code=406,
-                msg_en=f"[Engine] Download {data.official_title} failed.",
-                msg_zh=f"[Engine] 下载 {data.official_title} 失败。",
-            )
+
+        return ResponseModel(
+            status=True,
+            status_code=200,
+            msg_en=f"RSS for {data.official_title} was subscribed successfully.",
+            msg_zh=f"已成功订阅 {data.official_title} 的 RSS。",
+        )
 
     async def subscribe_existing(self, rss: RSSItem, bangumi_id: int) -> ResponseModel:
         bangumi = await self.bangumi.search_id(bangumi_id)
