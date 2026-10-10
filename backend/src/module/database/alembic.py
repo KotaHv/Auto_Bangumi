@@ -1,10 +1,15 @@
+import sqlite3
 from collections.abc import Callable
+from contextlib import closing
+from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from typing import Any
 
 from alembic import command
 from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -19,13 +24,23 @@ def _project_config_path() -> Path:
     raise RuntimeError("Alembic project configuration could not be located")
 
 
+def _backup_database(connection) -> None:
+    database_path = connection.engine.url.database
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
+    with (
+        closing(sqlite3.connect(database_path)) as source,
+        closing(sqlite3.connect(f"{database_path}.{timestamp}.bak")) as backup,
+    ):
+        source.backup(backup)
+
+
 def upgrade_schema(
     connection,
     *,
     migration_dir: str,
     before_upgrade: Callable[[Any, Config], None] | None = None,
 ) -> None:
-    """Point Alembic at a migration tree and upgrade it to head."""
+    """Back up the SQLite database before applying migrations."""
 
     project_config_path = _project_config_path()
     alembic_config = Config(toml_file=str(project_config_path))
@@ -33,6 +48,12 @@ def upgrade_schema(
         "script_location", str(project_config_path.parent / migration_dir)
     )
     alembic_config.attributes["connection"] = connection
+
+    current_revision = MigrationContext.configure(connection).get_current_revision()
+    target_revision = ScriptDirectory.from_config(alembic_config).get_current_head()
+    if current_revision != target_revision:
+        _backup_database(connection)
+
     if before_upgrade is not None:
         before_upgrade(connection, alembic_config)
     command.upgrade(alembic_config, "head")
