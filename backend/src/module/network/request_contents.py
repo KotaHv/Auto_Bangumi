@@ -1,5 +1,4 @@
 import re
-import xml.etree.ElementTree
 
 import httpx2
 import lxml.etree as etree
@@ -27,7 +26,7 @@ class RequestContent(RequestURL):
     ) -> list[Torrent]:
         try:
             soup = await self.get_xml(_url, retry)
-        except xml.etree.ElementTree.ParseError:
+        except etree.XMLSyntaxError:
             logger.warning("[Network] Failed to parse torrents: {}", _url)
             return []
 
@@ -54,12 +53,16 @@ class RequestContent(RequestURL):
             logger.warning("[Network] Invalid torrent feed: {}", _url)
             return []
 
-    async def get_xml(
-        self, _url, retry: int = 3
-    ) -> xml.etree.ElementTree.Element | None:
+    async def get_xml(self, _url, retry: int = 3) -> etree._Element | None:
         req = await self.get_url(_url, retry)
         if req:
-            return xml.etree.ElementTree.fromstring(req.text)
+            parser = etree.XMLParser(
+                resolve_entities=False,
+                load_dtd=False,
+                no_network=True,
+                huge_tree=False,
+            )
+            return etree.fromstring(req.content, parser=parser)
 
     # API JSON
     async def get_json(self, _url) -> dict | None:

@@ -1,5 +1,6 @@
-import xml.etree.ElementTree
 from collections.abc import AsyncIterator
+
+import lxml.etree as etree
 
 from module.conf import settings
 from module.models import Bangumi, BangumiData, RSSItem, SearchResult, Torrent
@@ -24,7 +25,7 @@ class SearchTorrent(RequestContent, RSSAnalyser):
     async def _get_titles(self, rss_item: RSSItem) -> list[str]:
         try:
             soup = await self.get_xml(rss_item.url)
-        except xml.etree.ElementTree.ParseError as error:
+        except etree.XMLSyntaxError as error:
             raise UpstreamUnavailableError from error
         if soup is None:
             raise UpstreamUnavailableError
