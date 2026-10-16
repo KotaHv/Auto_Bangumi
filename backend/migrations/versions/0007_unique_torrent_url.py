@@ -16,6 +16,18 @@ depends_on = None
 
 logger = logging.getLogger("alembic.runtime.migration")
 
+_torrent = sa.table(
+    "torrent",
+    sa.column("id", sa.Integer),
+    sa.column("bangumi_id", sa.Integer),
+    sa.column("rss_id", sa.Integer),
+    sa.column("name", sa.String),
+    sa.column("url", sa.String),
+    sa.column("homepage", sa.String),
+    sa.column("downloaded", sa.Boolean),
+    sa.column("hash", sa.String),
+)
+
 
 def _completeness(row) -> int:
     fields = ("name", "homepage", "hash")
@@ -24,14 +36,7 @@ def _completeness(row) -> int:
 
 def _remove_invalid_and_duplicate_torrents(connection) -> tuple[int, int]:
     rows = (
-        connection.execute(
-            sa.text(
-                "SELECT id, bangumi_id, rss_id, name, url, homepage, downloaded, hash "
-                "FROM torrent ORDER BY id"
-            )
-        )
-        .mappings()
-        .all()
+        connection.execute(sa.select(_torrent).order_by(_torrent.c.id)).mappings().all()
     )
     invalid_ids = []
     groups = {}
@@ -48,7 +53,7 @@ def _remove_invalid_and_duplicate_torrents(connection) -> tuple[int, int]:
         groups.setdefault(url, []).append(row)
 
     for row_id in invalid_ids:
-        connection.exec_driver_sql("DELETE FROM torrent WHERE id = ?", (row_id,))
+        connection.execute(sa.delete(_torrent).where(_torrent.c.id == row_id))
 
     duplicate_count = 0
     for duplicates in groups.values():
@@ -68,7 +73,7 @@ def _remove_invalid_and_duplicate_torrents(connection) -> tuple[int, int]:
             else:
                 row_id = candidate["id"]
 
-            connection.exec_driver_sql("DELETE FROM torrent WHERE id = ?", (row_id,))
+            connection.execute(sa.delete(_torrent).where(_torrent.c.id == row_id))
             duplicate_count += 1
 
     return len(invalid_ids), duplicate_count
