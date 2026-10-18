@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -8,11 +10,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from module.database.alembic import (
     _detect_legacy_revision,
     _is_supported_legacy_schema,
+    _project_config_path,
     upgrade_database,
 )
 from module.update.startup import ensure_default_user
 
-CURRENT_REVISION = "0007_unique_torrent_url"
+CURRENT_REVISION = "0008_rss_bangumi_association"
 
 
 def _async_url(path: Path) -> str:
@@ -65,6 +68,7 @@ async def _schema_info(async_engine):
                 }
                 for table in {
                     "bangumi",
+                    "bangumi_rss",
                     "rssitem",
                     "torrent",
                     "user",
@@ -78,6 +82,32 @@ async def _schema_info(async_engine):
 
 async def _assert_current_schema(async_engine):
     schema = await _schema_info(async_engine)
+    assert schema["bangumi"]["columns"] == {
+        "id",
+        "official_title",
+        "year",
+        "title_raw",
+        "season",
+        "season_raw",
+        "group_name",
+        "dpi",
+        "source",
+        "subtitle",
+        "eps_collect",
+        "offset",
+        "filter",
+        "poster_link",
+        "added",
+        "rule_name",
+        "save_path",
+        "deleted",
+    }
+    assert schema["bangumi_rss"]["columns"] == {"bangumi_id", "rss_id"}
+    assert schema["bangumi_rss"]["primary_key"] == ("bangumi_id", "rss_id")
+    assert schema["bangumi_rss"]["foreign_keys"] == {
+        (("bangumi_id",), "bangumi", ("id",)),
+        (("rss_id",), "rssitem", ("id",)),
+    }
     assert schema["rssitem"]["columns"] == {
         "id",
         "name",
@@ -129,6 +159,10 @@ async def _assert_current_schema(async_engine):
     assert schema["torrent"]["foreign_keys"] == {
         (("bangumi_id",), "bangumi", ("id",)),
     }
+    assert any(
+        index["name"] == "uq_rssitem_url" and index["unique"]
+        for index in await _indexes(async_engine, "rssitem")
+    )
     indexes = await _indexes(async_engine, "torrent")
     assert any(
         index["name"] == "uq_torrent_url" and index["unique"] for index in indexes
@@ -771,4 +805,129 @@ async def test_real_migration_failure_aborts_startup_without_false_head(
             None,
             "0001_baseline",
         }
+    await async_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_rss_association_migration_repairs_legacy_data(tmp_path):
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "rss-associations.db", "current"
+    )
+    async with async_engine.begin() as connection:
+        await connection.execute(
+            text(
+                "INSERT INTO rssitem (id, name, url, aggregate, parser, enabled) "
+                "VALUES "
+                "(2, 'Duplicated', 'HTTPS://EXAMPLE.TEST:443/rss', 0, 'federation', 0), "
+                "(3, 'Empty', '', 0, 'mikan', 1), "
+                "(4, 'Broken', 'file:///rss', 0, 'mikan', 1), "
+                "(5, 'Other', 'https://example.test/other', 0, 'mikan', 1)"
+            )
+        )
+        await connection.execute(
+            text(
+                "INSERT INTO torrent "
+                "(id, bangumi_id, rss_id, name, url, homepage, downloaded, hash) "
+                "VALUES "
+                "(2, 1, 2, 'Duplicate feed source', 'magnet:?xt=duplicate', "
+                "NULL, 0, NULL), "
+                "(3, 1, 3, 'Empty feed source', 'magnet:?xt=empty', NULL, 0, NULL), "
+                "(4, 1, 4, 'Broken feed source', 'magnet:?xt=broken', NULL, 0, NULL)"
+            )
+        )
+        await connection.execute(
+            text("UPDATE bangumi SET rss_link = :links WHERE id = 1"),
+            {
+                "links": (
+                    "https://example.test/other,https://missing.test/rss,"
+                    "https://EXAMPLE.TEST:443/rss,https://example.test/rss"
+                )
+            },
+        )
+
+    await upgrade_database(async_engine)
+
+    async with async_engine.connect() as connection:
+        feeds = (
+            await connection.execute(
+                text(
+                    "SELECT id, name, url, aggregate, parser, enabled "
+                    "FROM rssitem ORDER BY id"
+                )
+            )
+        ).all()
+        torrents = (
+            await connection.execute(text("SELECT id, rss_id FROM torrent ORDER BY id"))
+        ).all()
+        associations = (
+            await connection.execute(
+                text("SELECT bangumi_id, rss_id FROM bangumi_rss ORDER BY rss_id")
+            )
+        ).all()
+
+    assert feeds == [
+        (1, "Current", "https://example.test/rss", 1, "mikan", 1),
+        (5, "Other", "https://example.test/other", 0, "mikan", 1),
+    ]
+    assert torrents == [(1, 1)]
+    assert associations == [(1, 1), (1, 5)]
+    assert any(
+        index["name"] == "uq_rssitem_url" and index["unique"]
+        for index in await _indexes(async_engine, "rssitem")
+    )
+    await _assert_current_schema(async_engine)
+    await async_engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_rss_association_migration_downgrade_reconstructs_feeds(tmp_path):
+    async_engine = await _make_git_schema_fixture(
+        tmp_path / "rss-association-downgrade.db", "current"
+    )
+    async with async_engine.begin() as connection:
+        await connection.execute(
+            text(
+                "INSERT INTO rssitem (id, name, url, aggregate, parser, enabled) "
+                "VALUES (2, 'Other', 'https://example.test/other', 0, 'mikan', 1)"
+            )
+        )
+        await connection.execute(
+            text("UPDATE bangumi SET rss_link = :links WHERE id = 1"),
+            {"links": "https://example.test/other,https://example.test/rss"},
+        )
+
+    await upgrade_database(async_engine)
+
+    def downgrade(connection):
+        project_config_path = _project_config_path()
+        config = Config(toml_file=str(project_config_path))
+        config.set_main_option(
+            "script_location", str(project_config_path.parent / "migrations")
+        )
+        config.attributes["connection"] = connection
+        command.downgrade(config, "0007_unique_torrent_url")
+
+    async with async_engine.begin() as connection:
+        await connection.run_sync(downgrade)
+
+    assert (
+        await _scalar(async_engine, "SELECT version_num FROM alembic_version")
+        == "0007_unique_torrent_url"
+    )
+    restored_links = await _scalar(
+        async_engine, "SELECT rss_link FROM bangumi WHERE id = 1"
+    )
+    assert set(restored_links.split(",")) == {
+        "https://example.test/rss",
+        "https://example.test/other",
+    }
+    async with async_engine.connect() as connection:
+        tables = await connection.run_sync(
+            lambda sync_connection: set(inspect(sync_connection).get_table_names())
+        )
+    assert "bangumi_rss" not in tables
+    assert not any(
+        index["name"] == "uq_rssitem_url" and index["unique"]
+        for index in await _indexes(async_engine, "rssitem")
+    )
     await async_engine.dispose()

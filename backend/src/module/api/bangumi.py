@@ -23,8 +23,7 @@ router = APIRouter(
 
 @router.get("/get/all", response_model=list[BangumiResponse])
 async def get_all_data(db: DatabaseDep):
-    bangumis = await BangumiService(db).search_all()
-    return [BangumiResponse.from_bangumi(bangumi) for bangumi in bangumis]
+    return await BangumiService(db).search_all()
 
 
 @router.patch("/update", response_model=APIResponse)

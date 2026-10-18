@@ -1,9 +1,13 @@
+from typing import cast
+
 from loguru import logger
+from sqlalchemy.orm import lazyload
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import func
-from sqlmodel import and_, col, delete, false, literal, or_, select
+from sqlmodel import and_, col, delete, false, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.models import Bangumi
+from module.models import Bangumi, BangumiRSS, RSSItem
 
 
 class BangumiDatabase:
@@ -36,6 +40,9 @@ class BangumiDatabase:
         logger.debug("[Database] Stage updates for {} bangumi.", len(datas))
 
     async def delete_one(self, _id: int) -> bool:
+        await self.session.exec(
+            delete(BangumiRSS).where(col(BangumiRSS.bangumi_id) == _id)
+        )
         result = await self.session.exec(
             delete(Bangumi).where(col(Bangumi.id) == _id).returning(col(Bangumi.id))
         )
@@ -45,16 +52,16 @@ class BangumiDatabase:
         logger.debug("[Database] Delete bangumi id: {}.", _id)
         return True
 
-    def set_rss_link(self, bangumi: Bangumi, rss_link: str) -> None:
-        bangumi.rss_link = rss_link
-        self.session.add(bangumi)
-
     async def delete_all(self):
-        statement = delete(Bangumi)
-        await self.session.exec(statement)
+        await self.session.exec(delete(BangumiRSS))
+        await self.session.exec(delete(Bangumi))
 
     async def search_all(self) -> list[Bangumi]:
-        statement = select(Bangumi)
+        return list((await self.session.exec(select(Bangumi))).all())
+
+    async def search_all_without_rss_items(self) -> list[Bangumi]:
+        rss_items = cast(InstrumentedAttribute[list[RSSItem]], Bangumi.rss_items)
+        statement = select(Bangumi).options(lazyload(rss_items))
         return list((await self.session.exec(statement)).all())
 
     async def find_by_raw_title_season_group(
@@ -128,14 +135,6 @@ class BangumiDatabase:
         bangumi.deleted = True
         self.session.add(bangumi)
         logger.debug("[Database] Disable rule {}.", bangumi.title_raw)
-
-    async def search_rss(self, rss_link: str) -> list[Bangumi]:
-        if not rss_link:
-            return []
-        members = literal(",") + func.coalesce(Bangumi.rss_link, "") + literal(",")
-        target = literal(f",{rss_link},")
-        statement = select(Bangumi).where(func.instr(members, target) > 0)
-        return list((await self.session.exec(statement)).all())
 
     async def get_offset(self, _id: int) -> int:
         offset = (

@@ -1,9 +1,29 @@
 from dataclasses import dataclass
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field
 from sqlmodel import Field as SQLField
-from sqlmodel import SQLModel
+from sqlmodel import Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from .rss import RSSItem
+
+
+class BangumiRSS(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "bangumi_rss"
+
+    bangumi_id: Annotated[
+        int, SQLField(primary_key=True, foreign_key="bangumi.id", ondelete="CASCADE")
+    ]
+    rss_id: Annotated[
+        int,
+        SQLField(
+            primary_key=True,
+            foreign_key="rssitem.id",
+            ondelete="CASCADE",
+            index=True,
+        ),
+    ]
 
 
 class Bangumi(SQLModel, table=True):
@@ -20,12 +40,16 @@ class Bangumi(SQLModel, table=True):
     eps_collect: Annotated[bool, SQLField(title="是否已收集")] = False
     offset: Annotated[int, SQLField(title="番剧偏移量")] = 0
     filter: Annotated[str, SQLField(title="番剧过滤器")] = "720,\\d+-\\d+"
-    rss_link: Annotated[str, SQLField(title="番剧RSS链接")] = ""
     poster_link: Annotated[str | None, SQLField(title="番剧海报链接")] = None
     added: Annotated[bool, SQLField(title="是否已添加")] = False
     rule_name: Annotated[str | None, SQLField(title="番剧规则名")] = None
     save_path: Annotated[str | None, SQLField(title="番剧保存路径")] = None
     deleted: Annotated[bool, SQLField(title="是否已删除")] = False
+    rss_items: list[RSSItem] = Relationship(
+        back_populates="bangumis",
+        link_model=BangumiRSS,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
 
 class BangumiData(BaseModel):
@@ -52,17 +76,15 @@ class BangumiData(BaseModel):
     @classmethod
     def from_bangumi(cls, bangumi: Bangumi) -> Self:
         return cls(
-            **bangumi.model_dump(exclude={"filter", "rss_link"}),
+            **bangumi.model_dump(exclude={"filter", "rss_items"}),
             filter=bangumi.filter.split(",") if bangumi.filter else [],
-            rss_links=[link for link in bangumi.rss_link.split(",") if link],
+            rss_links=[rss_item.url for rss_item in bangumi.rss_items],
         )
 
     def to_bangumi(self) -> Bangumi:
         data = self.model_dump(exclude_unset=True, exclude={"filter", "rss_links"})
         if "filter" in self.model_fields_set:
             data["filter"] = ",".join(self.filter)
-        if "rss_links" in self.model_fields_set:
-            data["rss_link"] = ",".join(self.rss_links)
         return Bangumi.model_validate(data)
 
 

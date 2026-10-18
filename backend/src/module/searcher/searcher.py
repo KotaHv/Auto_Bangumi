@@ -72,7 +72,7 @@ class SearchTorrent(RequestContent, RSSAnalyser):
                 bangumi.year,
                 bangumi.poster_link,
             ) = preview
-            bangumi.rss_link = rss.url
+            bangumi.rss_items = [rss]
             yield SearchResult(
                 bangumi=BangumiData.from_bangumi(bangumi), rss=rss
             ).model_dump_json()

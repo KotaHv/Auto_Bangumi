@@ -5,9 +5,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel.pool import StaticPool
 
 from module.database.bangumi import BangumiDatabase
-from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
-from module.models import Bangumi, RSSItem, Torrent
+from module.models import Bangumi, Torrent
 
 # sqlite mock engine
 engine = create_async_engine(
@@ -32,7 +31,6 @@ async def test_bangumi_database():
         eps_collect=False,
         offset=0,
         filter="720p,\\d+-\\d+",
-        rss_link="test",
         poster_link="/test/test.jpg",
         added=False,
         rule_name=None,
@@ -90,13 +88,3 @@ async def test_torrent_database():
             ]
         )
         assert [torrent.url for torrent in new_torrents] == ["https://test.com/new.mkv"]
-
-
-@pytest.mark.asyncio
-async def test_rss_database():
-    rss_url = "https://test.com/test.xml"
-
-    async with AsyncSession(engine, expire_on_commit=False) as db:
-        rss_repository = RSSDatabase(db)
-        await rss_repository.add(RSSItem(url=rss_url))
-        await db.commit()

@@ -2,6 +2,7 @@ from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.bangumi import BangumiDatabase
+from module.database.bangumi_rss import BangumiRSSDatabase
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
@@ -16,6 +17,7 @@ class SeasonService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.bangumi = BangumiDatabase(session)
+        self.bangumi_rss = BangumiRSSDatabase(session)
         self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
 
@@ -61,20 +63,27 @@ class SeasonService:
         data.eps_collect = True
         async with SearchTorrent() as search:
             torrents = await search.get_torrents(
-                data.rss_link, data.filter.replace(",", "|")
+                rss_item.url, data.filter.replace(",", "|")
             )
             for torrent in torrents:
-                bangumi = await search.raw_parser(raw=torrent.name)
-                if bangumi:
+                if parsed := await search.raw_parser(raw=torrent.name):
                     for field in SEARCH_KEY:
-                        setattr(data, field, getattr(bangumi, field))
+                        setattr(data, field, getattr(parsed, field))
                     break
 
         torrents = filter_superseded_torrents(torrents)
         rss_item.name = rss_item.name or data.official_title
         rss_item.enabled = True
-        await self.rss.add(rss_item)
+        if not await self.rss.add(rss_item):
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="RSS already exists.",
+                msg_zh="RSS 已存在。",
+            )
         await self.bangumi.add(data)
+        if data.id is not None and rss_item.id is not None:
+            await self.bangumi_rss.append(data.id, rss_item.id)
         await self.session.commit()
 
         if torrents:
@@ -115,12 +124,17 @@ class SeasonService:
             aggregate=False,
             parser=rss.parser,
         )
-        await self.rss.add(rss_item)
-        bangumi.rss_link = (
-            f"{bangumi.rss_link},{rss.url}" if bangumi.rss_link else rss.url
-        )
+        if not await self.rss.add(rss_item):
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="RSS already exists.",
+                msg_zh="RSS 已存在。",
+            )
+        if bangumi.id is not None and rss_item.id is not None:
+            await self.bangumi_rss.append(bangumi.id, rss_item.id)
         bangumi.deleted = False
-        self.bangumi.set_rss_link(bangumi, bangumi.rss_link)
+        self.session.add(bangumi)
         await self.session.commit()
 
         async with SearchTorrent() as search:

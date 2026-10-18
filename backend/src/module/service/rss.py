@@ -1,9 +1,12 @@
 import re
+from typing import cast
 
 from loguru import logger
+from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.bangumi import BangumiDatabase
+from module.database.bangumi_rss import BangumiRSSDatabase
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
@@ -28,6 +31,7 @@ class RssService:
         self.session = session
         self.rss = RSSDatabase(session)
         self.bangumi = BangumiDatabase(session)
+        self.bangumi_rss = BangumiRSSDatabase(session)
         self.torrent = TorrentDatabase(session)
         self.analyser = RSSAnalyser()
 
@@ -82,8 +86,8 @@ class RssService:
         return ResponseModel(
             status=False,
             status_code=406,
-            msg_en="RSS added failed.",
-            msg_zh="RSS 添加失败。",
+            msg_en="RSS already exists.",
+            msg_zh="RSS 已存在。",
         )
 
     async def analyze_feed(
@@ -118,9 +122,13 @@ class RssService:
             title_raw=data.title_raw,
         )
         options = [
-            RSSAnalysisOption(type="candidate", bangumi=BangumiData.from_bangumi(rule))
+            RSSAnalysisOption(
+                type="candidate",
+                bangumi=BangumiData.from_bangumi(rule),
+            )
             for rule in candidates
         ]
+        data.rss_items = [rss_item]
         options.append(
             RSSAnalysisOption(type="create", bangumi=BangumiData.from_bangumi(data))
         )
@@ -163,21 +171,16 @@ class RssService:
                 matches = await self.bangumi.find_by_raw_title_season_group(*key)
                 if matches:
                     bangumi = matches[0]
-                    rss_links = (bangumi.rss_link or "").split(",")
-                    if rss_item.url not in rss_links:
-                        bangumi.rss_link = (
-                            f"{bangumi.rss_link},{rss_item.url}"
-                            if bangumi.rss_link
-                            else rss_item.url
-                        )
+                    if rss_item not in bangumi.rss_items:
+                        bangumi.rss_items.append(rss_item)
                         bangumi.added = False
                     bangumi.deleted = False
-                    self.bangumi.set_rss_link(bangumi, bangumi.rss_link)
+                    self.session.add(bangumi)
                 else:
-                    bangumi.rss_link = rss_item.url
                     await self.analyser.official_title_parser(
                         bangumi, rss_item, torrent
                     )
+                    bangumi.rss_items.append(rss_item)
                     await self.bangumi.add(bangumi)
 
                 torrent_filter = (
@@ -199,15 +202,15 @@ class RssService:
     async def refresh_regular_rss(
         self, rss_item: RSSItem, client: DownloadClient
     ) -> None:
-        bangumi_list = await self.bangumi.search_rss(rss_item.url)
-        if not bangumi_list:
+        bangumis = rss_item.bangumis
+        if not bangumis:
             logger.warning(
                 "[RSS] No association rule found for regular RSS {}.", rss_item.url
             )
             await self.session.commit()
             return
 
-        bangumi = bangumi_list[0]
+        bangumi = bangumis[0]
         if bangumi.deleted:
             logger.info(
                 "[RSS] Skip regular RSS {} because its Bangumi rule is deleted.",
@@ -235,9 +238,9 @@ class RssService:
             try:
                 async with DownloadClient() as client:
                     if rss_id is None:
-                        rss_items = await self.rss.search_active()
+                        rss_items = await self.rss.search_active_with_bangumis()
                     else:
-                        rss_item = await self.rss.search_id(rss_id)
+                        rss_item = await self.rss.search_id_with_bangumis(rss_id)
                         rss_items = [rss_item] if rss_item else []
                     logger.debug("[RSS] Get {} RSS items", len(rss_items))
                     for rss_item in rss_items:
@@ -304,28 +307,27 @@ class RssService:
                 return False
             await self.session.commit()
             return True
+        except IntegrityError:
+            await self.session.rollback()
+            return False
         except Exception:
             await self.session.rollback()
             raise
 
     async def _delete_rss_and_cleanup_bangumi(self, rss_id: int) -> bool:
-        rss_item = await self.rss.search_id(rss_id)
+        rss_item = await self.rss.search_id_with_bangumis(rss_id)
         if rss_item is None:
             return False
 
-        for bangumi in await self.bangumi.search_rss(rss_item.url):
-            members = [
-                member
-                for member in (bangumi.rss_link or "").split(",")
-                if member and member != rss_item.url
-            ]
-            if members:
-                self.bangumi.set_rss_link(bangumi, ",".join(members))
-            elif bangumi.id is not None:
-                await self.torrent.delete_by_bangumi_id(bangumi.id)
-                if not await self.bangumi.delete_one(bangumi.id):
+        for bangumi in rss_item.bangumis:
+            bangumi_id = cast(int, bangumi.id)
+            if len(bangumi.rss_items) > 1:
+                await self.bangumi_rss.remove(bangumi_id, rss_id)
+            else:
+                await self.torrent.delete_by_bangumi_id(bangumi_id)
+                if not await self.bangumi.delete_one(bangumi_id):
                     raise ValueError(
-                        f"Bangumi rule {bangumi.id} disappeared during deletion"
+                        f"Bangumi rule {bangumi_id} disappeared during deletion"
                     )
 
         return await self.rss.delete_one(rss_id)

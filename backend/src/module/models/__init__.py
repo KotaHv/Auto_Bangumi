@@ -2,6 +2,7 @@ from .bangumi import (
     Bangumi,
     BangumiData,
     BangumiResponse,
+    BangumiRSS,
     Episode,
     Notification,
 )
@@ -23,6 +24,7 @@ from .user import User, UserUpdate
 __all__ = [
     "Bangumi",
     "BangumiData",
+    "BangumiRSS",
     "BangumiResponse",
     "Episode",
     "Notification",

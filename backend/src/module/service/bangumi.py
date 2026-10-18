@@ -10,7 +10,7 @@ from module.database.factory import session_factory
 from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
-from module.models import Bangumi, ResponseModel
+from module.models import Bangumi, BangumiResponse, ResponseModel, RSSItem
 from module.parser import TitleParser
 from module.service._locks import rss_operation_lock
 from module.service.plex import PlexService
@@ -25,8 +25,9 @@ class BangumiService:
         self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
 
-    async def search_all(self) -> list[Bangumi]:
-        return await self.bangumi.search_all()
+    async def search_all(self) -> list[BangumiResponse]:
+        bangumis = await self.bangumi.search_all()
+        return [BangumiResponse.from_bangumi(bangumi) for bangumi in bangumis]
 
     async def match_poster(self, title: str) -> str | None:
         return await self.bangumi.match_poster(title)
@@ -37,7 +38,7 @@ class BangumiService:
             await self.session.commit()
 
     async def refresh_poster(self) -> ResponseModel:
-        bangumis = await self.bangumi.search_all()
+        bangumis = await self.bangumi.search_all_without_rss_items()
         parser = TitleParser()
         for bangumi in bangumis:
             if not bangumi.poster_link:
@@ -72,7 +73,7 @@ class BangumiService:
 
     async def ensure_poster_cache(self) -> None:
         POSTERS_PATH.mkdir(parents=True, exist_ok=True)
-        bangumis = await self.bangumi.search_all()
+        bangumis = await self.bangumi.search_all_without_rss_items()
         changed = []
         parser = TitleParser()
         for bangumi in bangumis:
@@ -105,11 +106,10 @@ class BangumiService:
         async with rss_operation_lock:
             return await self._delete_one(bangumi_id, file, wake_event=wake_event)
 
-    async def _delete_regular_rss(self, rss_urls: set[str]) -> None:
-        for rss in await self.rss.search_urls(rss_urls):
-            if rss.aggregate or rss.id is None:
-                continue
-            await self.rss.delete_one(rss.id)
+    async def _delete_regular_rss(self, rss_items: list[RSSItem]) -> None:
+        for rss in rss_items:
+            if not rss.aggregate and rss.id is not None:
+                await self.rss.delete_one(rss.id)
 
     async def _delete_one(
         self,
@@ -128,12 +128,12 @@ class BangumiService:
             )
 
         official_title = data.official_title
-        rss_urls = set(filter(None, (data.rss_link or "").split(",")))
+        rss_items = data.rss_items
         offset_tag = format_offset_tag(data.offset)
         try:
             hashes = await self.torrent.delete_by_bangumi_id(bangumi_id)
             await self.bangumi.delete_one(bangumi_id)
-            await self._delete_regular_rss(rss_urls)
+            await self._delete_regular_rss(rss_items)
             if offset_tag and hashes:
                 async with DownloadClient() as client:
                     await client.set_tag(hashes, offset_tag)

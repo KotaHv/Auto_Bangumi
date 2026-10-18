@@ -1,8 +1,12 @@
+from typing import cast
+
 from loguru import logger
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlmodel import col, delete, select, true, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from module.models import RSSItem, RSSUpdate
+from module.models import Bangumi, BangumiRSS, RSSItem, RSSUpdate
 
 
 class RSSDatabase:
@@ -17,6 +21,7 @@ class RSSDatabase:
             return False
         logger.debug("Stage RSS item {} for insertion.", data.url)
         self.session.add(data)
+        await self.session.flush()
         return True
 
     async def add_all(self, data: list[RSSItem]):
@@ -46,13 +51,10 @@ class RSSDatabase:
         return result.rowcount == len(ids)
 
     async def delete_one(self, _id: int) -> bool:
-        rss_item = await self.search_id(_id)
-        if rss_item is None:
-            return False
-
-        await self.session.delete(rss_item)
+        await self.session.exec(delete(BangumiRSS).where(col(BangumiRSS.rss_id) == _id))
+        result = await self.session.exec(delete(RSSItem).where(col(RSSItem.id) == _id))
         logger.debug("[Database] Delete RSS id: {}.", _id)
-        return True
+        return result.rowcount > 0
 
     async def delete_many(self, rss_ids: list[int]) -> bool:
         ids = set(rss_ids)
@@ -84,33 +86,37 @@ class RSSDatabase:
     async def search_id(self, _id: int) -> RSSItem | None:
         return await self.session.get(RSSItem, _id)
 
+    async def search_id_with_bangumis(self, _id: int) -> RSSItem | None:
+        bangumis = cast(InstrumentedAttribute[list[Bangumi]], RSSItem.bangumis)
+        rss_items = cast(InstrumentedAttribute[list[RSSItem]], Bangumi.rss_items)
+        statement = (
+            select(RSSItem)
+            .where(RSSItem.id == _id)
+            .options(selectinload(bangumis).selectinload(rss_items))
+        )
+        return (await self.session.exec(statement)).first()
+
     async def search_all(self) -> list[RSSItem]:
         return list((await self.session.exec(select(RSSItem))).all())
 
     async def search_active(self) -> list[RSSItem]:
-        return list(
-            (
-                await self.session.exec(
-                    select(RSSItem).where(RSSItem.enabled == true())
-                )
-            ).all()
+        statement = select(RSSItem).where(RSSItem.enabled == true())
+        return list((await self.session.exec(statement)).all())
+
+    async def search_active_with_bangumis(self) -> list[RSSItem]:
+        bangumis = cast(InstrumentedAttribute[list[Bangumi]], RSSItem.bangumis)
+        rss_items = cast(InstrumentedAttribute[list[RSSItem]], Bangumi.rss_items)
+        statement = (
+            select(RSSItem)
+            .where(RSSItem.enabled == true())
+            .options(selectinload(bangumis).selectinload(rss_items))
         )
+        return list((await self.session.exec(statement)).all())
 
     async def search_url(self, url: str) -> RSSItem | None:
         return (
             await self.session.exec(select(RSSItem).where(RSSItem.url == url))
         ).first()
-
-    async def search_urls(self, urls: set[str]) -> list[RSSItem]:
-        if not urls:
-            return []
-        return list(
-            (
-                await self.session.exec(
-                    select(RSSItem).where(col(RSSItem.url).in_(urls))
-                )
-            ).all()
-        )
 
     async def delete_all(self):
         condition = delete(RSSItem)

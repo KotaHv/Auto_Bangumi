@@ -5,7 +5,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.database.bangumi import BangumiDatabase
 from module.database.factory import session_factory
-from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import Bangumi, ResponseModel
@@ -18,7 +17,6 @@ class TorrentService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.bangumi = BangumiDatabase(session)
-        self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
 
     async def ensure_torrent_hashes(self) -> None:
@@ -102,11 +100,10 @@ class TorrentService:
         )
 
     async def _set_rule_enabled(self, data: Bangumi, enabled: bool) -> None:
-        rss_urls = set(filter(None, (data.rss_link or "").split(",")))
         try:
             data.deleted = not enabled
             self.session.add(data)
-            for rss in await self.rss.search_urls(rss_urls):
+            for rss in data.rss_items:
                 if not rss.aggregate:
                     rss.enabled = enabled
                     self.session.add(rss)
