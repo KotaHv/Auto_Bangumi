@@ -4,7 +4,6 @@ from module.conf import settings
 from module.database.factory import session_factory
 from module.downloader import DownloadClient
 from module.notification import PostNotification
-from module.rss import RSSAnalyser
 from module.service.rename import RenameService
 from module.service.rss import RssService
 from module.service.season import SeasonService
@@ -13,10 +12,6 @@ from .status import ProgramStatus
 
 
 class RSSThread(ProgramStatus):
-    def __init__(self):
-        super().__init__()
-        self.analyser = RSSAnalyser()
-
     async def _rss_async_loop(self):
         await self._run_loop(self._rss_loop, settings.program.rss_time, "RSS")
 

@@ -21,7 +21,7 @@ from module.models import (
     Torrent,
 )
 from module.network import RequestContent
-from module.rss.analyser import RSSAnalyser
+from module.parser import TitleParser
 from module.service._locks import rss_operation_lock
 from module.utils.torrent_versions import filter_superseded_torrents
 
@@ -33,15 +33,10 @@ class RssService:
         self.bangumi = BangumiDatabase(session)
         self.bangumi_rss = BangumiRSSDatabase(session)
         self.torrent = TorrentDatabase(session)
-        self.analyser = RSSAnalyser()
+        self.parser = TitleParser()
 
     async def search_all(self) -> list[RSSItem]:
         return await self.rss.search_all()
-
-    async def get_rss_torrents(self, rss_id: int) -> list[Torrent]:
-        if await self.rss.search_id(rss_id) is None:
-            return []
-        return await self.torrent.search_rss(rss_id)
 
     async def pull_rss(self, rss_item: RSSItem) -> list[Torrent]:
         async with RequestContent() as req:
@@ -90,6 +85,30 @@ class RssService:
             msg_zh="RSS 已存在。",
         )
 
+    async def _first_bangumi_from_feed(
+        self, rss_item: RSSItem
+    ) -> Bangumi | ResponseModel:
+        async with RequestContent() as req:
+            torrents = await req.get_torrents(rss_item.url, "\\d+-\\d+")
+        if not torrents:
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="Cannot find any torrent.",
+                msg_zh="无法找到种子。",
+            )
+        for torrent in torrents:
+            bangumi = await self.parser.raw_parser(raw=torrent.name)
+            if bangumi:
+                await self.parser.official_title_parser(bangumi, rss_item, torrent)
+                return bangumi
+        return ResponseModel(
+            status=False,
+            status_code=406,
+            msg_en="Cannot parse this link.",
+            msg_zh="无法解析此链接。",
+        )
+
     async def analyze_feed(
         self, rss_item: RSSItem
     ) -> RSSAnalysisResult | ResponseModel:
@@ -101,7 +120,7 @@ class RssService:
                 msg_zh="RSS 已存在。",
             )
 
-        data = await self.analyser.link_to_data(rss_item)
+        data = await self._first_bangumi_from_feed(rss_item)
         if not isinstance(data, Bangumi):
             return data
 
@@ -150,7 +169,7 @@ class RssService:
             tuple[str, int, str | None], tuple[Bangumi, re.Pattern[str] | None]
         ] = {}
         for torrent in new_torrents:
-            bangumi = await self.analyser.raw_parser(raw=torrent.name)
+            bangumi = await self.parser.raw_parser(raw=torrent.name)
             if bangumi is None:
                 logger.warning(
                     "[RSS] Skip unparseable torrent {} from aggregate feed {}.",
@@ -177,9 +196,7 @@ class RssService:
                     bangumi.deleted = False
                     self.session.add(bangumi)
                 else:
-                    await self.analyser.official_title_parser(
-                        bangumi, rss_item, torrent
-                    )
+                    await self.parser.official_title_parser(bangumi, rss_item, torrent)
                     bangumi.rss_items.append(rss_item)
                     await self.bangumi.add(bangumi)
 

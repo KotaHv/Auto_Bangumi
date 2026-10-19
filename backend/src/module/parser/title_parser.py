@@ -1,7 +1,9 @@
+import re
+
 from loguru import logger
 
 from module.conf import settings
-from module.models import Bangumi
+from module.models import Bangumi, RSSItem, Torrent
 from module.parser.analyser import (
     OpenAIParser,
     mikan_parser,
@@ -63,6 +65,33 @@ class TitleParser:
                 bangumi.official_title,
             )
             logger.warning("Please change bangumi info manually.")
+
+    async def official_title_parser(
+        self, bangumi: Bangumi, rss: RSSItem, torrent: Torrent
+    ) -> None:
+        if rss.parser == "mikan":
+            if torrent.homepage is None:
+                logger.warning("[Parser] Mikan torrent has no homepage info.")
+            else:
+                try:
+                    (
+                        bangumi.poster_link,
+                        bangumi.official_title,
+                    ) = await self.mikan_parser(torrent.homepage)
+                except Exception as e:
+                    logger.warning(
+                        "[Parser] Mikan parser failed with error: {}. Use raw title instead.",
+                        e,
+                    )
+        elif rss.parser == "tmdb":
+            tmdb_title, season, year, poster_link = await self.tmdb_parser(
+                bangumi.official_title, bangumi.season, settings.rss_parser.language
+            )
+            bangumi.official_title = tmdb_title
+            bangumi.year = year
+            bangumi.season = season
+            bangumi.poster_link = poster_link
+        bangumi.official_title = re.sub(r"[/:.\\]", " ", bangumi.official_title)
 
     @staticmethod
     async def raw_parser(raw: str) -> Bangumi | None:

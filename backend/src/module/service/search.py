@@ -9,7 +9,7 @@ from module.conf import SEARCH_CONFIG, settings
 from module.exceptions import SearchUpstreamError, UnsupportedProviderError
 from module.models import Bangumi, BangumiData, RSSItem, SearchResult, Torrent
 from module.network import RequestContent
-from module.rss import RSSAnalyser
+from module.parser import TitleParser
 
 SEARCH_KEY = [
     "group_name",
@@ -39,7 +39,7 @@ def search_url(site: str, keywords: list[str]) -> RSSItem:
 
 class SearchService:
     def __init__(self) -> None:
-        self.analyser = RSSAnalyser()
+        self.parser = TitleParser()
 
     async def search_events(
         self, keywords: list[str], site: str = "mikan"
@@ -68,7 +68,7 @@ class SearchService:
         seen_links: set[str] = set()
         previews: dict[str, tuple[str, int, str | None, str | None]] = {}
         for title in titles:
-            bangumi = await self.parse_title(title)
+            bangumi = await self.parser.raw_parser(raw=title)
             if bangumi is None:
                 continue
 
@@ -79,7 +79,7 @@ class SearchService:
 
             preview = previews.get(bangumi.official_title)
             if preview is None:
-                preview = await self.analyser.tmdb_parser(
+                preview = await self.parser.tmdb_parser(
                     bangumi.official_title,
                     bangumi.season,
                     settings.rss_parser.language,
@@ -122,14 +122,8 @@ class SearchService:
 
     async def search_season(self, data: Bangumi, site: str = "mikan") -> list[Torrent]:
         rss_item = self.special_url(data, site)
-        torrents = await self.get_torrents(rss_item.url, data.filter.replace(",", "|"))
-        return [torrent for torrent in torrents if data.title_raw in torrent.name]
-
-    async def get_torrents(
-        self, url: str, torrent_filter: str | None = None
-    ) -> list[Torrent]:
         async with RequestContent() as req:
-            return await req.get_torrents(url, torrent_filter)
-
-    async def parse_title(self, name: str) -> Bangumi | None:
-        return await self.analyser.raw_parser(raw=name)
+            torrents = await req.get_torrents(
+                rss_item.url, data.filter.replace(",", "|")
+            )
+        return [torrent for torrent in torrents if data.title_raw in torrent.name]

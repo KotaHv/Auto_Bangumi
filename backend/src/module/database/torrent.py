@@ -47,13 +47,6 @@ class TorrentDatabase:
     async def search_all(self) -> list[Torrent]:
         return list((await self.session.exec(select(Torrent))).all())
 
-    async def search_rss(self, rss_id: int) -> list[Torrent]:
-        return list(
-            (
-                await self.session.exec(select(Torrent).where(Torrent.rss_id == rss_id))
-            ).all()
-        )
-
     async def search_bangumi(self, bangumi_id: int) -> list[Torrent]:
         return list(
             (

@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 from typing import cast
 
+import httpx2
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -47,10 +48,44 @@ async def add_rule_with_rss(
     assert bangumi.id is not None
 
 
+def serve_feeds(monkeypatch, feeds: dict[str, list[tuple[str, str]]]) -> list[str]:
+    requested: list[str] = []
+
+    async def handler(request: httpx2.Request) -> httpx2.Response:
+        url = str(request.url)
+        requested.append(url)
+        items = "".join(
+            f"<item><title>{title}</title>"
+            f"<link>https://mikanani.test/{index}</link>"
+            f'<enclosure url="{torrent_url}"/></item>'
+            for index, (title, torrent_url) in enumerate(feeds.get(url, []))
+        )
+        return httpx2.Response(200, text=f"<rss><channel>{items}</channel></rss>")
+
+    transport = httpx2.MockTransport(handler)
+    original_client = httpx2.AsyncClient
+
+    def client(*args, **kwargs):
+        return original_client(*args, transport=transport, **kwargs)
+
+    monkeypatch.setattr(httpx2, "AsyncClient", client)
+    return requested
+
+
 @pytest.mark.asyncio
 async def test_analyze_feed_returns_exact_match(
     database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
+    feed_url = "https://rss.example.test/a"
+    requested = serve_feeds(
+        monkeypatch,
+        {
+            feed_url: [
+                ("[Group A] Example Show S01E01 [1080p]", "https://torrent.test/a")
+            ]
+        },
+    )
+
     async with AsyncSession(database, expire_on_commit=False) as db:
         repository = BangumiDatabase(db)
         exact = Bangumi(
@@ -68,19 +103,9 @@ async def test_analyze_feed_returns_exact_match(
         await db.commit()
 
         service = RssService(db)
-        parsed = Bangumi(
-            title_raw="Example Show",
-            season=1,
-            season_raw="S01",
-            group_name="Group A",
-        )
+        result = await service.analyze_feed(RSSItem(url=feed_url, parser="custom"))
 
-        async def link_to_data(_rss_item: RSSItem) -> Bangumi:
-            return parsed
-
-        monkeypatch.setattr(service.analyser, "link_to_data", link_to_data)
-        result = await service.analyze_feed(RSSItem(url="https://rss.example.test/a"))
-
+        assert requested == [feed_url]
         assert isinstance(result, RSSAnalysisResult)
         assert result.options == [
             RSSAnalysisOption(
@@ -93,40 +118,42 @@ async def test_analyze_feed_returns_exact_match(
 async def test_analyze_feed_offers_candidates_for_other_groups(
     database: AsyncEngine, monkeypatch: pytest.MonkeyPatch
 ):
+    feed_url = "https://rss.example.test/candidates"
+    requested = serve_feeds(
+        monkeypatch,
+        {
+            feed_url: [
+                ("[Group C] Example Show S01E01 [1080p]", "https://torrent.test/c")
+            ]
+        },
+    )
     candidates = [
         Bangumi(title_raw="Example Show", season=1, group_name=group)
         for group in ("Group A", "Group B")
     ]
-    parsed = Bangumi(
-        title_raw="Example Show",
-        season=1,
-        season_raw="S01",
-        group_name="Group C",
-    )
 
     async with AsyncSession(database, expire_on_commit=False) as db:
         await BangumiDatabase(db).add_all(candidates)
         await db.commit()
         service = RssService(db)
+        rss_item = RSSItem(url=feed_url, parser="custom")
 
-        async def link_to_data(_rss_item: RSSItem) -> Bangumi:
-            return parsed
+        result = await service.analyze_feed(rss_item)
 
-        monkeypatch.setattr(service.analyser, "link_to_data", link_to_data)
-        result = await service.analyze_feed(
-            RSSItem(url="https://rss.example.test/candidates")
-        )
-
+    assert requested == [feed_url]
     assert isinstance(result, RSSAnalysisResult)
     assert {
         option.bangumi.group_name
         for option in result.options
         if option.type == "candidate"
     } == {"Group A", "Group B"}
-    assert result.options[-1] == RSSAnalysisOption(
-        type="create",
-        bangumi=BangumiData.from_bangumi(parsed),
-    )
+    created = result.options[-1]
+    assert created.type == "create"
+    assert created.bangumi.title_raw == "Example Show"
+    assert created.bangumi.season == 1
+    assert created.bangumi.season_raw == "S01"
+    assert created.bangumi.group_name == "Group C"
+    assert created.bangumi.rss_links == [rss_item.url]
 
 
 @pytest.mark.asyncio
@@ -147,7 +174,9 @@ async def test_aggregate_refresh_links_torrent_to_created_rule(
         async def __aexit__(self, *args: object) -> None:
             return None
 
-        async def get_torrents(self, _url: str) -> list[Torrent]:
+        async def get_torrents(
+            self, _url: str, _filter: str | None = None
+        ) -> list[Torrent]:
             return [torrent]
 
     class DownloadClientStub:
@@ -165,7 +194,7 @@ async def test_aggregate_refresh_links_torrent_to_created_rule(
             assert raw == torrent.name
             return parsed
 
-        monkeypatch.setattr(service.analyser, "raw_parser", raw_parser)
+        monkeypatch.setattr(service.parser, "raw_parser", raw_parser)
         await service.refresh_aggregate_rss(
             rss_item, cast(DownloadClient, DownloadClientStub())
         )
