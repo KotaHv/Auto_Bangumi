@@ -51,11 +51,10 @@ export const apiBangumi = {
     );
     return data;
   },
-  async forceCollect(bangumiData: BangumiData) {
-    const { data } = await axios.post<ApiSuccess>(
-      'api/v1/rss/force-collect',
-      bangumiData,
-    );
+  async forceCollect(bangumiId: number) {
+    const { data } = await axios.post<ApiSuccess>('api/v1/rss/force-collect', {
+      bangumi_id: bangumiId,
+    });
     return data;
   },
 };

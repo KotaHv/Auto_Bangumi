@@ -1,13 +1,8 @@
-from collections.abc import AsyncIterator
 from typing import cast
 
-import httpx2
 import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlmodel import SQLModel
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel.pool import StaticPool
 
 import module.service.rss as rss_service_module
 from module.database.bangumi import BangumiDatabase
@@ -25,19 +20,7 @@ from module.models import (
 from module.service.bangumi import BangumiService
 from module.service.rss import RssService
 from module.service.torrent import TorrentService
-
-
-@pytest_asyncio.fixture
-async def database() -> AsyncIterator[AsyncEngine]:
-    engine = create_async_engine(
-        "sqlite+aiosqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    async with engine.begin() as connection:
-        await connection.run_sync(SQLModel.metadata.create_all)
-    yield engine
-    await engine.dispose()
+from test.conftest import serve_feeds
 
 
 async def add_rule_with_rss(
@@ -46,30 +29,6 @@ async def add_rule_with_rss(
     bangumi.rss_items = rss_items
     await BangumiDatabase(session).add(bangumi)
     assert bangumi.id is not None
-
-
-def serve_feeds(monkeypatch, feeds: dict[str, list[tuple[str, str]]]) -> list[str]:
-    requested: list[str] = []
-
-    async def handler(request: httpx2.Request) -> httpx2.Response:
-        url = str(request.url)
-        requested.append(url)
-        items = "".join(
-            f"<item><title>{title}</title>"
-            f"<link>https://mikanani.test/{index}</link>"
-            f'<enclosure url="{torrent_url}"/></item>'
-            for index, (title, torrent_url) in enumerate(feeds.get(url, []))
-        )
-        return httpx2.Response(200, text=f"<rss><channel>{items}</channel></rss>")
-
-    transport = httpx2.MockTransport(handler)
-    original_client = httpx2.AsyncClient
-
-    def client(*args, **kwargs):
-        return original_client(*args, transport=transport, **kwargs)
-
-    monkeypatch.setattr(httpx2, "AsyncClient", client)
-    return requested
 
 
 @pytest.mark.asyncio

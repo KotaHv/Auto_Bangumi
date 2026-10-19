@@ -170,48 +170,67 @@ class SeasonService:
             msg_zh=f"已成功订阅 {bangumi.official_title} 的 RSS。",
         )
 
-    async def force_collect(self, bangumi: BangumiData) -> ResponseModel:
+    async def force_collect(self, bangumi_id: int) -> ResponseModel:
+        bangumi = await self.bangumi.search_id(bangumi_id)
+        if bangumi is None:
+            return ResponseModel(
+                status=False,
+                status_code=406,
+                msg_en="The selected Bangumi rule no longer exists.",
+                msg_zh="所选番剧规则已不存在。",
+            )
         logger.info(
             "Force collecting {} Season {}...", bangumi.official_title, bangumi.season
         )
-        rss_links = bangumi.rss_links
-        bangumi_model = bangumi.to_bangumi()
 
-        async with DownloadClient() as client:
-            for rss_link in rss_links:
-                rss = await self.rss.search_url(rss_link)
-                if rss is None:
-                    continue
-                if rss.aggregate:
-                    torrents = await self.search.search_season(bangumi_model)
-                    break
-                async with RequestContent() as req:
-                    torrents = await req.get_torrents(
-                        rss_link, "|".join(bangumi.filter)
-                    )
-                break
+        regular_rss = []
+        aggregate_rss = []
+        for rss in bangumi.rss_items:
+            if not rss.enabled:
+                continue
+            if rss.aggregate:
+                aggregate_rss.append(rss)
             else:
-                return ResponseModel(
-                    status=False,
-                    status_code=406,
-                    msg_en=f"Collection of {bangumi.official_title} Season {bangumi.season} failed, no valid rss found.",
-                    msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 未找到有效rss。",
+                regular_rss.append(rss)
+
+        torrents = []
+        if aggregate_rss:
+            source_torrents = await self.search.search_season(bangumi)
+            for torrent in source_torrents:
+                torrent.rss_id = aggregate_rss[0].id
+            torrents.extend(source_torrents)
+        async with RequestContent() as req:
+            for rss in regular_rss:
+                source_torrents = await req.get_torrents(
+                    rss.url, bangumi.filter.replace(",", "|")
                 )
-            torrents = filter_superseded_torrents(torrents)
-            await client.add_torrent(torrents, bangumi_model)
-            logger.info(
-                "Collections of {} Season {} completed.",
-                bangumi.official_title,
-                bangumi.season,
-            )
-            await self.torrent.add_all(torrents)
-            await self.session.commit()
+                for torrent in source_torrents:
+                    torrent.rss_id = rss.id
+                torrents.extend(source_torrents)
+
+        torrents = filter_superseded_torrents(torrents)
+        if not torrents:
             return ResponseModel(
-                status=True,
-                status_code=200,
-                msg_en=f"Collections of {bangumi.official_title} Season {bangumi.season} completed.",
-                msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季完成。",
+                status=False,
+                status_code=406,
+                msg_en=f"Collection of {bangumi.official_title} Season {bangumi.season} failed, no torrent found.",
+                msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季失败, 未找到种子。",
             )
+        async with DownloadClient() as client:
+            await client.add_torrent(torrents, bangumi)
+        await self.torrent.add_all(torrents)
+        await self.session.commit()
+        logger.info(
+            "Collections of {} Season {} completed.",
+            bangumi.official_title,
+            bangumi.season,
+        )
+        return ResponseModel(
+            status=True,
+            status_code=200,
+            msg_en=f"Collections of {bangumi.official_title} Season {bangumi.season} completed.",
+            msg_zh=f"收集 {bangumi.official_title} 第 {bangumi.season} 季完成。",
+        )
 
     async def collect_incomplete(self) -> None:
         async with rss_operation_lock:

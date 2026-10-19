@@ -126,6 +126,6 @@ async def add_to_bangumi(
     "/force-collect",
     response_model=APIResponse,
 )
-async def force_collect(data: BangumiData, db: DatabaseDep):
-    resp = await SeasonService(db).force_collect(data)
+async def force_collect(bangumi_id: Annotated[int, Body(embed=True)], db: DatabaseDep):
+    resp = await SeasonService(db).force_collect(bangumi_id)
     return u_response(resp)

@@ -119,7 +119,7 @@ export function AbEditRule({ rule, onClose }: AbEditRuleProps) {
   }
 
   function forceCollect() {
-    collectMutation.mutate(draftRule);
+    collectMutation.mutate(rule.id);
   }
 
   function rename() {
