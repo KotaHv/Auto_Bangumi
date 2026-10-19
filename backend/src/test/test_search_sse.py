@@ -1,17 +1,20 @@
 import importlib
-import xml.etree.ElementTree
+import json
 
+import httpx2
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 
-class SearchStub:
-    async def __aenter__(self):
-        return self
+def use_transport(monkeypatch, handler):
+    original_client = httpx2.AsyncClient
+    transport = httpx2.MockTransport(handler)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return None
+    def client(*args, **kwargs):
+        return original_client(*args, transport=transport, **kwargs)
+
+    monkeypatch.setattr(httpx2, "AsyncClient", client)
 
 
 def load_search_module(tmp_path, monkeypatch):
@@ -29,26 +32,12 @@ def search_app(search_module, require_session) -> FastAPI:
     return app
 
 
-@pytest.mark.asyncio
-async def test_search_streams_results_then_complete(tmp_path, monkeypatch):
-    search_module, require_session = load_search_module(tmp_path, monkeypatch)
-
-    class ResultsSearch(SearchStub):
-        async def analyse_keyword(self, keywords, site):
-            yield '{"id": 1}'
-            yield '{"id": 2}'
-
-    monkeypatch.setattr(search_module, "SearchTorrent", ResultsSearch)
-    async with AsyncClient(
-        transport=ASGITransport(app=search_app(search_module, require_session)),
-        base_url="http://testserver",
-    ) as client:
-        response = await client.get("/api/v1/search/bangumi?keywords=test")
-
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/event-stream")
-    assert response.text.count('data: {"id":') == 2
-    assert "event: complete\r\ndata: \r\n\r\n" in response.text
+def data_events(response) -> list[dict]:
+    return [
+        json.loads(line.removeprefix("data: "))
+        for line in response.text.splitlines()
+        if line.startswith("data: ") and line != "data: "
+    ]
 
 
 @pytest.mark.asyncio
@@ -69,26 +58,6 @@ async def test_search_rejects_missing_or_blank_keywords(
 
 
 @pytest.mark.asyncio
-async def test_search_with_no_provider_results_completes(tmp_path, monkeypatch):
-    search_module, require_session = load_search_module(tmp_path, monkeypatch)
-
-    class EmptySearch(SearchStub):
-        async def analyse_keyword(self, keywords, site):
-            if False:
-                yield ""
-
-    monkeypatch.setattr(search_module, "SearchTorrent", EmptySearch)
-    async with AsyncClient(
-        transport=ASGITransport(app=search_app(search_module, require_session)),
-        base_url="http://testserver",
-    ) as client:
-        response = await client.get("/api/v1/search/bangumi?keywords=test")
-
-    assert response.status_code == 200
-    assert "event: complete\r\ndata: \r\n\r\n" in response.text
-
-
-@pytest.mark.asyncio
 async def test_search_reports_invalid_provider(tmp_path, monkeypatch):
     search_module, require_session = load_search_module(tmp_path, monkeypatch)
     async with AsyncClient(
@@ -101,27 +70,6 @@ async def test_search_reports_invalid_provider(tmp_path, monkeypatch):
 
     assert "event: failure" in response.text
     assert 'data: {"code": "invalid_provider"}' in response.text
-
-
-@pytest.mark.asyncio
-async def test_search_reports_upstream_failure(tmp_path, monkeypatch):
-    search_module, require_session = load_search_module(tmp_path, monkeypatch)
-    network_module = importlib.import_module("module.network")
-
-    class UpstreamFailureSearch(SearchStub):
-        async def analyse_keyword(self, keywords, site):
-            raise network_module.UpstreamUnavailableError
-            yield ""
-
-    monkeypatch.setattr(search_module, "SearchTorrent", UpstreamFailureSearch)
-    async with AsyncClient(
-        transport=ASGITransport(app=search_app(search_module, require_session)),
-        base_url="http://testserver",
-    ) as client:
-        response = await client.get("/api/v1/search/bangumi?keywords=test")
-
-    assert "event: failure" in response.text
-    assert 'data: {"code": "upstream_unavailable"}' in response.text
 
 
 @pytest.mark.asyncio
@@ -138,58 +86,99 @@ async def test_search_keeps_authentication_at_stream_start(tmp_path, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_title_search_generates_one_poster_per_anime(tmp_path, monkeypatch):
-    load_search_module(tmp_path, monkeypatch)
-    models = importlib.import_module("module.models")
-    searcher_module = importlib.import_module("module.searcher.searcher")
-    searcher = searcher_module.SearchTorrent()
-    feed = xml.etree.ElementTree.fromstring(
-        "<rss><channel><item><title>Group A release</title></item>"
-        "<item><title>Group B release</title></item></channel></rss>"
+async def test_search_streams_one_result_per_rss_link(tmp_path, monkeypatch):
+    search_module, require_session = load_search_module(tmp_path, monkeypatch)
+    tmdb_searches = 0
+    feed = (
+        "<rss><channel>"
+        "<item><title>[Lilith-Raws] Sousou no Frieren - 01 [Baha][WEB-DL]"
+        "[1080p][AVC AAC][CHT][MP4]</title></item>"
+        "<item><title>[Lilith-Raws] Sousou no Frieren - 02 [Baha][WEB-DL]"
+        "[1080p][AVC AAC][CHT][MP4]</title></item>"
+        "<item><title>[ANi] Sousou no Frieren - 01 [1080P][Baha][WEB-DL]"
+        "[AAC AVC][CHT][MP4]</title></item>"
+        "</channel></rss>"
     )
-    poster_calls = 0
 
-    async def get_xml(*_args, **_kwargs):
-        return feed
+    async def handler(request):
+        nonlocal tmdb_searches
+        if request.url.path == "/RSS/Search":
+            return httpx2.Response(200, text=feed)
+        if request.url.path == "/3/search/tv":
+            tmdb_searches += 1
+            return httpx2.Response(200, json={"results": [{"id": 1}]})
+        if request.url.path == "/3/tv/1":
+            return httpx2.Response(
+                200,
+                json={
+                    "genres": [{"id": 16}],
+                    "seasons": [],
+                    "name": "Sousou no Frieren",
+                    "original_name": "Sousou no Frieren",
+                    "first_air_date": "2023-09-29",
+                    "poster_path": None,
+                },
+            )
+        raise AssertionError(f"unexpected request: {request.url}")
 
-    async def raw_parser(*, raw):
-        return models.Bangumi(
-            official_title="Demo title",
-            title_raw="Demo title",
-            group_name=raw,
-            filter="",
-        )
+    use_transport(monkeypatch, handler)
+    async with AsyncClient(
+        transport=ASGITransport(app=search_app(search_module, require_session)),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get("/api/v1/search/bangumi?keywords=frieren")
 
-    async def tmdb_parser(title, season, _language):
-        nonlocal poster_calls
-        poster_calls += 1
-        return title, season, "2025", "https://example.com/poster.jpg"
-
-    monkeypatch.setattr(searcher, "get_xml", get_xml)
-    monkeypatch.setattr(searcher, "raw_parser", raw_parser)
-    monkeypatch.setattr(searcher, "tmdb_parser", tmdb_parser)
-    results = [
-        item async for item in searcher.analyse_keyword(keywords=["demo"], site="mikan")
-    ]
-
+    results = data_events(response)
+    assert response.headers["content-type"].startswith("text/event-stream")
     assert len(results) == 2
-    assert poster_calls == 1
+    assert len({result["rss"]["url"] for result in results}) == 2
+    assert {result["bangumi"]["official_title"] for result in results} == {
+        "Sousou no Frieren"
+    }
+    assert {result["bangumi"]["year"] for result in results} == {"2023"}
+    assert tmdb_searches == 1
+    assert "event: complete\r\ndata: \r\n\r\n" in response.text
+
+
+@pytest.mark.asyncio
+async def test_search_with_no_provider_results_completes(tmp_path, monkeypatch):
+    search_module, require_session = load_search_module(tmp_path, monkeypatch)
+
+    async def handler(_request):
+        return httpx2.Response(200, text="<rss><channel></channel></rss>")
+
+    use_transport(monkeypatch, handler)
+    async with AsyncClient(
+        transport=ASGITransport(app=search_app(search_module, require_session)),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get("/api/v1/search/bangumi?keywords=test")
+
+    assert response.status_code == 200
+    assert data_events(response) == []
+    assert "event: complete\r\ndata: \r\n\r\n" in response.text
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "feed",
-    [None, xml.etree.ElementTree.fromstring("<rss><channel><item /></channel></rss>")],
+    [
+        "<rss><channel><item>",
+        "<rss><channel><item /></channel></rss>",
+    ],
 )
-async def test_title_search_reports_unavailable_feeds(tmp_path, monkeypatch, feed):
-    load_search_module(tmp_path, monkeypatch)
-    network_module = importlib.import_module("module.network")
-    searcher_module = importlib.import_module("module.searcher.searcher")
-    searcher = searcher_module.SearchTorrent()
+async def test_search_reports_unavailable_feeds(tmp_path, monkeypatch, feed):
+    search_module, require_session = load_search_module(tmp_path, monkeypatch)
 
-    async def get_xml(*_args, **_kwargs):
-        return feed
+    async def handler(_request):
+        return httpx2.Response(200, text=feed)
 
-    monkeypatch.setattr(searcher, "get_xml", get_xml)
-    with pytest.raises(network_module.UpstreamUnavailableError):
-        await searcher._get_titles(searcher_module.search_url("mikan", ["demo"]))
+    use_transport(monkeypatch, handler)
+    async with AsyncClient(
+        transport=ASGITransport(app=search_app(search_module, require_session)),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get("/api/v1/search/bangumi?keywords=test")
+
+    assert "event: failure" in response.text
+    assert 'data: {"code": "upstream_unavailable"}' in response.text

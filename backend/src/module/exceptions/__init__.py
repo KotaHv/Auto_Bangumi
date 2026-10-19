@@ -14,6 +14,7 @@ from .plex import (
     PlexStaleAddressError,
     PlexUpstreamError,
 )
+from .search import SearchUpstreamError, UnsupportedProviderError
 
 __all__ = [
     "InvalidLogLevel",
@@ -28,4 +29,6 @@ __all__ = [
     "PlexResponseError",
     "PlexStaleAddressError",
     "PlexUpstreamError",
+    "SearchUpstreamError",
+    "UnsupportedProviderError",
 ]

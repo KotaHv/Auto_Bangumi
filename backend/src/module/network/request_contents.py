@@ -12,10 +12,6 @@ from .request_url import RequestURL
 from .site import rss_parser
 
 
-class UpstreamUnavailableError(Exception):
-    pass
-
-
 class RequestContent(RequestURL):
     async def get_torrents(
         self,

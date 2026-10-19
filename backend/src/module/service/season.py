@@ -7,8 +7,8 @@ from module.database.rss import RSSDatabase
 from module.database.torrent import TorrentDatabase
 from module.downloader import DownloadClient
 from module.models import Bangumi, BangumiData, ResponseModel, RSSItem
-from module.searcher import SEARCH_KEY, SearchTorrent
 from module.service._locks import rss_operation_lock
+from module.service.search import SEARCH_KEY, SearchService
 from module.utils.torrent_tags import RENAME_TAG, format_offset_tag
 from module.utils.torrent_versions import filter_superseded_torrents
 
@@ -20,6 +20,7 @@ class SeasonService:
         self.bangumi_rss = BangumiRSSDatabase(session)
         self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
+        self.search = SearchService()
 
     async def collect_season(self, bangumi: BangumiData) -> ResponseModel:
         logger.info(
@@ -35,10 +36,12 @@ class SeasonService:
                 msg_en=f"Collection of {title} Season {season} failed, no RSS link configured.",
                 msg_zh=f"收集 {title} 第 {season} 季失败，未配置 RSS 链接。",
             )
-        async with SearchTorrent() as st, DownloadClient() as client:
+        async with DownloadClient() as client:
             torrents = []
             for link in rss_links:
-                torrents.extend(await st.get_torrents(link, "|".join(bangumi.filter)))
+                torrents.extend(
+                    await self.search.get_torrents(link, "|".join(bangumi.filter))
+                )
             torrents = filter_superseded_torrents(torrents)
             offset_tag = format_offset_tag(bangumi.offset)
             tags = [RENAME_TAG, offset_tag] if offset_tag else None
@@ -61,15 +64,14 @@ class SeasonService:
     async def subscribe_season(self, data: Bangumi, rss_item: RSSItem) -> ResponseModel:
         data.added = True
         data.eps_collect = True
-        async with SearchTorrent() as search:
-            torrents = await search.get_torrents(
-                rss_item.url, data.filter.replace(",", "|")
-            )
-            for torrent in torrents:
-                if parsed := await search.raw_parser(raw=torrent.name):
-                    for field in SEARCH_KEY:
-                        setattr(data, field, getattr(parsed, field))
-                    break
+        torrents = await self.search.get_torrents(
+            rss_item.url, data.filter.replace(",", "|")
+        )
+        for torrent in torrents:
+            if parsed := await self.search.parse_title(torrent.name):
+                for field in SEARCH_KEY:
+                    setattr(data, field, getattr(parsed, field))
+                break
 
         torrents = filter_superseded_torrents(torrents)
         rss_item.name = rss_item.name or data.official_title
@@ -137,10 +139,9 @@ class SeasonService:
         self.session.add(bangumi)
         await self.session.commit()
 
-        async with SearchTorrent() as search:
-            torrents = await search.get_torrents(
-                rss.url, bangumi.filter.replace(",", "|")
-            )
+        torrents = await self.search.get_torrents(
+            rss.url, bangumi.filter.replace(",", "|")
+        )
         torrents = filter_superseded_torrents(torrents)
         if torrents:
             for torrent in torrents:
@@ -172,15 +173,17 @@ class SeasonService:
         rss_links = bangumi.rss_links
         bangumi_model = bangumi.to_bangumi()
 
-        async with SearchTorrent() as st, DownloadClient() as client:
+        async with DownloadClient() as client:
             for rss_link in rss_links:
                 rss = await self.rss.search_url(rss_link)
                 if rss is None:
                     continue
                 if rss.aggregate:
-                    torrents = await st.search_season(bangumi_model)
+                    torrents = await self.search.search_season(bangumi_model)
                     break
-                torrents = await st.get_torrents(rss_link, "|".join(bangumi.filter))
+                torrents = await self.search.get_torrents(
+                    rss_link, "|".join(bangumi.filter)
+                )
                 break
             else:
                 return ResponseModel(
@@ -212,9 +215,9 @@ class SeasonService:
                 return
             logger.info("Start collecting full season...")
             try:
-                async with SearchTorrent() as st, DownloadClient() as client:
+                async with DownloadClient() as client:
                     for data in datas:
-                        torrents = await st.search_season(data)
+                        torrents = await self.search.search_season(data)
                         torrents = filter_superseded_torrents(torrents)
                         if not await client.add_torrent(torrents, data):
                             continue

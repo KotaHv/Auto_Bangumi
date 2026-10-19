@@ -1,3 +1,3 @@
-from .request_contents import RequestContent, UpstreamUnavailableError
+from .request_contents import RequestContent
 
-__all__ = ["RequestContent", "UpstreamUnavailableError"]
+__all__ = ["RequestContent"]
