@@ -4,11 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { AbSearch } from '@/features/search/components/ab-search';
 import { AbBangumiCard } from '@/features/bangumi/components/ab-bangumi-card';
 import { AbBangumiReview } from '@/features/rss/components/review/bangumi-review';
+import { AbRssCandidateSelection } from '@/features/rss/components/review/candidate-selection';
+import { AbRssExactMatch } from '@/features/rss/components/review/exact-match';
 import { AbPopup } from '@/components/shared/ab-popup';
 import { cn } from 'cn';
 import { searchProviderOptions } from '@/features/search/queries';
 import { useSearchSSE } from '@/features/search/hooks/use-search-sse';
+import {
+  searchResultBangumi,
+  selectSearchReview,
+} from '@/features/search/review';
+import type { SearchReview } from '@/features/search/review';
 import type { SearchResult } from '@/features/search/types';
+import type { RSSAPI } from '@/features/rss/types/rss';
 
 interface AbSearchBarProps {
   className?: string;
@@ -71,8 +79,69 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
     setReviewOpen(true);
   }
 
-  function closeReview() {
+  function backToResults() {
     setReviewOpen(false);
+    setOpen(true);
+  }
+
+  function renderReviewContent(review: SearchReview, rss: RSSAPI) {
+    switch (review.kind) {
+      case 'exact':
+        return (
+          <AbRssExactMatch
+            rule={review.rule}
+            rss={rss}
+            onBack={backToResults}
+            onComplete={() => setReviewOpen(false)}
+          />
+        );
+      case 'candidates':
+        return (
+          <AbRssCandidateSelection
+            options={review.options}
+            rss={rss}
+            onBack={backToResults}
+            onComplete={() => setReviewOpen(false)}
+          />
+        );
+      case 'create':
+        return (
+          <AbBangumiReview
+            rule={review.rule}
+            rss={rss}
+            onBack={backToResults}
+            onComplete={() => setReviewOpen(false)}
+          />
+        );
+      default: {
+        const exhaustive: never = review;
+        return exhaustive;
+      }
+    }
+  }
+
+  function renderReview() {
+    if (!selectedResult) return null;
+
+    const review = selectSearchReview(selectedResult);
+    if (!review) return null;
+
+    return (
+      <AbPopup
+        title={t('topbar.add.title')}
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        onOpenChangeComplete={(open) => {
+          if (!open) {
+            setSelectedResult(null);
+          }
+        }}
+        width="xl"
+        className="shadow-2xl"
+      >
+        {renderReviewContent(review, selectedResult.rss)}
+      </AbPopup>
+    );
   }
 
   return (
@@ -116,10 +185,10 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
                 {t(`topbar.search.errors.${state.error}`)}
               </div>
             )}
-            {state.results.map((result: SearchResult) => (
+            {state.results.map((result) => (
               <AbBangumiCard
                 key={result.rss.url}
-                bangumi={result.bangumi}
+                bangumi={searchResultBangumi(result)}
                 type="search"
                 onClick={() => handleSelect(result)}
               />
@@ -128,26 +197,7 @@ export function AbSearchBar({ className }: AbSearchBarProps) {
         )}
       </div>
 
-      {selectedResult && (
-        <AbPopup
-          title={t('topbar.add.new_bangumi')}
-          open={reviewOpen}
-          onOpenChange={setReviewOpen}
-          onOpenChangeComplete={(open) => {
-            if (!open) {
-              setSelectedResult(null);
-            }
-          }}
-          width="xl"
-          className="shadow-2xl"
-        >
-          <AbBangumiReview
-            rule={selectedResult.bangumi}
-            rss={selectedResult.rss}
-            onComplete={closeReview}
-          />
-        </AbPopup>
-      )}
+      {renderReview()}
     </>
   );
 }

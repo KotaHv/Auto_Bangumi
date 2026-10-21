@@ -4,12 +4,14 @@ from collections.abc import AsyncIterator
 
 import lxml.etree as etree
 from loguru import logger
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from module.conf import SEARCH_CONFIG, settings
 from module.exceptions import SearchUpstreamError, UnsupportedProviderError
-from module.models import Bangumi, BangumiData, RSSItem, SearchResult, Torrent
+from module.models import Bangumi, RSSItem, SearchResult, Torrent
 from module.network import RequestContent
 from module.parser import TitleParser
+from module.service.rss import RssService
 
 SEARCH_KEY = [
     "group_name",
@@ -38,8 +40,9 @@ def search_url(site: str, keywords: list[str]) -> RSSItem:
 
 
 class SearchService:
-    def __init__(self) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.parser = TitleParser()
+        self.rss = RssService(session)
 
     async def search_events(
         self, keywords: list[str], site: str = "mikan"
@@ -92,7 +95,8 @@ class SearchService:
                 bangumi.poster_link,
             ) = preview
             bangumi.rss_items = [rss]
-            yield SearchResult(bangumi=BangumiData.from_bangumi(bangumi), rss=rss)
+            options = await self.rss.analysis_options(bangumi)
+            yield SearchResult(options=options, rss=rss)
 
     async def _get_titles(self, rss_item: RSSItem) -> list[str]:
         async with RequestContent() as req:

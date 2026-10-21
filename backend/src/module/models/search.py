@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from typing import Annotated
 
-from .bangumi import BangumiData
-from .rss import RSSItem
+from pydantic import BaseModel, Field
+
+from .rss import RSSAnalysisOption, RSSItem
 
 
 class SearchResult(BaseModel):
-    bangumi: BangumiData
+    options: Annotated[list[RSSAnalysisOption], Field(min_length=1)]
     rss: RSSItem

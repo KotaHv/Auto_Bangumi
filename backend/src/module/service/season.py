@@ -23,7 +23,7 @@ class SeasonService:
         self.rss = RSSDatabase(session)
         self.torrent = TorrentDatabase(session)
         self.parser = TitleParser()
-        self.search = SearchService()
+        self.search = SearchService(session)
 
     async def collect_season(self, bangumi: BangumiData) -> ResponseModel:
         logger.info(

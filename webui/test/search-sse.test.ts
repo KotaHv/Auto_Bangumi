@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import type {
-  SearchResultResponse,
+  SearchResult,
   SearchStreamEvent,
 } from '../src/features/search/types';
+import { makeBangumi, makeRss } from './fixtures';
 
 class FakeEventSource {
   static instances: FakeEventSource[] = [];
@@ -50,36 +51,14 @@ Object.defineProperty(globalThis, 'localStorage', {
 const { apiSearch } = await import('../src/features/search/api');
 
 const searchResultResponse = {
-  bangumi: {
-    added: false,
-    deleted: false,
-    dpi: '1080p',
-    eps_collect: false,
-    filter: ['1080p'],
-    group_name: 'Group',
-    id: null,
-    official_title: 'Example',
-    offset: 0,
-    poster_link: null,
-    rss_links: ['https://example.com/rss'],
-    rule_name: null,
-    save_path: null,
-    season: 1,
-    season_raw: null,
-    source: null,
-    subtitle: 'Sub',
-    title_raw: 'Example',
-    year: null,
-  },
-  rss: {
-    aggregate: false,
-    enabled: true,
-    id: null,
-    name: null,
-    parser: 'mikan',
-    url: 'https://example.com/rss',
-  },
-} satisfies SearchResultResponse;
+  options: [
+    {
+      type: 'create',
+      bangumi: makeBangumi({ season_raw: null, subtitle: 'Sub', year: null }),
+    },
+  ],
+  rss: makeRss(),
+} satisfies SearchResult;
 
 function subscribe() {
   const events: SearchStreamEvent[] = [];
@@ -108,10 +87,12 @@ describe('apiSearch.get', () => {
 
     const [result] = stream.events;
     if (result?.type !== 'result') throw new Error('Expected a search result');
-    expect(result.result.bangumi.filter).toEqual(['1080p']);
-    expect(result.result.bangumi.id).toBeNull();
-    expect(result.result.bangumi.rule_name).toBeNull();
-    expect(result.result.bangumi.save_path).toBeNull();
+    const [option] = result.result.options;
+    if (option?.type !== 'create') throw new Error('Expected a create option');
+    expect(option.bangumi.filter).toEqual(['1080p']);
+    expect(option.bangumi.id).toBeNull();
+    expect(option.bangumi.rule_name).toBeNull();
+    expect(option.bangumi.save_path).toBeNull();
     expect(result.result.rss.id).toBeNull();
     expect(result.result.rss.name).toBeNull();
     expect(stream.completed()).toBe(true);

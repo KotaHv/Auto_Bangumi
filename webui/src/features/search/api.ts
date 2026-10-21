@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { axios } from '@/lib/axios';
 import type {
   SearchFailureCode,
-  SearchResultResponse,
+  SearchResult,
   SearchStreamEvent,
 } from './types';
 
@@ -27,14 +27,8 @@ export const apiSearch = {
 
       eventSource.onmessage = (event) => {
         try {
-          const apiData: SearchResultResponse = JSON.parse(event.data);
-          observer.next({
-            type: 'result',
-            result: {
-              bangumi: apiData.bangumi,
-              rss: apiData.rss,
-            },
-          });
+          const result: SearchResult = JSON.parse(event.data);
+          observer.next({ type: 'result', result });
         } catch {
           fail('protocol');
         }

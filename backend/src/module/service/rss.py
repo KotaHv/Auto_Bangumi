@@ -124,17 +124,19 @@ class RssService:
         if not isinstance(data, Bangumi):
             return data
 
+        data.rss_items = [rss_item]
+        return RSSAnalysisResult(options=await self.analysis_options(data))
+
+    async def analysis_options(self, data: Bangumi) -> list[RSSAnalysisOption]:
         if data.season_raw:
             exact_match = await self.bangumi.find_for_rss_analysis(data)
             if exact_match is not None:
-                return RSSAnalysisResult(
-                    options=[
-                        RSSAnalysisOption(
-                            type="exact_match",
-                            bangumi=BangumiData.from_bangumi(exact_match),
-                        )
-                    ]
-                )
+                return [
+                    RSSAnalysisOption(
+                        type="exact_match",
+                        bangumi=BangumiData.from_bangumi(exact_match),
+                    )
+                ]
 
         candidates = await self.bangumi.find_by_official_or_raw_title(
             official_title=data.official_title,
@@ -147,11 +149,10 @@ class RssService:
             )
             for rule in candidates
         ]
-        data.rss_items = [rss_item]
         options.append(
             RSSAnalysisOption(type="create", bangumi=BangumiData.from_bangumi(data))
         )
-        return RSSAnalysisResult(options=options)
+        return options
 
     async def _filter_new_torrents(self, torrents: list[Torrent]) -> list[Torrent]:
         return await self.torrent.check_new(filter_superseded_torrents(torrents))

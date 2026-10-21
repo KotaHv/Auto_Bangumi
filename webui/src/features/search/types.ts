@@ -1,13 +1,11 @@
-import type { BangumiData } from '@/features/bangumi/types';
-import type { RSSAPI } from '@/features/rss/types/rss';
-
-export interface SearchResultResponse {
-  bangumi: BangumiData;
-  rss: RSSAPI;
-}
+import type {
+  NonEmptyArray,
+  RSSAnalysisOptionAPI,
+  RSSAPI,
+} from '@/features/rss/types/rss';
 
 export interface SearchResult {
-  bangumi: BangumiData;
+  options: NonEmptyArray<RSSAnalysisOptionAPI>;
   rss: RSSAPI;
 }
 
