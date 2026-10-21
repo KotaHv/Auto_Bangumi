@@ -35,10 +35,11 @@ class RequestContent(RequestURL):
             torrents: list[Torrent] = []
             if _filter is None:
                 _filter = "|".join(settings.rss_parser.filter)
+            pattern = re.compile(_filter)
             for _title, torrent_url, homepage in zip(
                 torrent_titles, torrent_urls, torrent_homepage, strict=True
             ):
-                if re.search(_filter, _title) is None:
+                if pattern.search(_title) is None:
                     torrents.append(
                         Torrent(name=_title, url=torrent_url, homepage=homepage)
                     )

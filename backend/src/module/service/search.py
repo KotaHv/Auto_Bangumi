@@ -108,14 +108,17 @@ class SearchService:
             raise SearchUpstreamError
 
         try:
+            pattern = re.compile("|".join(settings.rss_parser.filter))
             titles = []
             for item in soup.findall("./channel/item"):
                 title = item.findtext("title")
                 if not title:
                     raise ValueError
+                if pattern.search(title):
+                    continue
                 titles.append(title)
             return titles
-        except (AttributeError, TypeError, ValueError) as error:
+        except (AttributeError, TypeError, ValueError, re.error) as error:
             raise SearchUpstreamError from error
 
     @staticmethod
