@@ -22,6 +22,7 @@ from module.api import v1
 from module.conf import VERSION, settings
 from module.core import Program
 from module.core.plex_refresh import PlexRefreshWorker
+from module.database import engine
 from module.exceptions import (
     PlexDiscoveryError,
     PlexError,
@@ -108,6 +109,7 @@ async def lifespan(app: FastAPI):
         try:
             await program.stop()
         finally:
+            await engine.dispose()
             await app.state.log_manager.shutdown()
 
 
